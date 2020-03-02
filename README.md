@@ -1,1 +1,22 @@
 # SWAAT
+
+
+
+## Preparing dependencies for the auxiliary workflow 
+
+### Installing `tranvar`
+
+```
+# Use miniconda3 for clean installation
+pip install --user transvar
+
+# set up databases
+transvar config --download_anno --refversion hg19
+
+# in case you don't have a reference
+transvar config --download_ref --refversion hg19
+
+# test
+transvar panno -i 'PIK3CA:p.E545K' --ucsc --ccds
+```
+

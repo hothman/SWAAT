@@ -1,0 +1,109 @@
+Mar-02 10:26:06.225 [main] DEBUG nextflow.cli.Launcher - $> nextflow run prepare_data.groovy -c prepare_data.config
+Mar-02 10:26:06.292 [main] INFO  nextflow.cli.CmdRun - N E X T F L O W  ~  version 19.04.1
+Mar-02 10:26:06.330 [main] INFO  nextflow.cli.CmdRun - Launching `prepare_data.groovy` [ecstatic_joliot] - revision: 6b76dfdd3f
+Mar-02 10:26:06.346 [main] DEBUG nextflow.config.ConfigBuilder - User config file: /home/houcemeddine/BILIM/SWAAT/prepare_data/prepare_data.config
+Mar-02 10:26:06.347 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /home/houcemeddine/BILIM/SWAAT/prepare_data/prepare_data.config
+Mar-02 10:26:06.370 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `standard`
+Mar-02 10:26:06.914 [main] DEBUG nextflow.Session - Session uuid: 2c6158f5-8837-4609-8f22-94da1d42e702
+Mar-02 10:26:06.914 [main] DEBUG nextflow.Session - Run name: ecstatic_joliot
+Mar-02 10:26:06.914 [main] DEBUG nextflow.Session - Executor pool size: 12
+Mar-02 10:26:06.934 [main] DEBUG nextflow.cli.CmdRun - 
+  Version: 19.04.1 build 5072
+  Modified: 03-05-2019 12:29 UTC (14:29 SAST)
+  System: Linux 5.3.0-40-generic
+  Runtime: Groovy 2.5.6 on OpenJDK 64-Bit Server VM 11.0.6+10-post-Ubuntu-1ubuntu118.04.1
+  Encoding: UTF-8 (UTF-8)
+  Process: 22106@nimcha [127.0.1.1]
+  CPUs: 12 - Mem: 31.2 GB (9.3 GB) - Swap: 2 GB (1.7 GB)
+Mar-02 10:26:06.995 [main] DEBUG nextflow.Session - Work-dir: /home/houcemeddine/BILIM/SWAAT/prepare_data/work [ext2/ext3]
+Mar-02 10:26:06.996 [main] DEBUG nextflow.Session - Script base path does not exist or is not a directory: /home/houcemeddine/BILIM/SWAAT/prepare_data/bin
+Mar-02 10:26:07.381 [main] DEBUG nextflow.Session - Session start invoked
+Mar-02 10:26:07.383 [main] DEBUG nextflow.processor.TaskDispatcher - Dispatcher > start
+Mar-02 10:26:07.412 [main] DEBUG nextflow.script.ScriptRunner - > Script parsing
+Mar-02 10:26:07.630 [main] DEBUG nextflow.script.ScriptRunner - > Launching execution
+Mar-02 10:26:07.767 [main] DEBUG nextflow.processor.ProcessFactory - << taskConfig executor: local
+Mar-02 10:26:07.767 [main] DEBUG nextflow.processor.ProcessFactory - >> processorType: 'local'
+Mar-02 10:26:07.771 [main] DEBUG nextflow.executor.Executor - Initializing executor: local
+Mar-02 10:26:07.772 [main] INFO  nextflow.executor.Executor - [warm up] executor > local
+Mar-02 10:26:07.774 [main] DEBUG n.processor.LocalPollingMonitor - Creating local task monitor for executor 'local' > cpus=12; memory=31.2 GB; capacity=12; pollInterval=100ms; dumpInterval=5m
+Mar-02 10:26:07.786 [main] DEBUG nextflow.processor.TaskDispatcher - Starting monitor: LocalPollingMonitor
+Mar-02 10:26:07.786 [main] DEBUG n.processor.TaskPollingMonitor - >>> barrier register (monitor: local)
+Mar-02 10:26:07.789 [main] DEBUG nextflow.executor.Executor - Invoke register for executor: local
+Mar-02 10:26:07.845 [main] DEBUG nextflow.Session - >>> barrier register (process: GetSequences)
+Mar-02 10:26:07.847 [main] DEBUG nextflow.processor.TaskProcessor - Creating operator > GetSequences -- maxForks: 12
+Mar-02 10:26:07.920 [main] DEBUG nextflow.processor.ProcessFactory - << taskConfig executor: local
+Mar-02 10:26:07.920 [main] DEBUG nextflow.processor.ProcessFactory - >> processorType: 'local'
+Mar-02 10:26:07.920 [main] DEBUG nextflow.executor.Executor - Initializing executor: local
+Mar-02 10:26:07.920 [main] DEBUG nextflow.Session - >>> barrier register (process: GetProteinAnnotation)
+Mar-02 10:26:07.921 [main] DEBUG nextflow.processor.TaskProcessor - Creating operator > GetProteinAnnotation -- maxForks: 12
+Mar-02 10:26:07.933 [main] DEBUG nextflow.processor.ProcessFactory - << taskConfig executor: local
+Mar-02 10:26:07.933 [main] DEBUG nextflow.processor.ProcessFactory - >> processorType: 'local'
+Mar-02 10:26:07.934 [main] DEBUG nextflow.executor.Executor - Initializing executor: local
+Mar-02 10:26:07.934 [main] DEBUG nextflow.Session - >>> barrier register (process: GetCoordinates)
+Mar-02 10:26:07.934 [main] DEBUG nextflow.processor.TaskProcessor - Creating operator > GetCoordinates -- maxForks: 12
+Mar-02 10:26:07.939 [main] DEBUG nextflow.processor.ProcessFactory - << taskConfig executor: local
+Mar-02 10:26:07.939 [main] DEBUG nextflow.processor.ProcessFactory - >> processorType: 'local'
+Mar-02 10:26:07.939 [main] DEBUG nextflow.executor.Executor - Initializing executor: local
+Mar-02 10:26:07.940 [main] DEBUG nextflow.Session - >>> barrier register (process: CalculatePSSM)
+Mar-02 10:26:07.941 [main] DEBUG nextflow.processor.TaskProcessor - Creating operator > CalculatePSSM -- maxForks: 12
+Mar-02 10:26:07.942 [main] DEBUG nextflow.script.ScriptRunner - > Await termination 
+Mar-02 10:26:07.943 [main] DEBUG nextflow.Session - Session await
+Mar-02 10:26:08.009 [Task submitter] DEBUG nextflow.executor.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
+Mar-02 10:26:08.015 [Task submitter] INFO  nextflow.Session - [1d/43aefc] Submitted process > GetProteinAnnotation (1)
+Mar-02 10:26:08.055 [Task submitter] DEBUG nextflow.executor.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
+Mar-02 10:26:08.055 [Task submitter] INFO  nextflow.Session - [36/d47e54] Submitted process > GetSequences (1)
+Mar-02 10:26:10.152 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 2; name: GetProteinAnnotation (1); status: COMPLETED; exit: 1; error: -; workDir: /home/houcemeddine/BILIM/SWAAT/prepare_data/work/1d/43aefcfe08cbcff5fcc949a7d7f6eb]
+Mar-02 10:26:10.172 [Task monitor] ERROR nextflow.processor.TaskProcessor - Error executing process > 'GetProteinAnnotation (1)'
+
+Caused by:
+  Process `GetProteinAnnotation (1)` terminated with an error exit status (1)
+
+Command executed:
+
+  tail -n +2  list.csv >list_of_uniprot_ids
+  while read protein_id
+  do
+  	echo $protein_id
+  	python /home/houcemeddine/BILIM/SWAAT/scripts//parseProteinAnnotation.py --accession $protein_id
+  
+  done < list_of_uniprot_ids
+
+Command exit status:
+  1
+
+Command output:
+  P04798
+  Downloading entry P04798 ...
+
+Command error:
+  Traceback (most recent call last):
+    File "/home/houcemeddine/BILIM/SWAAT/scripts//parseProteinAnnotation.py", line 120, in <module>
+      output_annotation = myprot.parse_uniprot() 
+    File "/home/houcemeddine/BILIM/SWAAT/scripts//parseProteinAnnotation.py", line 92, in parse_uniprot
+      start_residue = int( anotation_line[2])
+  ValueError: invalid literal for int() with base 10: '29..40'
+
+Work dir:
+  /home/houcemeddine/BILIM/SWAAT/prepare_data/work/1d/43aefcfe08cbcff5fcc949a7d7f6eb
+
+Tip: you can try to figure out what's wrong by changing to the process work dir and showing the script file named `.command.sh`
+Mar-02 10:26:10.176 [Actor Thread 2] DEBUG nextflow.Session - <<< barrier arrive (process: GetProteinAnnotation)
+Mar-02 10:26:10.177 [Task monitor] DEBUG nextflow.Session - Session aborted -- Cause: Process `GetProteinAnnotation (1)` terminated with an error exit status (1)
+Mar-02 10:26:10.193 [Task monitor] DEBUG nextflow.Session - The following nodes are still active:
+[process] GetCoordinates
+  status=ACTIVE
+  port 0: (queue) OPEN  ; channel: fasta
+  port 1: (cntrl) -     ; channel: $
+
+[process] CalculatePSSM
+  status=ACTIVE
+  port 0: (queue) OPEN  ; channel: fasta
+  port 1: (cntrl) -     ; channel: $
+
+Mar-02 10:26:10.196 [main] DEBUG nextflow.Session - Session await > all process finished
+Mar-02 10:26:10.201 [Task monitor] DEBUG n.processor.TaskPollingMonitor - <<< barrier arrives (monitor: local)
+Mar-02 10:26:10.201 [main] DEBUG nextflow.Session - Session await > all barriers passed
+Mar-02 10:26:10.230 [main] WARN  n.processor.TaskPollingMonitor - Killing pending tasks (1)
+Mar-02 10:26:10.269 [main] DEBUG nextflow.trace.StatsObserver - Workflow completed > WorkflowStats[succeedCount=0; failedCount=2; ignoredCount=0; cachedCount=0; succeedDuration=0ms; failedDuration=2s; cachedDuration=0ms]
+Mar-02 10:26:10.381 [main] DEBUG nextflow.CacheDB - Closing CacheDB done
+Mar-02 10:26:10.405 [main] DEBUG nextflow.script.ScriptRunner - > Execution complete -- Goodbye
