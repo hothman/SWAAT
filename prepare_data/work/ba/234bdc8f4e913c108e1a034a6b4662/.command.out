@@ -1,0 +1,22 @@
+>P04798|CYP1A1|ENSG00000140465|NM_000499
+MLFPISMSATEFLLASVIFCLVFWVIRASRPQVPKGLKNPPGPWGWPLIGHMLTLGKNPHLALSRMSQQYGDVLQIRIGSTPVVVLSGLDTIRQALVRQGDDFKGRPDLYTFTLISNGQSMSFSPDSGPVWAARRRLAQNGLKSFSIASDPASSTSCYLEEHVSKEAEVLISTLQELMAGPGHFNPYRYVVVSVTNVICAICFGRRYDHNHQELLSLVNLNNNFGEVVGSGNPADFIPILRYLPNPSLNAFKDLNEKFYSFMQKMVKEHYKTFEKGHIRDITDSLIEHCQEKQLDENANVQLSDEKIINIVLDLFGAGFDTVTTAISWSLMYLVMNPRVQRKIQEELDTVIGRSRRPRLSDRSHLPYMEAFILETFRHSSFVPFTIPHSTTRDTSLKGFYIPKGRCVFVNQWQINHDQKLWVNPSEFLPERFLTPDGAIDKVLSEKVIIFGMGKRKCIGETIARWEVFLFLAILLQRVEFSVPLGVKVDMTPIYGLTMKHACCEHFQMQLRS
+
+
+Building a new DB, current time: 03/04/2020 14:08:57
+New DB name:   /home/houcemeddine/BILIM/SWAAT/prepare_data/work/ba/234bdc8f4e913c108e1a034a6b4662/CYP1A1/temp/QUERY.hits.db.blastdb
+New DB title:  .//CYP1A1/temp//QUERY.hits.db
+Sequence type: Protein
+Keep MBits: T
+Maximum file size: 1000000000B
+Adding sequences from FASTA; added 116110 sequences in 2.01178 seconds.
+
+    #########################################################################################
+    #########                                                                       #########
+    #########                             PRODRES PIPELINE                          #########
+    #########                                                                       #########
+    #########################################################################################
+    
+	>>>Sequences found: 1 <<<
+
+Beginning CDR...
+Ending CDR.

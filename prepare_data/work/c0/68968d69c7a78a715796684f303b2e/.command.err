@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/home/houcemeddine/modules/PRODRES/PRODRES/PRODRES.py", line 8, in <module>
+    from Bio import SeqIO
+ModuleNotFoundError: No module named 'Bio'

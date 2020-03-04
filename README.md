@@ -20,3 +20,13 @@ transvar config --download_ref --refversion hg19
 transvar panno -i 'PIK3CA:p.E545K' --ucsc --ccds
 ```
 
+
+
+### Installing `BioPython`
+
+```
+pip install biopython
+# Or if you prefer conda 
+conda install -c anaconda biopython 
+```
+

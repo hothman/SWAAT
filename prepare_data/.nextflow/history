@@ -1,0 +1,9 @@
+2020-03-02 11:40:06	12s	stupefied_legentil	OK	b4bc3819723342c459b96d0a69d2fa20	818b0619-467a-46bb-85f4-ead514ba3b72	nextflow run prepare_data.groovy -c prepare_data.config
+2020-03-02 11:45:16	9.3s	silly_sanger	OK	8c1a72c81795a839f46762a5a9ddd1c3	ba5de3fd-2103-4fcf-845d-b0aa3d4ff550	nextflow run prepare_data.groovy -c prepare_data.config
+2020-03-02 11:50:27	1.5s	scruffy_bose	ERR	8c1a72c81795a839f46762a5a9ddd1c3	6305beb3-4086-42d3-96f2-0f04b938c293	nextflow run prepare_data.groovy -c prepare_data.config
+2020-03-02 11:55:00	10.9s	maniac_lorenz	OK	8c1a72c81795a839f46762a5a9ddd1c3	95992391-501a-4316-928e-2c6f83fff88a	nextflow run prepare_data.groovy -c prepare_data.config
+2020-03-04 13:52:17	9.6s	extravagant_brattain	OK	8c1a72c81795a839f46762a5a9ddd1c3	f335cc15-48db-411a-9a48-426bf7d6c76a	nextflow run prepare_data.groovy -c prepare_data.config
+2020-03-04 13:55:51	10.8s	reverent_torvalds	ERR	a63a618fc73cb444df17f04b279a53ba	de49db99-c702-4441-821c-e4e7bcd9c92f	nextflow run prepare_data.groovy -c prepare_data.config
+2020-03-04 13:58:13	1m 5s	happy_pauling	OK	a63a618fc73cb444df17f04b279a53ba	276b8d03-f422-48fb-befd-9be6b5b930fd	nextflow run prepare_data.groovy -c prepare_data.config
+2020-03-04 14:01:54	1.5s	shrivelled_mcclintock	ERR	ee3015d2752ffa579259ac3b855a5b38	276b8d03-f422-48fb-befd-9be6b5b930fd	nextflow run prepare_data.groovy -resume -c prepare_data.config
+2020-03-04 14:08:34	50.5s	curious_wozniak	OK	ee3015d2752ffa579259ac3b855a5b38	276b8d03-f422-48fb-befd-9be6b5b930fd	nextflow run prepare_data.groovy -resume -c prepare_data.config

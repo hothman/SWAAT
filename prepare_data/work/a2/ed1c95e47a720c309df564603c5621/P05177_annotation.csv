@@ -1,0 +1,4 @@
+residue_id,gene_symbol,uniprot_accession,annotation_tag,note
+458,CYP1A2,P05177,12,Iron (heme axial ligand)
+226,CYP1A2,P05177,13,Substrate
+69,CYP1A2,P05177,17,O-linked (GlcNAc) serine

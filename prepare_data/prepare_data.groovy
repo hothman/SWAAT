@@ -32,7 +32,7 @@ process GetSequences {
 	"""
 }
 
-/*
+
 sequences.into {seq_for_mapping ; seq_for_annotation }
 
 PROTLIST = Channel.fromPath("$params.PROTLIST")
@@ -59,6 +59,7 @@ process GetProteinAnnotation {
 	"""
 }
 
+
 // output mapping files to the 'maps' directory
 maps_dir  = file("${params.OUTFOLDER}/maps")
 maps_dir.mkdir() 
@@ -79,7 +80,10 @@ process GetCoordinates {
    """
 } 
 
-// Will  calculate the PSSM for each protein, requires PRODRES
+
+// 		Will  calculate the PSSM for each protein, requires PRODRES
+// 		If you use our precalculated PSSM matrices then turn this parameters to False 
+// 		In the configuration file (calculate_PSSM = false ) 
 
 if ( params.calculate_PSSM == true ) {
     println 'calculate_PSSM'
@@ -116,4 +120,3 @@ if ( params.calculate_PSSM == true ) {
 }
 
 
-*/
