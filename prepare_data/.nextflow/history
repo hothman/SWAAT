@@ -7,3 +7,4 @@
 2020-03-04 13:58:13	1m 5s	happy_pauling	OK	a63a618fc73cb444df17f04b279a53ba	276b8d03-f422-48fb-befd-9be6b5b930fd	nextflow run prepare_data.groovy -c prepare_data.config
 2020-03-04 14:01:54	1.5s	shrivelled_mcclintock	ERR	ee3015d2752ffa579259ac3b855a5b38	276b8d03-f422-48fb-befd-9be6b5b930fd	nextflow run prepare_data.groovy -resume -c prepare_data.config
 2020-03-04 14:08:34	50.5s	curious_wozniak	OK	ee3015d2752ffa579259ac3b855a5b38	276b8d03-f422-48fb-befd-9be6b5b930fd	nextflow run prepare_data.groovy -resume -c prepare_data.config
+2020-03-04 14:37:07	1m 11s	boring_ekeblad	OK	4734787eb5d4b084d3b97fba2dd16d83	276b8d03-f422-48fb-befd-9be6b5b930fd	nextflow run prepare_data.groovy -resume -c prepare_data.config

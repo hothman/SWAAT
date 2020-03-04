@@ -1,2 +1,7 @@
-./prepare_data/work
-*log*
+/prepare_data/work
+/prepare_data/.nextflow
+/prepare_data/.nextflow.*
+
+/prepare_data/*.log*
+*.log
+*.log.
