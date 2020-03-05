@@ -1,84 +1,86 @@
-Mar-04 14:37:07.040 [main] DEBUG nextflow.cli.Launcher - $> nextflow run prepare_data.groovy -resume -c prepare_data.config
-Mar-04 14:37:07.105 [main] INFO  nextflow.cli.CmdRun - N E X T F L O W  ~  version 19.04.1
-Mar-04 14:37:07.112 [main] INFO  nextflow.cli.CmdRun - Launching `prepare_data.groovy` [boring_ekeblad] - revision: 4734787eb5
-Mar-04 14:37:07.123 [main] DEBUG nextflow.config.ConfigBuilder - User config file: /home/houcemeddine/BILIM/SWAAT/prepare_data/prepare_data.config
-Mar-04 14:37:07.123 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /home/houcemeddine/BILIM/SWAAT/prepare_data/prepare_data.config
-Mar-04 14:37:07.144 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `standard`
-Mar-04 14:37:07.387 [main] DEBUG nextflow.Session - Session uuid: 276b8d03-f422-48fb-befd-9be6b5b930fd
-Mar-04 14:37:07.387 [main] DEBUG nextflow.Session - Run name: boring_ekeblad
-Mar-04 14:37:07.387 [main] DEBUG nextflow.Session - Executor pool size: 12
-Mar-04 14:37:07.408 [main] DEBUG nextflow.cli.CmdRun - 
+Mar-05 15:32:56.962 [main] DEBUG nextflow.cli.Launcher - $> nextflow run prepare_data.groovy -resume -c prepare_data.config
+Mar-05 15:32:57.035 [main] INFO  nextflow.cli.CmdRun - N E X T F L O W  ~  version 19.04.1
+Mar-05 15:32:57.042 [main] INFO  nextflow.cli.CmdRun - Launching `prepare_data.groovy` [angry_mirzakhani] - revision: 817d1b1a55
+Mar-05 15:32:57.054 [main] DEBUG nextflow.config.ConfigBuilder - User config file: /home/houcemeddine/BILIM/SWAAT/prepare_data/prepare_data.config
+Mar-05 15:32:57.054 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /home/houcemeddine/BILIM/SWAAT/prepare_data/prepare_data.config
+Mar-05 15:32:57.070 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `standard`
+Mar-05 15:32:57.319 [main] DEBUG nextflow.Session - Session uuid: 276b8d03-f422-48fb-befd-9be6b5b930fd
+Mar-05 15:32:57.319 [main] DEBUG nextflow.Session - Run name: angry_mirzakhani
+Mar-05 15:32:57.319 [main] DEBUG nextflow.Session - Executor pool size: 12
+Mar-05 15:32:57.340 [main] DEBUG nextflow.cli.CmdRun - 
   Version: 19.04.1 build 5072
   Modified: 03-05-2019 12:29 UTC (14:29 SAST)
   System: Linux 5.3.0-40-generic
   Runtime: Groovy 2.5.6 on OpenJDK 64-Bit Server VM 11.0.6+10-post-Ubuntu-1ubuntu118.04.1
   Encoding: UTF-8 (UTF-8)
-  Process: 6162@nimcha [127.0.1.1]
-  CPUs: 12 - Mem: 31.2 GB (1.1 GB) - Swap: 2 GB (433.7 MB)
-Mar-04 14:37:07.442 [main] DEBUG nextflow.Session - Work-dir: /home/houcemeddine/BILIM/SWAAT/prepare_data/work [ext2/ext3]
-Mar-04 14:37:07.443 [main] DEBUG nextflow.Session - Script base path does not exist or is not a directory: /home/houcemeddine/BILIM/SWAAT/prepare_data/bin
-Mar-04 14:37:07.649 [main] DEBUG nextflow.Session - Session start invoked
-Mar-04 14:37:07.652 [main] DEBUG nextflow.processor.TaskDispatcher - Dispatcher > start
-Mar-04 14:37:07.654 [main] DEBUG nextflow.script.ScriptRunner - > Script parsing
-Mar-04 14:37:07.759 [main] DEBUG nextflow.script.ScriptRunner - > Launching execution
-Mar-04 14:37:07.850 [main] DEBUG nextflow.processor.ProcessFactory - << taskConfig executor: local
-Mar-04 14:37:07.850 [main] DEBUG nextflow.processor.ProcessFactory - >> processorType: 'local'
-Mar-04 14:37:07.853 [main] DEBUG nextflow.executor.Executor - Initializing executor: local
-Mar-04 14:37:07.854 [main] INFO  nextflow.executor.Executor - [warm up] executor > local
-Mar-04 14:37:07.871 [main] DEBUG n.processor.LocalPollingMonitor - Creating local task monitor for executor 'local' > cpus=12; memory=31.2 GB; capacity=12; pollInterval=100ms; dumpInterval=5m
-Mar-04 14:37:07.874 [main] DEBUG nextflow.processor.TaskDispatcher - Starting monitor: LocalPollingMonitor
-Mar-04 14:37:07.875 [main] DEBUG n.processor.TaskPollingMonitor - >>> barrier register (monitor: local)
-Mar-04 14:37:07.876 [main] DEBUG nextflow.executor.Executor - Invoke register for executor: local
-Mar-04 14:37:07.899 [main] DEBUG nextflow.Session - >>> barrier register (process: GetSequences)
-Mar-04 14:37:07.901 [main] DEBUG nextflow.processor.TaskProcessor - Creating operator > GetSequences -- maxForks: 12
-Mar-04 14:37:07.932 [main] DEBUG nextflow.processor.ProcessFactory - << taskConfig executor: local
-Mar-04 14:37:07.932 [main] DEBUG nextflow.processor.ProcessFactory - >> processorType: 'local'
-Mar-04 14:37:07.932 [main] DEBUG nextflow.executor.Executor - Initializing executor: local
-Mar-04 14:37:07.933 [main] DEBUG nextflow.Session - >>> barrier register (process: GetProteinAnnotation)
-Mar-04 14:37:07.933 [main] DEBUG nextflow.processor.TaskProcessor - Creating operator > GetProteinAnnotation -- maxForks: 12
-Mar-04 14:37:07.938 [main] DEBUG nextflow.processor.ProcessFactory - << taskConfig executor: local
-Mar-04 14:37:07.939 [main] DEBUG nextflow.processor.ProcessFactory - >> processorType: 'local'
-Mar-04 14:37:07.939 [main] DEBUG nextflow.executor.Executor - Initializing executor: local
-Mar-04 14:37:07.939 [main] DEBUG nextflow.Session - >>> barrier register (process: GetCoordinates)
-Mar-04 14:37:07.940 [main] DEBUG nextflow.processor.TaskProcessor - Creating operator > GetCoordinates -- maxForks: 12
-Mar-04 14:37:07.945 [main] DEBUG nextflow.processor.ProcessFactory - << taskConfig executor: local
-Mar-04 14:37:07.945 [main] DEBUG nextflow.processor.ProcessFactory - >> processorType: 'local'
-Mar-04 14:37:07.945 [main] DEBUG nextflow.executor.Executor - Initializing executor: local
-Mar-04 14:37:07.945 [main] DEBUG nextflow.Session - >>> barrier register (process: CalculatePSSM)
-Mar-04 14:37:07.946 [main] DEBUG nextflow.processor.TaskProcessor - Creating operator > CalculatePSSM -- maxForks: 12
-Mar-04 14:37:07.947 [main] DEBUG nextflow.script.ScriptRunner - > Await termination 
-Mar-04 14:37:07.947 [main] DEBUG nextflow.Session - Session await
-Mar-04 14:37:08.015 [Task submitter] DEBUG nextflow.executor.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
-Mar-04 14:37:08.019 [Task submitter] INFO  nextflow.Session - [e2/2bc651] Submitted process > GetSequences (1)
-Mar-04 14:37:08.028 [Task submitter] DEBUG nextflow.executor.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
-Mar-04 14:37:08.028 [Task submitter] INFO  nextflow.Session - [a2/ed1c95] Submitted process > GetProteinAnnotation (1)
-Mar-04 14:37:14.193 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 2; name: GetProteinAnnotation (1); status: COMPLETED; exit: 0; error: -; workDir: /home/houcemeddine/BILIM/SWAAT/prepare_data/work/a2/ed1c95e47a720c309df564603c5621]
-Mar-04 14:37:14.212 [Actor Thread 2] DEBUG nextflow.Session - <<< barrier arrive (process: GetProteinAnnotation)
-Mar-04 14:37:14.645 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 1; name: GetSequences (1); status: COMPLETED; exit: 0; error: -; workDir: /home/houcemeddine/BILIM/SWAAT/prepare_data/work/e2/2bc651f686d1fcbee80b5c5bae4860]
-Mar-04 14:37:14.647 [Actor Thread 7] DEBUG nextflow.Session - <<< barrier arrive (process: GetSequences)
-Mar-04 14:37:14.659 [Task submitter] DEBUG nextflow.executor.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
-Mar-04 14:37:14.660 [Task submitter] INFO  nextflow.Session - [1f/53ccb0] Submitted process > GetCoordinates (1)
-Mar-04 14:37:14.663 [Task submitter] DEBUG nextflow.executor.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
-Mar-04 14:37:14.663 [Task submitter] INFO  nextflow.Session - [6e/ad8fce] Submitted process > GetCoordinates (2)
-Mar-04 14:37:14.666 [Task submitter] DEBUG nextflow.executor.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
-Mar-04 14:37:14.667 [Task submitter] INFO  nextflow.Session - [c0/9b2845] Submitted process > GetCoordinates (3)
-Mar-04 14:37:14.686 [Task submitter] DEBUG nextflow.executor.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
-Mar-04 14:37:14.686 [Task submitter] INFO  nextflow.Session - [6a/7e2f5a] Submitted process > CalculatePSSM (1)
-Mar-04 14:37:14.690 [Task submitter] DEBUG nextflow.executor.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
-Mar-04 14:37:14.690 [Task submitter] INFO  nextflow.Session - [76/816171] Submitted process > CalculatePSSM (3)
-Mar-04 14:37:14.694 [Task submitter] DEBUG nextflow.executor.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
-Mar-04 14:37:14.695 [Task submitter] INFO  nextflow.Session - [8f/a4182a] Submitted process > CalculatePSSM (2)
-Mar-04 14:37:27.912 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 6; name: CalculatePSSM (3); status: COMPLETED; exit: 0; error: -; workDir: /home/houcemeddine/BILIM/SWAAT/prepare_data/work/76/816171d0285f2534c27cfb99ebec55]
-Mar-04 14:37:48.007 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 4; name: CalculatePSSM (2); status: COMPLETED; exit: 0; error: -; workDir: /home/houcemeddine/BILIM/SWAAT/prepare_data/work/8f/a4182ab11a82fad14f49c0ba8b3775]
-Mar-04 14:37:48.269 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 3; name: CalculatePSSM (1); status: COMPLETED; exit: 0; error: -; workDir: /home/houcemeddine/BILIM/SWAAT/prepare_data/work/6a/7e2f5a246d4fdbe2131daf404a19bf]
-Mar-04 14:37:48.271 [Actor Thread 12] DEBUG nextflow.Session - <<< barrier arrive (process: CalculatePSSM)
-Mar-04 14:38:15.300 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 7; name: GetCoordinates (2); status: COMPLETED; exit: 0; error: -; workDir: /home/houcemeddine/BILIM/SWAAT/prepare_data/work/6e/ad8fce1338599fe673058c2ccc6cd4]
-Mar-04 14:38:16.281 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 5; name: GetCoordinates (1); status: COMPLETED; exit: 0; error: -; workDir: /home/houcemeddine/BILIM/SWAAT/prepare_data/work/1f/53ccb0c240da71aa80345f731c1e73]
-Mar-04 14:38:17.343 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 8; name: GetCoordinates (3); status: COMPLETED; exit: 0; error: -; workDir: /home/houcemeddine/BILIM/SWAAT/prepare_data/work/c0/9b2845cad6da753443e6e5f8d93df3]
-Mar-04 14:38:17.346 [Actor Thread 12] DEBUG nextflow.Session - <<< barrier arrive (process: GetCoordinates)
-Mar-04 14:38:17.346 [main] DEBUG nextflow.Session - Session await > all process finished
-Mar-04 14:38:17.346 [Task monitor] DEBUG n.processor.TaskPollingMonitor - <<< barrier arrives (monitor: local)
-Mar-04 14:38:17.346 [main] DEBUG nextflow.Session - Session await > all barriers passed
-Mar-04 14:38:17.350 [main] DEBUG nextflow.trace.StatsObserver - Workflow completed > WorkflowStats[succeedCount=8; failedCount=0; ignoredCount=0; cachedCount=0; succeedDuration=4m 37s; failedDuration=0ms; cachedDuration=0ms]
-Mar-04 14:38:17.526 [main] DEBUG nextflow.CacheDB - Closing CacheDB done
-Mar-04 14:38:17.534 [main] DEBUG nextflow.script.ScriptRunner - > Execution complete -- Goodbye
+  Process: 4790@nimcha [127.0.1.1]
+  CPUs: 12 - Mem: 31.2 GB (3.2 GB) - Swap: 2 GB (711.5 MB)
+Mar-05 15:32:57.363 [main] DEBUG nextflow.Session - Work-dir: /home/houcemeddine/BILIM/SWAAT/prepare_data/work [ext2/ext3]
+Mar-05 15:32:57.363 [main] DEBUG nextflow.Session - Script base path does not exist or is not a directory: /home/houcemeddine/BILIM/SWAAT/prepare_data/bin
+Mar-05 15:32:57.539 [main] DEBUG nextflow.Session - Session start invoked
+Mar-05 15:32:57.541 [main] DEBUG nextflow.processor.TaskDispatcher - Dispatcher > start
+Mar-05 15:32:57.543 [main] DEBUG nextflow.script.ScriptRunner - > Script parsing
+Mar-05 15:32:57.661 [main] DEBUG nextflow.script.ScriptRunner - > Launching execution
+Mar-05 15:32:57.759 [main] DEBUG nextflow.processor.ProcessFactory - << taskConfig executor: local
+Mar-05 15:32:57.761 [main] DEBUG nextflow.processor.ProcessFactory - >> processorType: 'local'
+Mar-05 15:32:57.765 [main] DEBUG nextflow.executor.Executor - Initializing executor: local
+Mar-05 15:32:57.766 [main] INFO  nextflow.executor.Executor - [warm up] executor > local
+Mar-05 15:32:57.770 [main] DEBUG n.processor.LocalPollingMonitor - Creating local task monitor for executor 'local' > cpus=12; memory=31.2 GB; capacity=12; pollInterval=100ms; dumpInterval=5m
+Mar-05 15:32:57.772 [main] DEBUG nextflow.processor.TaskDispatcher - Starting monitor: LocalPollingMonitor
+Mar-05 15:32:57.773 [main] DEBUG n.processor.TaskPollingMonitor - >>> barrier register (monitor: local)
+Mar-05 15:32:57.774 [main] DEBUG nextflow.executor.Executor - Invoke register for executor: local
+Mar-05 15:32:57.795 [main] DEBUG nextflow.Session - >>> barrier register (process: GetSequences)
+Mar-05 15:32:57.797 [main] DEBUG nextflow.processor.TaskProcessor - Creating operator > GetSequences -- maxForks: 12
+Mar-05 15:32:57.834 [main] DEBUG nextflow.processor.ProcessFactory - << taskConfig executor: local
+Mar-05 15:32:57.834 [main] DEBUG nextflow.processor.ProcessFactory - >> processorType: 'local'
+Mar-05 15:32:57.834 [main] DEBUG nextflow.executor.Executor - Initializing executor: local
+Mar-05 15:32:57.835 [main] DEBUG nextflow.Session - >>> barrier register (process: GetProteinAnnotation)
+Mar-05 15:32:57.835 [main] DEBUG nextflow.processor.TaskProcessor - Creating operator > GetProteinAnnotation -- maxForks: 12
+Mar-05 15:32:57.840 [main] DEBUG nextflow.processor.ProcessFactory - << taskConfig executor: local
+Mar-05 15:32:57.841 [main] DEBUG nextflow.processor.ProcessFactory - >> processorType: 'local'
+Mar-05 15:32:57.841 [main] DEBUG nextflow.executor.Executor - Initializing executor: local
+Mar-05 15:32:57.841 [main] DEBUG nextflow.Session - >>> barrier register (process: GetCoordinates)
+Mar-05 15:32:57.841 [main] DEBUG nextflow.processor.TaskProcessor - Creating operator > GetCoordinates -- maxForks: 12
+Mar-05 15:32:57.847 [main] DEBUG nextflow.processor.ProcessFactory - << taskConfig executor: local
+Mar-05 15:32:57.847 [main] DEBUG nextflow.processor.ProcessFactory - >> processorType: 'local'
+Mar-05 15:32:57.847 [main] DEBUG nextflow.executor.Executor - Initializing executor: local
+Mar-05 15:32:57.848 [main] DEBUG nextflow.Session - >>> barrier register (process: CalculatePSSM)
+Mar-05 15:32:57.848 [main] DEBUG nextflow.processor.TaskProcessor - Creating operator > CalculatePSSM -- maxForks: 12
+Mar-05 15:32:57.851 [PathVisitor-1] DEBUG nextflow.file.PathVisitor - files for syntax: glob; folder: /home/houcemeddine/BILIM/ADME_PGx/ADME_structures/; pattern: *.pdb; options: [:]
+Mar-05 15:32:57.853 [main] DEBUG nextflow.processor.ProcessFactory - << taskConfig executor: local
+Mar-05 15:32:57.853 [main] DEBUG nextflow.processor.ProcessFactory - >> processorType: 'local'
+Mar-05 15:32:57.853 [main] DEBUG nextflow.executor.Executor - Initializing executor: local
+Mar-05 15:32:57.857 [main] DEBUG nextflow.Session - >>> barrier register (process: Hospotislands)
+Mar-05 15:32:57.858 [main] DEBUG nextflow.processor.TaskProcessor - Creating operator > Hospotislands -- maxForks: 12
+Mar-05 15:32:57.859 [main] DEBUG nextflow.script.ScriptRunner - > Await termination 
+Mar-05 15:32:57.859 [main] DEBUG nextflow.Session - Session await
+Mar-05 15:32:57.924 [Task submitter] DEBUG nextflow.executor.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
+Mar-05 15:32:57.929 [Task submitter] INFO  nextflow.Session - [d3/38e9c4] Submitted process > Hospotislands (2)
+Mar-05 15:32:57.940 [Task submitter] DEBUG nextflow.executor.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
+Mar-05 15:32:57.940 [Task submitter] INFO  nextflow.Session - [ee/9db199] Submitted process > Hospotislands (3)
+Mar-05 15:32:57.947 [Task submitter] DEBUG nextflow.executor.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
+Mar-05 15:32:57.948 [Task submitter] INFO  nextflow.Session - [a9/5c1be0] Submitted process > Hospotislands (1)
+Mar-05 15:32:57.951 [Actor Thread 3] INFO  nextflow.processor.TaskProcessor - [e2/2bc651] Cached process > GetSequences (1)
+Mar-05 15:32:57.951 [Actor Thread 5] INFO  nextflow.processor.TaskProcessor - [a2/ed1c95] Cached process > GetProteinAnnotation (1)
+Mar-05 15:32:57.984 [Actor Thread 10] DEBUG nextflow.Session - <<< barrier arrive (process: GetSequences)
+Mar-05 15:32:57.991 [Actor Thread 8] INFO  nextflow.processor.TaskProcessor - [d4/b82c64] Cached process > GetCoordinates (2)
+Mar-05 15:32:57.992 [Actor Thread 13] INFO  nextflow.processor.TaskProcessor - [42/ba913e] Cached process > GetCoordinates (3)
+Mar-05 15:32:57.992 [Actor Thread 9] INFO  nextflow.processor.TaskProcessor - [74/09b735] Cached process > GetCoordinates (1)
+Mar-05 15:32:57.997 [Actor Thread 11] DEBUG nextflow.Session - <<< barrier arrive (process: GetProteinAnnotation)
+Mar-05 15:32:57.997 [Actor Thread 2] DEBUG nextflow.Session - <<< barrier arrive (process: GetCoordinates)
+Mar-05 15:32:58.019 [Actor Thread 12] INFO  nextflow.processor.TaskProcessor - [7e/41fb1a] Cached process > CalculatePSSM (1)
+Mar-05 15:32:58.019 [Actor Thread 7] INFO  nextflow.processor.TaskProcessor - [02/82a75e] Cached process > CalculatePSSM (3)
+Mar-05 15:32:58.019 [Actor Thread 14] INFO  nextflow.processor.TaskProcessor - [26/bdc02c] Cached process > CalculatePSSM (2)
+Mar-05 15:32:58.020 [Actor Thread 10] DEBUG nextflow.Session - <<< barrier arrive (process: CalculatePSSM)
+Mar-05 15:34:47.012 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 5; name: Hospotislands (3); status: COMPLETED; exit: 0; error: -; workDir: /home/houcemeddine/BILIM/SWAAT/prepare_data/work/ee/9db199eb4155f84c6b9e471b618a17]
+Mar-05 15:37:22.322 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 3; name: Hospotislands (1); status: COMPLETED; exit: 0; error: -; workDir: /home/houcemeddine/BILIM/SWAAT/prepare_data/work/a9/5c1be0242c051e856f74e4bee06a63]
+Mar-05 15:37:57.955 [Task monitor] DEBUG n.processor.TaskPollingMonitor - !! executor local > tasks to be completed: 1 -- pending tasks are shown below
+~> TaskHandler[id: 4; name: Hospotislands (2); status: RUNNING; exit: -; error: -; workDir: /home/houcemeddine/BILIM/SWAAT/prepare_data/work/d3/38e9c4a88364be24e1f3152d43ec07]
+Mar-05 15:40:02.634 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 4; name: Hospotislands (2); status: COMPLETED; exit: 0; error: -; workDir: /home/houcemeddine/BILIM/SWAAT/prepare_data/work/d3/38e9c4a88364be24e1f3152d43ec07]
+Mar-05 15:40:02.637 [Actor Thread 2] DEBUG nextflow.Session - <<< barrier arrive (process: Hospotislands)
+Mar-05 15:40:02.637 [main] DEBUG nextflow.Session - Session await > all process finished
+Mar-05 15:40:02.637 [Task monitor] DEBUG n.processor.TaskPollingMonitor - <<< barrier arrives (monitor: local)
+Mar-05 15:40:02.637 [main] DEBUG nextflow.Session - Session await > all barriers passed
+Mar-05 15:40:02.640 [main] DEBUG nextflow.trace.StatsObserver - Workflow completed > WorkflowStats[succeedCount=3; failedCount=0; ignoredCount=0; cachedCount=8; succeedDuration=13m 18s; failedDuration=0ms; cachedDuration=4m 36s]
+Mar-05 15:40:02.754 [main] DEBUG nextflow.CacheDB - Closing CacheDB done
+Mar-05 15:40:02.767 [main] DEBUG nextflow.script.ScriptRunner - > Execution complete -- Goodbye

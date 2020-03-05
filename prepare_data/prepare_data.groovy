@@ -65,7 +65,6 @@ maps_dir  = file("${params.OUTFOLDER}/maps")
 maps_dir.mkdir() 
 
 process GetCoordinates {   
-
    input:
         file fasta from  seq_for_mapping.flatMap()
    output:
@@ -119,4 +118,35 @@ if ( params.calculate_PSSM == true ) {
 	}
 }
 
+//		 Alanine scanning  to generate hotspot patch map 
+// 		 Will run the alanine scanning prorocol of FoldX over the
+//		 PDB structures than will apply an algorithm to locate and 
+//		 index the hotspot islands withing the structure 
+//		 The PDB file must have the Uniprot ID as basename 
+//		 example P04798.pdb
+//		 Only proteins defined in the list file 'params.PROTLIST'
+//		 Are processed by the workflow
+
+uniprot_list = file("${params.PROTLIST}")
+uniprot_id  = uniprot_list.readLines()
+uniprot_id.remove(0)   // remove the header
+
+PDBFILES = Channel.fromPath("${params.PDBFILESPATH}/*.pdb") 
+
+process Hospotislands {
+	input:
+		val id from uniprot_id
+		//val line from lines.flatMap()
+
+	//script:
+     //   name = pdb.baseName.replaceFirst(".pdb","")
+"""
+ln -s ${params.PDBFILESPATH}/${id}.pdb 
+# first repair the structure
+foldx --command=RepairPDB --pdb=${id}.pdb
+# Generate the Ala scan profile
+foldx --command=AlaScan --pdb=${id}_Repair.pdb
+"""
+
+}
 
