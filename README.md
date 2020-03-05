@@ -7,7 +7,7 @@
 ### Installing `tranvar`
 
 ```
-# Use miniconda3 for clean installation
+# Use miniconda3 for a cleaner installation
 pip install --user transvar
 
 # set up databases
@@ -19,8 +19,6 @@ transvar config --download_ref --refversion hg19
 # test
 transvar panno -i 'PIK3CA:p.E545K' --ucsc --ccds
 ```
-
-
 
 ### Installing `BioPython`
 
