@@ -37,3 +37,6 @@
 2020-03-05 14:51:19	2.1s	fervent_kalman	ERR	3cf6191615127bfa64217135b2f02e78	276b8d03-f422-48fb-befd-9be6b5b930fd	nextflow run prepare_data.groovy -resume -c prepare_data.config
 2020-03-05 15:23:00	6m 56s	sick_shirley	OK	e6daec8b1c438647b6fc9645d1ebcc54	276b8d03-f422-48fb-befd-9be6b5b930fd	nextflow run prepare_data.groovy -resume -c prepare_data.config
 2020-03-05 15:32:57	7m 6s	angry_mirzakhani	OK	817d1b1a55f232381a08c986305eafd8	276b8d03-f422-48fb-befd-9be6b5b930fd	nextflow run prepare_data.groovy -resume -c prepare_data.config
+2020-03-06 22:12:23	1m 57s	confident_avogadro	ERR	3d4c13fbbb7bf87a4784c3142ea9fe3e	276b8d03-f422-48fb-befd-9be6b5b930fd	nextflow run prepare_data.groovy -resume -c prepare_data.config
+2020-03-06 22:16:16	1.4s	crazy_albattani	ERR	e18b95857ece9bae5af4fda5d221a32d	276b8d03-f422-48fb-befd-9be6b5b930fd	nextflow run prepare_data.groovy -resume -c prepare_data.config
+2020-03-06 22:16:40	7m 9s	goofy_edison	OK	7a7d6e9bbda6707249198c100cd03440	276b8d03-f422-48fb-befd-9be6b5b930fd	nextflow run prepare_data.groovy -resume -c prepare_data.config

@@ -146,6 +146,7 @@ ln -s ${params.PDBFILESPATH}/${id}.pdb
 foldx --command=RepairPDB --pdb=${id}.pdb
 # Generate the Ala scan profile
 foldx --command=AlaScan --pdb=${id}_Repair.pdb
+python ${params.SCRIPTHOME}/hotspotPatches.py --pdb ${id}_Repair.pdb --ALAscan *_AS.fxout --chain A
 """
 
 }
