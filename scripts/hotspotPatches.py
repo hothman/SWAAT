@@ -40,6 +40,17 @@ class alaSCanAnalysis():
 		if len(self.structure) >1: 
 			warnings.warn('Structure contains more than a model. Only the first one is used')
 
+	def returnChains(self):
+		my_structure = self.structure
+		if len(my_structure) >  1 :
+			raise ValueError('you have multiple models in the PDB file !')
+		for model in self.structure :
+			monomers = []
+			for chain in model: 
+				if chain.id != ' ' :
+					monomers.append(chain.id)
+		return monomers
+
 	def readALA(self, ala_scan_file): 
 		""" read the alanine scanning file a
 		'self.dic' a dictionary where  keys are amino acid positions and
@@ -62,7 +73,7 @@ class alaSCanAnalysis():
 		self.chain = chain
 		if 'dic'  in dir(self):
 			self.protein_ca_atoms = [atom for atom in self.structure[0].get_atoms() if atom.name=="CA"]
-			self.atoms  = Selection.unfold_entities(self.structure[0], 'A')
+			self.atoms  = Selection.unfold_entities(self.structure[0], self.chain )
 			# instantanize NeighborSearch
 			self.ns = NeighborSearch(self.protein_ca_atoms)
 			for residue in self.protein_ca_atoms: 
