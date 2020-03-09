@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-
 """
 This is the implementation of an algorithm to detect the hot spot patches
 based on alanine scanning data. User must provide a PDB file and a Foldx alanine scanning 
@@ -11,12 +10,10 @@ __credits__ = "Wits University H3Africa/GSK ADME project"
 __maintainer__ = "Houcemeddine Othman"
 __email__ = "houcemoo@gmail.com"
 
-
 import argparse
 from Bio.PDB.PDBParser import PDBParser 
 from Bio.PDB import NeighborSearch, Selection, NeighborSearch
 from Bio.PDB.Selection import unfold_entities
-
 
 # from descriptor BIGC670101,  AAindex
 volume = { 'ALA' : 52.6, 'ASN' : 75.7, 
@@ -64,6 +61,20 @@ class alaSCanAnalysis():
 			position = splitted[1] 
 			energy = float(splitted[7])
 			self.dic[position] = ( amino_acid , energy  )
+		print(self.dic)
+
+
+	def _chainWalk(self): 
+		my_structure = self.structure
+		chainId = []
+		if len(my_structure) >  1 :
+			raise ValueError('you have multiple models in the PDB file!')
+		for model in self.structure :
+			for chain in model: 
+				for res in chain: 
+					chainId.append( (res.id[1], chain.id) )
+		self.chainId = chainId
+		print(self.chainId)
 
 	def DefinePatches(self, chain):
 		"""
@@ -209,7 +220,6 @@ class alaSCanAnalysis():
 			for item in clusters: 
 				file2.writelines( ','.join( [item, str(clusters[item][0]) , str(clusters[item][1]), str(clusters[item][2]) ] )+'\n' )
 
-
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description=" A tool to detect the 3D hotspot patches of a protein.")
 	# add long and short argument
@@ -220,51 +230,62 @@ if __name__ == "__main__":
 	parser.add_argument("--DistanceCutoff", help="Cuoff distance to define a contact between CA atoms. Default = 6 Angstroms")
 	parser.add_argument("--EnergyCutoff", help="Energy cutoff above which a residues is considered as a hotspot. Default = 2.0 kcal/mol  ")
 	parser.add_argument("--output", help="Path to the output folder")
+	parser.add_argument("--mode", help="'chain' or 'alascan'")
 	args = parser.parse_args()
 
 	# Check if the required arguments are filled
 	assert args.pdb != None, 'You must provide a PDB structure'
-	assert args.ALAscan != None, 'You must provide an Alanine scanning Foldx file.'
-	assert args.chain != None, 'You must provide the chan identifier for the Alanine scanning file.'
-	if args.DistanceCutoff != None:
-		distance = args.DistanceCutoff
-	else: 
-		distance = 6.0 
+	# If the user wants only the list of chains 
+	if args.mode == "chain": 
+		myprotein = alaSCanAnalysis(args.pdb)
+		chains = myprotein.returnChains()
+		for element in chains: 
+			print('{}'.format(element) )
+	else:
+		args.mode = "alascan"
+		assert args.ALAscan != None, 'You must provide an Alanine scanning Foldx file.'
+		assert args.chain != None, 'You must provide the chan identifier for the Alanine scanning file.'
+		if args.DistanceCutoff != None:
+			distance = args.DistanceCutoff
+		else: 
+			distance = 6.0 
 
-	if args.EnergyCutoff != None: 
-		energy = args.EnergyCutoff
-	else: 
-		energy = 2.0 
+		if args.EnergyCutoff != None: 
+			energy = args.EnergyCutoff
+		else: 
+			energy = 2.0 
 
-	if args.output != None: 
-		output = args.output
-	else: 
-		output = './'
+		if args.output != None: 
+			output = args.output
+		else: 
+			output = './'
 
-	if args.suffix != None: 
-		suffix = args.suffix
-	else: 
-		suffix = 'Hotspots'
+		if args.suffix != None: 
+			suffix = args.suffix
+		else: 
+			suffix = 'Hotspots'
 
-	# output Verbosity 
-	output_file1  = output+'/'+suffix+'_residueClus.csv'
-	output_file2  = output+'/'+suffix+'_clusters.csv'
+		# output Verbosity 
+		output_file1  = output+'/'+suffix+'_residueClus.csv'
+		output_file2  = output+'/'+suffix+'_clusters.csv'
 
-	print("""
-	Calculating 3D hotspots: 
-				PDB:                         {0}
-				Alanine scanning file:       {1}
-				CA distance cutoff:          {2}
-				Energy cutoff:               {3}
-				Output folder:               {4}
-				Residues to clusters file:   {5}
-				Hotspots output:             {6}
+		print("""
+		Calculating 3D hotspots: 
+					PDB:                         {0}
+					Alanine scanning file:       {1}
+					CA distance cutoff:          {2}
+					Energy cutoff:               {3}
+					Output folder:               {4}
+					Residues to clusters file:   {5}
+					Hotspots output:             {6}
 
-	""".format(args.pdb, args.ALAscan, distance, energy, args.output, output_file1, output_file2 ) )
+		""".format(args.pdb, args.ALAscan, distance, energy, args.output, output_file1, output_file2 ) )
 
-	# Workflow 
-	myala = alaSCanAnalysis(args.pdb)
-	myala.readALA(args.ALAscan) 
-	myala.DefinePatches(args.chain)
-	residues_to_cluster, clusters = myala.formatClusters()
-	myala.outputToFiles(residues_to_cluster, clusters, suffix=suffix, path=output )
+		# Workflow 
+		myala = alaSCanAnalysis(args.pdb)
+		chains = myala._chainWalk()
+
+		myala.readALA(args.ALAscan)
+		myala.DefinePatches(args.chain)
+		residues_to_cluster, clusters = myala.formatClusters()
+		myala.outputToFiles(residues_to_cluster, clusters, suffix=suffix, path=output )
