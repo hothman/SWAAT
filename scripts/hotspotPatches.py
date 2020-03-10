@@ -47,34 +47,35 @@ class alaSCanAnalysis():
 				if chain.id != ' ' :
 					monomers.append(chain.id)
 		return monomers
+		
 
 	def readALA(self, ala_scan_file): 
 		""" read the alanine scanning file a
 		'self.dic' a dictionary where  keys are amino acid positions and
 		values are tuples  of amino acid Id and energy """
+		self._chainWalk()
 		with open(ala_scan_file) as file: 
 			lines = file.readlines()
 		self.dic = {}
-		for line in lines: 
+		for idx, line in enumerate(lines): 
 			splitted = line.split()
 			amino_acid =  splitted[0]
 			position = splitted[1] 
 			energy = float(splitted[7])
-			self.dic[position] = ( amino_acid , energy  )
-		print(self.dic)
-
+			assert position != self.chainId[idx][0] , 'Residue numbering conflict between PDB (residue {0}) file and alanine scanning file (residue {1})'.format(self.chainId[idx][0],position  )
+			self.dic[position] = ( amino_acid , energy, self.chainId[idx][1], self.chainId[idx][0] )
+			print(amino_acid , energy, self.chainId[idx][1], self.chainId[idx][0])
+		print(self.dic.keys())
 
 	def _chainWalk(self): 
-		my_structure = self.structure
 		chainId = []
-		if len(my_structure) >  1 :
+		if len(self.structure) >  1 :
 			raise ValueError('you have multiple models in the PDB file!')
-		for model in self.structure :
-			for chain in model: 
-				for res in chain: 
+		for chain in self.structure[0]: 
+			for res in chain: 
+				if res.id[0] == ' ':
 					chainId.append( (res.id[1], chain.id) )
 		self.chainId = chainId
-		print(self.chainId)
 
 	def DefinePatches(self, chain):
 		"""
@@ -282,10 +283,10 @@ if __name__ == "__main__":
 		""".format(args.pdb, args.ALAscan, distance, energy, args.output, output_file1, output_file2 ) )
 
 		# Workflow 
+
 		myala = alaSCanAnalysis(args.pdb)
-		chains = myala._chainWalk()
 
 		myala.readALA(args.ALAscan)
-		myala.DefinePatches(args.chain)
-		residues_to_cluster, clusters = myala.formatClusters()
-		myala.outputToFiles(residues_to_cluster, clusters, suffix=suffix, path=output )
+		#myala.DefinePatches(args.chain)
+		#residues_to_cluster, clusters = myala.formatClusters()
+		#myala.outputToFiles(residues_to_cluster, clusters, suffix=suffix, path=output )
