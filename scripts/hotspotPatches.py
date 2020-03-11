@@ -37,7 +37,7 @@ class alaSCanAnalysis():
 		if len(self.structure) >1: 
 			warnings.warn('Structure contains more than a model. Only the first one is used')
 
-	def returnChains(self):
+	def _returnChains(self):
 		my_structure = self.structure
 		if len(my_structure) >  1 :
 			raise ValueError('you have multiple models in the PDB file !')
@@ -48,7 +48,6 @@ class alaSCanAnalysis():
 					monomers.append(chain.id)
 		return monomers
 		
-
 	def readALA(self, ala_scan_file): 
 		""" read the alanine scanning file a
 		'self.dic' a dictionary where  keys are amino acid positions and
@@ -57,6 +56,7 @@ class alaSCanAnalysis():
 		with open(ala_scan_file) as file: 
 			lines = file.readlines()
 		self.dic = {}
+		ala_scan_lines = []
 		for idx, line in enumerate(lines): 
 			splitted = line.split()
 			amino_acid =  splitted[0]
@@ -64,8 +64,9 @@ class alaSCanAnalysis():
 			energy = float(splitted[7])
 			assert position != self.chainId[idx][0] , 'Residue numbering conflict between PDB (residue {0}) file and alanine scanning file (residue {1})'.format(self.chainId[idx][0],position  )
 			self.dic[position] = ( amino_acid , energy, self.chainId[idx][1], self.chainId[idx][0] )
-			print(amino_acid , energy, self.chainId[idx][1], self.chainId[idx][0])
-		print(self.dic.keys())
+			ala_scan_lines.append( (amino_acid , energy, self.chainId[idx][1], self.chainId[idx][0] ) ) 
+		#print(self.dic.keys())
+		return ala_scan_lines
 
 	def _chainWalk(self): 
 		chainId = []
@@ -76,6 +77,20 @@ class alaSCanAnalysis():
 				if res.id[0] == ' ':
 					chainId.append( (res.id[1], chain.id) )
 		self.chainId = chainId
+
+	def allChainsClusters(self, ala_scan_file):
+		alascan_table = self.readALA(ala_scan_file)
+		chain_dic = {}
+		for chain in self._returnChains():
+			for line in alascan_table: 
+				if chain == line[2]: 
+					position = line[3]
+					amino_acid = line[0]
+					energy = line[1]
+					chain_dic[position] = ( amino_acid , energy, chain, position )
+			print(chain_dic)
+
+		pass
 
 	def DefinePatches(self, chain):
 		"""
@@ -285,8 +300,9 @@ if __name__ == "__main__":
 		# Workflow 
 
 		myala = alaSCanAnalysis(args.pdb)
+		myala.allChainsClusters(args.ALAscan)
 
-		myala.readALA(args.ALAscan)
+		#myala.readALA(args.ALAscan, chain='A')
 		#myala.DefinePatches(args.chain)
 		#residues_to_cluster, clusters = myala.formatClusters()
 		#myala.outputToFiles(residues_to_cluster, clusters, suffix=suffix, path=output )
