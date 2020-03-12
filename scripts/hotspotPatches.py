@@ -65,7 +65,6 @@ class alaSCanAnalysis():
 			assert position != self.chainId[idx][0] , 'Residue numbering conflict between PDB (residue {0}) file and alanine scanning file (residue {1})'.format(self.chainId[idx][0],position  )
 			self.dic[position] = ( amino_acid , energy, self.chainId[idx][1], self.chainId[idx][0] )
 			ala_scan_lines.append( (amino_acid , energy, self.chainId[idx][1], self.chainId[idx][0] ) ) 
-		#print(self.dic.keys())
 		return ala_scan_lines
 
 	def _chainWalk(self): 
@@ -79,35 +78,35 @@ class alaSCanAnalysis():
 		self.chainId = chainId
 
 	def allChainsClusters(self, ala_scan_file):
-		alascan_table = self.readALA(ala_scan_file)
-		chain_dic = {}
+		alascan_table = self.readALA(ala_scan_file)	
+		All_chains_dics = {}
 		for chain in self._returnChains():
+			chain_dic = {}
 			for line in alascan_table: 
 				if chain == line[2]: 
 					position = line[3]
 					amino_acid = line[0]
 					energy = line[1]
 					chain_dic[position] = ( amino_acid , energy, chain, position )
-			print(chain_dic)
+			All_chains_dics[chain] = chain_dic
+		return  All_chains_dics
 
-		pass
-
-	def DefinePatches(self, chain):
+	def DefinePatches(self, chain, dic_chain):
 		"""
 		This method is the implementation of the algorithm
 		"""
+		self.dic = dic_chain 
 		clusters_pre_list = []     # The list containing the clusters
 		self.chain = chain
 		if 'dic'  in dir(self):
 			self.protein_ca_atoms = [atom for atom in self.structure[0].get_atoms() if atom.name=="CA"]
-			self.atoms  = Selection.unfold_entities(self.structure[0], self.chain )
+			self.atoms  = Selection.unfold_entities(self.structure[0], "A" )
 			# instantanize NeighborSearch
 			self.ns = NeighborSearch(self.protein_ca_atoms)
 			for residue in self.protein_ca_atoms: 
 				residue_attributes = residue.get_full_id()
 				if residue_attributes[2] == self.chain :    # check if the residue belongs to the specified chain
 					close_residues = self._definepatches(residue, energy_cutoff=2.0)
-
 					# Initialize the 'clusters_pre_list'  if it is empty
 					if len(clusters_pre_list) == 0 and len(close_residues) != 0 : 
 						clusters_pre_list.append(close_residues)
@@ -122,17 +121,17 @@ class alaSCanAnalysis():
 									if element not in cluster:
 										cluster.append( element )
 								break
-						else: # when the loop has exhausted iterating clusters_pre_list.
+						else: # when the loop exhausts iterating clusters_pre_list.
 							# if neither of the atoms in 'close_residues' belongs to 
 							# one of the clusters, then assign all the atoms of 'close_residues'
 							# to a new cluster.
 							clusters_pre_list.append(close_residues)
 
 			self.clusters_pre_list =  clusters_pre_list
+			print(self.clusters_pre_list)
 
 		else: 
 			raise TypeError ('You have not provided a Foldx alanine scanning file')
-
 
 	def _definepatches(self, residue, energy_cutoff=2.0):	
 		"""
@@ -168,10 +167,12 @@ class alaSCanAnalysis():
 		high energy or Alanine. return Boolean value.
 		"""
 		atom_res_id = str( atom.get_full_id()[3][1] )
+		
 		try: 
-			isInTable = self.dic[atom_res_id]
+			isInTable = self.dic[int(atom_res_id)]
 		except: 
 			pass 
+		
 		if isInTable :
 			close_residue_name = isInTable[0]
 			close_residue_energy = isInTable[1]
@@ -300,7 +301,11 @@ if __name__ == "__main__":
 		# Workflow 
 
 		myala = alaSCanAnalysis(args.pdb)
-		myala.allChainsClusters(args.ALAscan)
+		mydics = myala.allChainsClusters(args.ALAscan)
+		for chain in mydics: 
+			myala.DefinePatches(chain, mydics[chain])
+
+
 
 		#myala.readALA(args.ALAscan, chain='A')
 		#myala.DefinePatches(args.chain)
