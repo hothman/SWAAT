@@ -14,6 +14,7 @@ import argparse
 from Bio.PDB.PDBParser import PDBParser 
 from Bio.PDB import NeighborSearch, Selection, NeighborSearch
 from Bio.PDB.Selection import unfold_entities
+import copy 
 
 # from descriptor BIGC670101,  AAindex
 volume = { 'ALA' : 52.6, 'ASN' : 75.7, 
@@ -121,14 +122,15 @@ class alaSCanAnalysis():
 									if element not in cluster:
 										cluster.append( element )
 								break
-						else: # when the loop exhausts iterating clusters_pre_list.
+						else: 
+							# when the loop exhausts iterating clusters_pre_list.
 							# if neither of the atoms in 'close_residues' belongs to 
 							# one of the clusters, then assign all the atoms of 'close_residues'
 							# to a new cluster.
 							clusters_pre_list.append(close_residues)
-
-			self.clusters_pre_list =  clusters_pre_list
-			print(self.clusters_pre_list)
+			#print(clusters_pre_list)
+			self.clusters_pre_list = clusters_pre_list
+							
 
 		else: 
 			raise TypeError ('You have not provided a Foldx alanine scanning file')
@@ -145,7 +147,6 @@ class alaSCanAnalysis():
 			if not is_close_residue_a_hotspot == None :
 				is_close_residue_a_hotspot_table.append(is_close_residue_a_hotspot)
 		return is_close_residue_a_hotspot_table
-
 					 
 	def _proximalResidues(self, atom, distance_cutoff = 6): 
 		"""
@@ -188,54 +189,55 @@ class alaSCanAnalysis():
 		keys and a tuple as a value contaning the cluster size, 
 		volume, and energy density.
 		"""
-		cluster_dic = {}
-		residue_in_cluster_dic = {}
-		residues_to_cluster = {}
-		myClusterList = [elem for elem in self.clusters_pre_list  if len(elem) > 3.0   ] 
-		all_rsidue_identifiers = [key for key in self.dic.keys()  ]
-		tags = list( range(1, len(myClusterList)+1 ) ) 
-		for tag, cluster in zip(tags, myClusterList ):
-			cluster_volume = 0.0
-			cumulated_energy = 0.0
-			for residue in cluster: 
-				cluster_volume += volume[residue[1][0]]
-				cumulated_energy += residue[1][1]
-				residue_in_cluster_dic[str( residue[0] ) ] = 'c'+str(tag) 
-				#print(residue[0], 'c'+str(tag))
-			per_volume_energy = round( cumulated_energy/cluster_volume, 6 )
-			cluster_name =  'c'+str(tag)
-			cluster_size =  len(cluster) 
-			cluster_dic[ cluster_name ] = (cluster_size, cluster_volume, per_volume_energy )
+		for chain_cluster in self.clusters_pre_list: 
+			cluster_dic = {}
+			residue_in_cluster_dic = {}
+			residues_to_cluster = {}
+			myClusterList = [elem for elem in self.clusters_pre_list  if len(elem) > 3.0   ] 
+			all_rsidue_identifiers = [key for key in self.dic.keys()  ]
+			tags = list( range(1, len(myClusterList)+1 ) ) 
+			for tag, cluster in zip(tags, myClusterList ):
+				cluster_volume = 0.0
+				cumulated_energy = 0.0
+				for residue in cluster: 
+					cluster_volume += volume[residue[1][0]]
+					cumulated_energy += residue[1][1]
+					residue_in_cluster_dic[str( residue[0] ) ] = 'c'+str(tag) 
+					#print(residue[0], 'c'+str(tag))
+				per_volume_energy = round( cumulated_energy/cluster_volume, 6 )
+				cluster_name =  'c'+str(tag)
+				cluster_size =  len(cluster) 
+				cluster_dic[ cluster_name ] = (cluster_size, cluster_volume, per_volume_energy )
 
-		each_residue_to_a_cluster = {}
-		output_residue_to_cluster = []
-		for residue_id in all_rsidue_identifiers: 
-			try :
-				each_residue_to_a_cluster[str(residue_id)] = residue_in_cluster_dic[  str(residue_id) ]
-			except: 
-				each_residue_to_a_cluster[str(residue_id)] = 'c0'
-			line =  ','.join( [residue_id, each_residue_to_a_cluster[str(residue_id)], self.chain] )  
-			output_residue_to_cluster.append( line )
+			each_residue_to_a_cluster = {}
+			output_residue_to_cluster = []
+			for residue_id in all_rsidue_identifiers: 
+				try :
+					each_residue_to_a_cluster[str(residue_id)] = residue_in_cluster_dic[  str(residue_id) ]
+				except: 
+					each_residue_to_a_cluster[str(residue_id)] = 'c0'
+				line =  ','.join( [str(residue_id), each_residue_to_a_cluster[str(residue_id)], self.chain] )  
+				output_residue_to_cluster.append( line )
 
-		return  output_residue_to_cluster, cluster_dic 
+			return  output_residue_to_cluster, cluster_dic 
 
-	def outputToFiles(self, residue_to_cluster, clusters, suffix='Hotspots', path='./'):
-		"""
-		'residue_to_cluster' is the first list returned by formatClusters
-		and 'clusters' is the dictionary returned by formatClusters
-		suffix is used to tag the output
-		"""
-		outputheader1 = ['res_ID', 'Cluster_ID', 'chain']
-		outputheader2 = ['Cluster_ID', 'size', 'volume', 'density(kcal/mol/A**3)']
-		with open(path+'/'+suffix+'_residueClus.csv', 'w') as file1: 
-			file1.writelines( ','.join( outputheader1  )+'\n' )
-			for line in residue_to_cluster: 
-				file1.writelines( str(line)+'\n' )
-				
-		with open(path+'/'+suffix+'_clusters.csv', 'w') as file2: 
-			file2.writelines( ','.join( outputheader2  )+'\n' )
-			for item in clusters: 
-				file2.writelines( ','.join( [item, str(clusters[item][0]) , str(clusters[item][1]), str(clusters[item][2]) ] )+'\n' )
+		def outputToFiles(self, residue_to_cluster, clusters, suffix='Hotspots', path='./'):
+			"""
+			'residue_to_cluster' is the first list returned by formatClusters
+			and 'clusters' is the dictionary returned by formatClusters
+			suffix is used to tag the output
+			"""
+			outputheader1 = ['res_ID', 'Cluster_ID', 'chain']
+			outputheader2 = ['Cluster_ID', 'size', 'volume', 'density(kcal/mol/A**3)']
+			with open(path+'/'+suffix+'_residueClus.csv', 'w') as file1: 
+				file1.writelines( ','.join( outputheader1  )+'\n' )
+				for line in residue_to_cluster: 
+					file1.writelines( str(line)+'\n' )
+					
+			with open(path+'/'+suffix+'_clusters.csv', 'w') as file2: 
+				file2.writelines( ','.join( outputheader2  )+'\n' )
+				for item in clusters: 
+					file2.writelines( ','.join( [item, str(clusters[item][0]) , str(clusters[item][1]), str(clusters[item][2]) ] )+'\n' )
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description=" A tool to detect the 3D hotspot patches of a protein.")
@@ -258,6 +260,7 @@ if __name__ == "__main__":
 		chains = myprotein.returnChains()
 		for element in chains: 
 			print('{}'.format(element) )
+
 	else:
 		args.mode = "alascan"
 		assert args.ALAscan != None, 'You must provide an Alanine scanning Foldx file.'
@@ -303,7 +306,12 @@ if __name__ == "__main__":
 		myala = alaSCanAnalysis(args.pdb)
 		mydics = myala.allChainsClusters(args.ALAscan)
 		for chain in mydics: 
-			myala.DefinePatches(chain, mydics[chain])
+			myala.DefinePatches(chain, mydics[chain])  
+			print("############")
+			print( myala.clusters_pre_list)
+			print( myala.formatClusters() )
+
+		#myala.formatClusters()  
 
 
 
