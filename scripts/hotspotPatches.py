@@ -158,7 +158,7 @@ class alaSCanAnalysis():
 				close_atom_list.append(closatom)
 		return close_atom_list
 
-	def _evaluateEnergy(self, atom, energy_cutoff=1.0): 
+	def _evaluateEnergy(self, atom, energy_cutoff=3): 
 		""" Check if an atom corresponds to a residue with
 		high energy or Alanine. return Boolean value.
 		"""
@@ -201,7 +201,7 @@ class alaSCanAnalysis():
 				per_volume_energy = round( cumulated_energy/cluster_volume, 6 )
 				cluster_name =  'c'+str(tag)+cluster[0][1][2]
 				cluster_size =  len(cluster) 
-				cluster_dic[ cluster_name ] = (cluster_size, cluster_volume, per_volume_energy )
+				cluster_dic[ cluster_name ] = (cluster_size, round(cluster_volume, 3), per_volume_energy )
 
 			each_residue_to_a_cluster = {}
 			output_residue_to_cluster = []
@@ -246,18 +246,6 @@ class alaSCanAnalysis():
 				for item in clusters: 
 					file2.writelines( ','.join( [item, str(clusters[item][0]) , str(clusters[item][1]), str(clusters[item][2]) ] )+'\n' )	
 
-	def Pymolout(self, clusters):
-		colors = ["black", "blue", "bluewhite", "br0", "br1", "br2", "br3", "br4", 
-		"br5", "br6", "br7", "br8", "br9", "brightorange", "brown", "carbon", "chartreuse", 
-		"chocolate", "cyan", "darksalmon", "dash", "deepblue", "deepolive", "deeppurple", "deepsalmon", 
-		"deepsalmon", "deepteal", "density", "dirtyviolet", "firebrick", "forest", "gray", "green", "greencyan",
-		 "grey", "hotpink", "hydrogen", "lightblue", "lightmagenta", "lightorange", "lightpink", "lightteal", "lime", 
-		 "limegreen", "limon", "magenta", "marine", "nitrogen", "olive", "orange", "oxygen", "palecyan", "palegreen",
-		  "paleyellow", "pink", "purple", "purpleblue", "raspberry", "red", "ruby", "salmon", "sand", 
-		  "skyblue", "slate", "smudge", "splitpea", "sulfur", "teal", "tv_blue", "tv_green", "tv_orange", 
-		  "tv_red", "tv_yellow", "violet", "violetpurple", "warmpink", "wheat", "white", "yellow", "yelloworange" ] 
-
-
 
 
 if __name__ == "__main__":
@@ -284,7 +272,7 @@ if __name__ == "__main__":
 	if args.EnergyCutoff != None: 
 		energy = float(args.EnergyCutoff)
 	else: 
-		energy = 2.0 
+		energy = 2.5 
 
 	if args.output != None: 
 		output = args.output
@@ -315,6 +303,7 @@ if __name__ == "__main__":
 	# Workflow 
 	myala = alaSCanAnalysis(args.pdb)
 	mydics = myala.allChainsClusters(args.ALAscan)
+	pymoldic = {}
 	for chain in mydics: 
 		index_of_chain = list(mydics.keys()).index(chain)
 		if index_of_chain == 0: 
@@ -323,17 +312,7 @@ if __name__ == "__main__":
 			overwrite = False
 		myala.DefinePatches(chain, mydics[chain], energy_cutoff=energy,  dist_cutoff=distance)  
 		residues_to_cluster, clusters = myala.formatClusters()
-		print(residues_to_cluster)
-		print(clusters)
+		#print(residues_to_cluster)
+		#print(clusters)
 		myala.outputToFiles(residues_to_cluster, clusters, suffix=suffix, path=output, overwrite= overwrite)
 
-
-
-	#myala.formatClusters()  
-
-
-
-	#myala.readALA(args.ALAscan, chain='A')
-	#myala.DefinePatches(args.chain)
-	#residues_to_cluster, clusters = myala.formatClusters()
-	#myala.outputToFiles(residues_to_cluster, clusters, suffix=suffix, path=output )
