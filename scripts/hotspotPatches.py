@@ -14,7 +14,6 @@ import argparse
 from Bio.PDB.PDBParser import PDBParser 
 from Bio.PDB import NeighborSearch, Selection, NeighborSearch
 from Bio.PDB.Selection import unfold_entities
-import copy 
 
 # from descriptor BIGC670101,  AAindex
 volume = { 'ALA' : 52.6, 'ASN' : 75.7, 
@@ -92,7 +91,7 @@ class alaSCanAnalysis():
 			All_chains_dics[chain] = chain_dic
 		return  All_chains_dics
 
-	def DefinePatches(self, chain, dic_chain):
+	def DefinePatches(self, chain, dic_chain,energy_cutoff=2.0,  dist_cutoff=6):
 		"""
 		This method is the implementation of the algorithm
 		"""
@@ -107,7 +106,7 @@ class alaSCanAnalysis():
 			for residue in self.protein_ca_atoms: 
 				residue_attributes = residue.get_full_id()
 				if residue_attributes[2] == self.chain :    # check if the residue belongs to the specified chain
-					close_residues = self._definepatches(residue, energy_cutoff=2.0)
+					close_residues = self._definepatches(residue, energy_cutoff=energy_cutoff, dist_cutoff=dist_cutoff)
 					# Initialize the 'clusters_pre_list'  if it is empty
 					if len(clusters_pre_list) == 0 and len(close_residues) != 0 : 
 						clusters_pre_list.append(close_residues)
@@ -128,19 +127,16 @@ class alaSCanAnalysis():
 							# one of the clusters, then assign all the atoms of 'close_residues'
 							# to a new cluster.
 							clusters_pre_list.append(close_residues)
-			#print(clusters_pre_list)
 			self.clusters_pre_list = clusters_pre_list
-							
-
 		else: 
 			raise TypeError ('You have not provided a Foldx alanine scanning file')
 
-	def _definepatches(self, residue, energy_cutoff=2.0):	
+	def _definepatches(self, residue, energy_cutoff=2.0, dist_cutoff = 6):	
 		"""
 		returns a list of of residues which are close and satisfy the energy 
 		criteria for being a hotspot.
 		"""
-		close_residues = self._proximalResidues(residue)    # what are the residues
+		close_residues = self._proximalResidues(residue, distance_cutoff=dist_cutoff)    # what are the residues
 		is_close_residue_a_hotspot_table = []
 		for close_residue in close_residues : 
 			is_close_residue_a_hotspot = self._evaluateEnergy(close_residue, energy_cutoff=energy_cutoff) 
@@ -155,7 +151,6 @@ class alaSCanAnalysis():
 		"""
 		atom_id = atom.get_full_id()[3][1]
 		close_atom_list = []
-		#print('########', atom_id)
 		close = self.ns.search(atom.coord, distance_cutoff )
 		for closatom in close:
 			close_atom_id = closatom.get_full_id()[3][1]
@@ -202,10 +197,9 @@ class alaSCanAnalysis():
 				for residue in cluster: 
 					cluster_volume += volume[residue[1][0]]
 					cumulated_energy += residue[1][1]
-					residue_in_cluster_dic[str( residue[0] ) ] = 'c'+str(tag) 
-					#print(residue[0], 'c'+str(tag))
+					residue_in_cluster_dic[str( residue[0] ) ] = 'c'+str(tag)+residue[1][2]
 				per_volume_energy = round( cumulated_energy/cluster_volume, 6 )
-				cluster_name =  'c'+str(tag)
+				cluster_name =  'c'+str(tag)+cluster[0][1][2]
 				cluster_size =  len(cluster) 
 				cluster_dic[ cluster_name ] = (cluster_size, cluster_volume, per_volume_energy )
 
@@ -215,107 +209,131 @@ class alaSCanAnalysis():
 				try :
 					each_residue_to_a_cluster[str(residue_id)] = residue_in_cluster_dic[  str(residue_id) ]
 				except: 
-					each_residue_to_a_cluster[str(residue_id)] = 'c0'
+					each_residue_to_a_cluster[str(residue_id)] = 'c0'+cluster[0][1][2]
 				line =  ','.join( [str(residue_id), each_residue_to_a_cluster[str(residue_id)], self.chain] )  
 				output_residue_to_cluster.append( line )
-
 			return  output_residue_to_cluster, cluster_dic 
 
-		def outputToFiles(self, residue_to_cluster, clusters, suffix='Hotspots', path='./'):
-			"""
-			'residue_to_cluster' is the first list returned by formatClusters
-			and 'clusters' is the dictionary returned by formatClusters
-			suffix is used to tag the output
-			"""
+	def outputToFiles(self, residue_to_cluster, clusters, suffix='Hotspots', path='./', overwrite=True):
+		"""
+		'residue_to_cluster' is the first list returned by formatClusters
+		and 'clusters' is the dictionary returned by formatClusters
+		suffix is used to tag the output
+		"""
+		output_res_clusters = path+'/'+suffix+'_residueClus.csv' 
+		output_clusters = path+'/'+suffix+'_clusters.csv'
+		if overwrite == True: 
+			operation = 'w'
 			outputheader1 = ['res_ID', 'Cluster_ID', 'chain']
 			outputheader2 = ['Cluster_ID', 'size', 'volume', 'density(kcal/mol/A**3)']
-			with open(path+'/'+suffix+'_residueClus.csv', 'w') as file1: 
+			with open( output_res_clusters , operation) as file1: 
 				file1.writelines( ','.join( outputheader1  )+'\n' )
 				for line in residue_to_cluster: 
 					file1.writelines( str(line)+'\n' )
-					
-			with open(path+'/'+suffix+'_clusters.csv', 'w') as file2: 
+
+			with open(output_clusters, operation) as file2: 
 				file2.writelines( ','.join( outputheader2  )+'\n' )
 				for item in clusters: 
 					file2.writelines( ','.join( [item, str(clusters[item][0]) , str(clusters[item][1]), str(clusters[item][2]) ] )+'\n' )
+
+		else:
+			operation = 'a'
+			with open(output_res_clusters, operation) as file1: 
+				for line in residue_to_cluster: 
+					file1.writelines( str(line)+'\n' )
+
+			with open(output_clusters, operation) as file2: 
+				for item in clusters: 
+					file2.writelines( ','.join( [item, str(clusters[item][0]) , str(clusters[item][1]), str(clusters[item][2]) ] )+'\n' )	
+
+	def Pymolout(self, clusters):
+		colors = ["black", "blue", "bluewhite", "br0", "br1", "br2", "br3", "br4", 
+		"br5", "br6", "br7", "br8", "br9", "brightorange", "brown", "carbon", "chartreuse", 
+		"chocolate", "cyan", "darksalmon", "dash", "deepblue", "deepolive", "deeppurple", "deepsalmon", 
+		"deepsalmon", "deepteal", "density", "dirtyviolet", "firebrick", "forest", "gray", "green", "greencyan",
+		 "grey", "hotpink", "hydrogen", "lightblue", "lightmagenta", "lightorange", "lightpink", "lightteal", "lime", 
+		 "limegreen", "limon", "magenta", "marine", "nitrogen", "olive", "orange", "oxygen", "palecyan", "palegreen",
+		  "paleyellow", "pink", "purple", "purpleblue", "raspberry", "red", "ruby", "salmon", "sand", 
+		  "skyblue", "slate", "smudge", "splitpea", "sulfur", "teal", "tv_blue", "tv_green", "tv_orange", 
+		  "tv_red", "tv_yellow", "violet", "violetpurple", "warmpink", "wheat", "white", "yellow", "yelloworange" ] 
+
+
+
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description=" A tool to detect the 3D hotspot patches of a protein.")
 	# add long and short argument
 	parser.add_argument("--pdb", help="PDB file")
 	parser.add_argument("--ALAscan", help="Foldx Alanine scan file")
-	parser.add_argument("--chain", help="Protein chain for which the alanine scanning profile was calculated")
 	parser.add_argument("--suffix", help="A tag for the output files. Default = 'Hotspots'.")
 	parser.add_argument("--DistanceCutoff", help="Cuoff distance to define a contact between CA atoms. Default = 6 Angstroms")
 	parser.add_argument("--EnergyCutoff", help="Energy cutoff above which a residues is considered as a hotspot. Default = 2.0 kcal/mol  ")
 	parser.add_argument("--output", help="Path to the output folder")
-	parser.add_argument("--mode", help="'chain' or 'alascan'")
 	args = parser.parse_args()
 
 	# Check if the required arguments are filled
 	assert args.pdb != None, 'You must provide a PDB structure'
-	# If the user wants only the list of chains 
-	if args.mode == "chain": 
-		myprotein = alaSCanAnalysis(args.pdb)
-		chains = myprotein.returnChains()
-		for element in chains: 
-			print('{}'.format(element) )
 
-	else:
-		args.mode = "alascan"
-		assert args.ALAscan != None, 'You must provide an Alanine scanning Foldx file.'
-		assert args.chain != None, 'You must provide the chan identifier for the Alanine scanning file.'
-		if args.DistanceCutoff != None:
-			distance = args.DistanceCutoff
+	assert args.ALAscan != None, 'You must provide an Alanine scanning Foldx file.'
+
+	if args.DistanceCutoff != None:
+		distance = float(args.DistanceCutoff)
+	else: 
+		distance = 6.0 
+
+	if args.EnergyCutoff != None: 
+		energy = float(args.EnergyCutoff)
+	else: 
+		energy = 2.0 
+
+	if args.output != None: 
+		output = args.output
+	else: 
+		output = '.'
+
+	if args.suffix != None: 
+		suffix = args.suffix
+	else: 
+		suffix = 'Hotspots'
+
+	# output Verbosity 
+	output_file1  = output+'/'+suffix+'_residueClus.csv'
+	output_file2  = output+'/'+suffix+'_clusters.csv'
+
+	print("""
+	Calculating 3D hotspots: 
+				PDB:                         {0}
+				Alanine scanning file:       {1}
+				CA distance cutoff:          {2}
+				Energy cutoff:               {3}
+				Output folder:               {4}
+				Residues to clusters file:   {5}
+				Hotspots output:             {6}
+
+	""".format(args.pdb, args.ALAscan, distance, energy, args.output, output_file1, output_file2 ) )
+
+	# Workflow 
+	myala = alaSCanAnalysis(args.pdb)
+	mydics = myala.allChainsClusters(args.ALAscan)
+	for chain in mydics: 
+		index_of_chain = list(mydics.keys()).index(chain)
+		if index_of_chain == 0: 
+			overwrite = True
 		else: 
-			distance = 6.0 
-
-		if args.EnergyCutoff != None: 
-			energy = args.EnergyCutoff
-		else: 
-			energy = 2.0 
-
-		if args.output != None: 
-			output = args.output
-		else: 
-			output = './'
-
-		if args.suffix != None: 
-			suffix = args.suffix
-		else: 
-			suffix = 'Hotspots'
-
-		# output Verbosity 
-		output_file1  = output+'/'+suffix+'_residueClus.csv'
-		output_file2  = output+'/'+suffix+'_clusters.csv'
-
-		print("""
-		Calculating 3D hotspots: 
-					PDB:                         {0}
-					Alanine scanning file:       {1}
-					CA distance cutoff:          {2}
-					Energy cutoff:               {3}
-					Output folder:               {4}
-					Residues to clusters file:   {5}
-					Hotspots output:             {6}
-
-		""".format(args.pdb, args.ALAscan, distance, energy, args.output, output_file1, output_file2 ) )
-
-		# Workflow 
-
-		myala = alaSCanAnalysis(args.pdb)
-		mydics = myala.allChainsClusters(args.ALAscan)
-		for chain in mydics: 
-			myala.DefinePatches(chain, mydics[chain])  
-			print("############")
-			print( myala.clusters_pre_list)
-			print( myala.formatClusters() )
-
-		#myala.formatClusters()  
+			overwrite = False
+		myala.DefinePatches(chain, mydics[chain], energy_cutoff=energy,  dist_cutoff=distance)  
+		residues_to_cluster, clusters = myala.formatClusters()
+		print(residues_to_cluster)
+		print(clusters)
+		myala.outputToFiles(residues_to_cluster, clusters, suffix=suffix, path=output, overwrite= overwrite)
 
 
 
-		#myala.readALA(args.ALAscan, chain='A')
-		#myala.DefinePatches(args.chain)
-		#residues_to_cluster, clusters = myala.formatClusters()
-		#myala.outputToFiles(residues_to_cluster, clusters, suffix=suffix, path=output )
+	#myala.formatClusters()  
+
+
+
+	#myala.readALA(args.ALAscan, chain='A')
+	#myala.DefinePatches(args.chain)
+	#residues_to_cluster, clusters = myala.formatClusters()
+	#myala.outputToFiles(residues_to_cluster, clusters, suffix=suffix, path=output )
