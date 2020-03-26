@@ -46,6 +46,7 @@ class alaSCanAnalysis():
 			for chain in model: 
 				if chain.id != ' ' :
 					monomers.append(chain.id)
+
 		return monomers
 		
 	def readALA(self, ala_scan_file): 
@@ -189,8 +190,11 @@ class alaSCanAnalysis():
 			residue_in_cluster_dic = {}
 			residues_to_cluster = {}
 			myClusterList = [elem for elem in self.clusters_pre_list  if len(elem) > 3.0   ] 
+			print(myClusterList)
+			print("######")
 			all_rsidue_identifiers = [key for key in self.dic.keys()  ]
-			tags = list( range(1, len(myClusterList)+1 ) ) 
+			# print( all_rsidue_identifiers )
+			tags = list( range(1, len(myClusterList)+1 ) )   # ID number of the cluster in the chain
 			for tag, cluster in zip(tags, myClusterList ):
 				cluster_volume = 0.0
 				cumulated_energy = 0.0
@@ -202,16 +206,22 @@ class alaSCanAnalysis():
 				cluster_name =  'c'+str(tag)+cluster[0][1][2]
 				cluster_size =  len(cluster) 
 				cluster_dic[ cluster_name ] = (cluster_size, round(cluster_volume, 3), per_volume_energy )
-
+			print(residue_in_cluster_dic)
 			each_residue_to_a_cluster = {}
 			output_residue_to_cluster = []
+			print(all_rsidue_identifiers)
+			print(cluster, "dfgdfg")
 			for residue_id in all_rsidue_identifiers: 
 				try :
 					each_residue_to_a_cluster[str(residue_id)] = residue_in_cluster_dic[  str(residue_id) ]
+					line =  ','.join( [str(residue_id), each_residue_to_a_cluster[str(residue_id)], self.chain] ) 
+					output_residue_to_cluster.append( line )
+					print("it is here")
 				except: 
-					each_residue_to_a_cluster[str(residue_id)] = 'c0'+cluster[0][1][2]
-				line =  ','.join( [str(residue_id), each_residue_to_a_cluster[str(residue_id)], self.chain] )  
-				output_residue_to_cluster.append( line )
+					#print("residue {} does not belongto any cluster".format(residue_id) )
+					pass #each_residue_to_a_cluster[str(residue_id)] = 'c0'+cluster[0][1][2]
+				 
+			print(output_residue_to_cluster)	
 			return  output_residue_to_cluster, cluster_dic 
 
 	def outputToFiles(self, residue_to_cluster, clusters, suffix='Hotspots', path='./', overwrite=True):
@@ -272,7 +282,7 @@ if __name__ == "__main__":
 	if args.EnergyCutoff != None: 
 		energy = float(args.EnergyCutoff)
 	else: 
-		energy = 2.5 
+		energy = 2.0
 
 	if args.output != None: 
 		output = args.output
@@ -303,6 +313,7 @@ if __name__ == "__main__":
 	# Workflow 
 	myala = alaSCanAnalysis(args.pdb)
 	mydics = myala.allChainsClusters(args.ALAscan)
+
 	pymoldic = {}
 	for chain in mydics: 
 		index_of_chain = list(mydics.keys()).index(chain)
@@ -312,7 +323,6 @@ if __name__ == "__main__":
 			overwrite = False
 		myala.DefinePatches(chain, mydics[chain], energy_cutoff=energy,  dist_cutoff=distance)  
 		residues_to_cluster, clusters = myala.formatClusters()
-		#print(residues_to_cluster)
-		#print(clusters)
-		myala.outputToFiles(residues_to_cluster, clusters, suffix=suffix, path=output, overwrite= overwrite)
+		#myala.outputToFiles(residues_to_cluster, clusters, suffix=suffix, path=output, overwrite= overwrite)
+
 
