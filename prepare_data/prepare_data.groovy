@@ -127,27 +127,34 @@ if ( params.calculate_PSSM == true ) {
 //		 Only proteins defined in the list file 'params.PROTLIST'
 //		 Are processed by the workflow
 
-uniprot_list = file("${params.PROTLIST}")
-uniprot_id  = uniprot_list.readLines()
-uniprot_id.remove(0)   // remove the header
 
-PDBFILES = Channel.fromPath("${params.PDBFILESPATH}/*.pdb") 
+if ( params.calculate_hotspots == true ) {
+	// creating output directory 
+	// output mapping files to the 'maps' directory
+	hotspot_dir  = file("${params.OUTFOLDER}/hotspots")
+	hotspot_dir.mkdir() 
 
-process Hospotislands {
-	input:
-		val id from uniprot_id
-		//val line from lines.flatMap()
+	uniprot_list = file("${params.PROTLIST}")
+	uniprot_id  = uniprot_list.readLines()
+	uniprot_id.remove(0)   // remove the header
 
-	//script:
-     //   name = pdb.baseName.replaceFirst(".pdb","")
-"""
-ln -s ${params.PDBFILESPATH}/${id}.pdb 
-# first repair the structure
-foldx --command=RepairPDB --pdb=${id}.pdb
-# Generate the Ala scan profile
-foldx --command=AlaScan --pdb=${id}_Repair.pdb
-python ${params.SCRIPTHOME}/hotspotPatches.py --pdb ${id}_Repair.pdb --ALAscan *_AS.fxout --chain A
-"""
+	PDBFILES = Channel.fromPath("${params.PDBFILESPATH}/*.pdb") 
+
+	process Hospotislands {
+		input:
+			val id from uniprot_id
+		output: 
+			file  '*.csv' 
+
+	    publishDir hotspot_dir , mode:'copy'
+	"""
+	ln -s ${params.PDBFILESPATH}/${id}.pdb 
+	# first repair the structure
+	foldx --command=RepairPDB --pdb=${id}.pdb
+	# Generate the Ala scan profile
+	foldx --command=AlaScan --pdb=${id}_Repair.pdb
+	python ${params.SCRIPTHOME}/hotspotPatches.py --pdb ${id}_Repair.pdb --ALAscan *_AS.fxout --suffix ${id}
+	"""
+	}
 
 }
-
