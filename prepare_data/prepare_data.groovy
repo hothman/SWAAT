@@ -158,3 +158,9 @@ if ( params.calculate_hotspots == true ) {
 	}
 
 }
+
+
+if ( params.calculate_hotspots == true ) {
+
+
+} 

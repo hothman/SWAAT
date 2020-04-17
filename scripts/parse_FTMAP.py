@@ -11,7 +11,6 @@ __email__ = "houcemoo@gmail.com"
 import argparse
 from scipy import stats
 
-
 class parseFTMAP():
 	""" 
 	calculate the zcores from the distrubutin of 
