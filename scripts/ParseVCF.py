@@ -1,7 +1,19 @@
 #!/usr/bin/python3
 
+"""
+Parses a VCF file, generates a file containing all missense 
+variants using a map file and a file for SWAAT input
+"""
+
+__author__ = "Houcemeddine Othman"
+__credits__ = "Wits University H3Africa/GSK ADME project"
+__maintainer__ = "Houcemeddine Othman"
+__email__ = "houcemoo@gmail.com"
+
+
 import re 
 import os.path
+import argparse
 
 DNA_code = { 
         'ATA':'I', 'ATC':'I', 'ATT':'I', 'ATG':'M', 
@@ -185,17 +197,31 @@ class MissenseVars(VCF, Prot2GenMap ):
 			for variant in self.swaat_vars : 
 				with open(swaat_input, "a") as file:
 					file.writelines( "\t".join([variant[0], variant[1]+variant[2]+variant[3]+"\n" ] ) )
+		else: 
+			print("No variants to report")
 
 
 if __name__ == "__main__" : 
-	#myvcf = VCF("/home/houcemeddine/BILIM/random_mutation/CYP1A1_dummy.vcf")
-	#myvcf.readVcf()
+	parser = argparse.ArgumentParser(description="parsing VCF file and generates SWAAT input")
+	# Arguments
+	parser.add_argument("--vcf", help="Path to the VCF file")
+	parser.add_argument("--map", help="Path to the map file")
+	parser.add_argument("--output", help="Output file")
+	parser.add_argument("--swaat", help="Output file for SWAAT")
 
-	#mymap = Prot2GenMap("/home/houcemeddine/BILIM/testing_SWAAT/myoutput/maps/CYP1A1.tsv")
-	#mymap.readMap()
-	myclass = MissenseVars("/home/houcemeddine/BILIM/random_mutation/CYP1A1_dummy.vcf", "/home/houcemeddine/BILIM/testing_SWAAT/myoutput/maps/CYP1A1.tsv"  )
+	args = parser.parse_args()
+	assert args.vcf != None, 'You need at least a VCF and a map file'
+	assert args.map != None, 'You need at least a VCF and a map file'
+	myclass = MissenseVars(args.vcf, args.map )
 	myclass.isInProt()
-	myclass.varToprot()
-	myclass.swaatOutput()
+	try: 
+		myclass.varToprot(output_file=args.output)
+	except: 
+		myclass.varToprot()
+	
+	try: 
+		myclass.swaatOutput(swaat_input=args.swaat)
+	except: 
+		myclass.swaatOutput()
 
 		
