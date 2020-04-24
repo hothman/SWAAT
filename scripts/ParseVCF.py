@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import re 
+import os.path
 
 DNA_code = { 
         'ATA':'I', 'ATC':'I', 'ATT':'I', 'ATG':'M', 
@@ -46,6 +47,10 @@ class Prot2GenMap():
 			 self.map  = [line.split() for line in myfile.readlines()][1:]
 		
 	def exons(self): 
+		"""
+		generates intervals of positions corresponding to exons from
+		map file 
+		"""
 		positions= []
 		offset = 10
 		for amino_acid in self.map: 
@@ -94,7 +99,6 @@ class MissenseVars(VCF, Prot2GenMap ):
 		The usage of this methods aims to reduce the complexity of 
 		the further steps"""
 		self.exons()
-		print(self.myexons)
 		self.retained_vars = []
 		for variant in self.vars: 
 			var_position = self.vars[variant][1] 
@@ -143,36 +147,44 @@ class MissenseVars(VCF, Prot2GenMap ):
 				 'cDNA_new_codon':cDNA_new_codon,
 				 'new_AA':new_AA }
 
-	def varToprot(self): 
+	def varToprot(self, output_file="output_vars.csv"): 
+		"""
+		a wrapping method that outputs all the non synonomous variants
+		to csv file.
+		"""
 		self.map.sort(key = lambda x: x[4])
-
-		#print(self.map)
+		# self.swaat_vars container of variants for SWAAT input 
+		self.swaat_vars = []
 		#sub_li.sort(key = lambda x: x[1])
-		for retained_variant in self.retained_vars: 
-			#print(self.vars[retained_variant])
-			chromosome = self.vars[retained_variant][0]
-			position = self.vars[retained_variant][1]
-			ref = self.vars[retained_variant][2]
-			alt = self.vars[retained_variant][3]
-			for var_map in self.map: 
-				if  int(var_map[4]) <= position <= int(var_map[5]): 
-					position_in_triplet = range( int(var_map[4]) , int(var_map[5])+1 ).index(position)+1
-					gDNA_codon = var_map[6] 
-					mut_dic = self.mutate(gDNA_codon , alt , position_in_triplet)
-					try: 
-						var_map[2] == mut_dic['AA']
-						print( chromosome, var_map[1], var_map[2] )
-						print(mut_dic)
-					except:
-						pass
-					break
-			#print(retained_variant)
-		#print(self.map)
-		#print(self.vars)
+		if self.retained_vars: 
+			with open( output_file , 'w') as file:
+				file.writelines("gene_name,chromosome,position,ref_allele,alt_allele,ref_AA,AA_position,mutant_AA")
+			for retained_variant in self.retained_vars: 
+				#print(self.vars[retained_variant])
+				chromosome = self.vars[retained_variant][0]
+				position = self.vars[retained_variant][1]
+				ref = self.vars[retained_variant][2]
+				alt = self.vars[retained_variant][3]
+				for var_map in self.map: 
+					if  int(var_map[4]) <= position <= int(var_map[5]): 
+						position_in_triplet = range( int(var_map[4]) , int(var_map[5])+1 ).index(position)+1
+						gDNA_codon = var_map[6] 
+						mut_dic = self.mutate(gDNA_codon , alt , position_in_triplet)
+						if mut_dic['new_AA'] != var_map[2]: 
+							# in order : gene name, chromosome, position, reference allele, alternative allele, reference AA, AA position, mutant AA
+							# output to a file 
+							with open( output_file , 'a') as file:
+								file.writelines( ','.join([var_map[1], chromosome, str(position), ref, alt,  var_map[2], str(var_map[3]), mut_dic['new_AA']+"\n"]) )
+							# fill the list for SWAAT
+							data_for_swaat = (var_map[1],var_map[2], str(var_map[3]), mut_dic['new_AA'])
+							if  data_for_swaat not in self.swaat_vars:
+								self.swaat_vars.append(data_for_swaat)
 
-		#print(self.getcDNA("GAT"))
-		#print(self.mutate('GAT', 'T', 2))
-
+	def swaatOutput(self, swaat_input="swaat_input.tsv"): 
+		if len(self.swaat_vars ) > 1:
+			for variant in self.swaat_vars : 
+				with open(swaat_input, "a") as file:
+					file.writelines( "\t".join([variant[0], variant[1]+variant[2]+variant[3]+"\n" ] ) )
 
 
 if __name__ == "__main__" : 
@@ -184,5 +196,6 @@ if __name__ == "__main__" :
 	myclass = MissenseVars("/home/houcemeddine/BILIM/random_mutation/CYP1A1_dummy.vcf", "/home/houcemeddine/BILIM/testing_SWAAT/myoutput/maps/CYP1A1.tsv"  )
 	myclass.isInProt()
 	myclass.varToprot()
+	myclass.swaatOutput()
 
 		
