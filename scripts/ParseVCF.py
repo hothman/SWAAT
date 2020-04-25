@@ -81,7 +81,8 @@ class Prot2GenMap():
 
 	def _interval_extract(self, list): 
 		""" converts sorted list of integer into intervals 
-		source Smitha Dinesh Semwal from www.geeksforgeeks.org"""
+		source Smitha Dinesh Semwal from www.geeksforgeeks.org
+		for internal call by exons(method)"""
 		length = len(list) 
 		i = 0
 		while (i< length): 
@@ -105,6 +106,12 @@ class MissenseVars(VCF, Prot2GenMap ):
 		# generate self.vars and self.map
 		self.readVcf()		
 		self.readMap()
+
+	def checkCompatibilityVCFMAP(self):
+		"""
+		Make sure that the chromosomes in the map and vcf files are the same
+		"""
+		assert self.vars[1][0] == self.map[1][0], "Chromosomes in Map and VCF files are not the same"
 
 	def isInProt(self): 
 		""" which variants are in the protein coding regions
@@ -212,7 +219,9 @@ if __name__ == "__main__" :
 	args = parser.parse_args()
 	assert args.vcf != None, 'You need at least a VCF and a map file'
 	assert args.map != None, 'You need at least a VCF and a map file'
+	# instantize
 	myclass = MissenseVars(args.vcf, args.map )
+	myclass.checkCompatibilityVCFMAP()
 	myclass.isInProt()
 	try: 
 		myclass.varToprot(output_file=args.output)
@@ -223,5 +232,4 @@ if __name__ == "__main__" :
 		myclass.swaatOutput(swaat_input=args.swaat)
 	except: 
 		myclass.swaatOutput()
-
 		
