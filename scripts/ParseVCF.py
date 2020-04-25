@@ -177,7 +177,7 @@ class MissenseVars(VCF, Prot2GenMap ):
 		#sub_li.sort(key = lambda x: x[1])
 		if self.retained_vars: 
 			with open( output_file , 'w') as file:
-				file.writelines("gene_name,chromosome,position,ref_allele,alt_allele,ref_AA,AA_position,mutant_AA")
+				file.writelines("gene_name,chromosome,position,ref_allele,alt_allele,ref_AA,AA_position,mutant_AA\n")
 			for retained_variant in self.retained_vars: 
 				#print(self.vars[retained_variant])
 				chromosome = self.vars[retained_variant][0]
