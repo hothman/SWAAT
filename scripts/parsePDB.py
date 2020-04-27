@@ -1,11 +1,20 @@
 #!/usr/bin/python3
 __author__ = "Houcemeddine Othman"
+__credits__ = "Wits University H3Africa/GSK ADME project"
+__maintainer__ = "Houcemeddine Othman"
+__email__ = "houcemoo@gmail.com"
 
-# Check for that biopython is installed
-try:
-    from Bio.PDB.PDBParser import PDBParser 
-except ImportError:
-	raise ImportError('Biopython is a required package')
+"""
+		parsePDB.py does the mapping between a PDB file and a sequence file 
+		It generates a TSV file with the following data: 
+				AA      ID      IDref   sasa    sasa_ratio      SS      n_HBonds
+
+		requires freesasa and stride
+		Usage example: 
+			python parsePDB.py --fasta CYP1A2.fa --pdb P05177.pdb --output CYP1A2_pdb.map
+
+		Dependencies: freesasa (https://freesasa.github.io/), stride (http://webclu.bio.wzw.tum.de/stride/)
+"""
 import warnings   
 import sys
 import re
@@ -20,29 +29,12 @@ import argparse
 if sys.version_info[0] < 3:
     raise Exception("Python 3 or a more recent version is required.")
 
-# initiate the parser
-parser = argparse.ArgumentParser(description=" A script to map the residue \
-IDs in pdb file to the protein sequence coordinates. \
-\nCalculates per amino acid SASA, secondary structure and hydrogen bond number ")
-# add long and short argument
-parser.add_argument("--pdb", help="Input pdb file")
-parser.add_argument("--fasta", help="Reference sequences in FASTA format ")
-parser.add_argument("--output", help="Path to folder of the output files ")
+# Check for that biopython is installed
+try:
+    from Bio.PDB.PDBParser import PDBParser 
+except ImportError:
+	raise ImportError('Biopython is a required package')
 
-# read arguments from the command line
-args = parser.parse_args()
-if not args.pdb:  
-    print("A pdb file is required \n Use --help for more details")
-    sys.exit(1)
-if not args.fasta:  
-    print("A fasta file is required \n Use --help for more details")
-    sys.exit(1)
-if not args.output:  
-    output = './'
-else:
-	output = args.output
-
-# three letters to one letter code of amino acids
 # three letters to one letter code of amino acids
 amino_acids = { 'A':'ALA', 'R':'ARG',
 				'N':'ASN', 'D':'ASP',
@@ -86,22 +78,33 @@ class ParsePDB:
 		stucture in a list of dictionaries
 		"""
 		my_structure = self.structure
+		# swap keys and values in amino_acid dictionary to get proper indexing
+		swapped_amino_acids = dict((v,k) for k,v in amino_acids.items())
 		if len(my_structure) >  1 :
 			raise ValueError('you have multiple models in the PDB file !')
-		for model in self.structure :
-			monomers = []
+		monomers = []
+		for model in self.structure :	
 			for chain in model: 
 				chain_id =  chain.id 
+				if chain_id == " ": 
+					print("Empty chain ID in a PDB file")
 				sequence=''
 				resids = []
 				for residue in chain: 
 					resname = residue.get_resname()
-					AA = amino_acids[resname]
-					sequence=sequence+AA
-					resids.append( residue.id[1] )
-				monomer = { 'chain':chain_id, 'seq':sequence, 'ids':resids, 'posinref':[] }
-				monomers.append(monomer)
+					try: # avoid processing non canonical residues
+						AA = swapped_amino_acids[resname]
+						sequence=sequence+AA
+						resids.append( residue.id[1] )
+					except: 
+						print("Non canonical residue {0} in chain ~{1}~ in PDB file {2}".format(resname, chain_id, self.pdb_file))
+						pass
+				if sequence=="" :
+					pass 
+				else: 
+					monomers.append({ 'chain':chain_id, 'seq':sequence, 'ids':resids, 'posinref':[] })
 		return monomers
+
 
 	def sasa(self, chain):
 		""" Calculates the fraction of exposed surfqace for each 
@@ -243,17 +246,38 @@ def alignProteinseq( seq1, seq2):
 	else:
 		sys.exit("One or both sequences contain non standard amino acids")
 
-##########################################
-			#The workflow
 
-# Parse the reference fasta file
-my_sequence = ParseFASTA(args.fasta)
-fileSeqs =  my_sequence.readFASTA()
-# Parse the protein PDB file
-my_pdb = ParsePDB(args.pdb)
-# generate themapping betwenn PDB and fasta
-my_pdb.isInSeq( fileSeqs )
-# Calculate the per AA sasa and the hbonds and SS
-my_pdb.fillProperties()
-# outpu to tsv files
-my_pdb.propertiesToTsv(output)
+if __name__ == "__main__":
+	# initiate the parser
+	parser = argparse.ArgumentParser(description=" A script to map the residue \
+	IDs in pdb file to the protein sequence coordinates. \
+	\nCalculates per amino acid SASA, secondary structure and hydrogen bond number ")
+	# add long and short argument
+	parser.add_argument("--pdb", help="Input pdb file")
+	parser.add_argument("--fasta", help="Reference sequences in FASTA format ")
+	parser.add_argument("--output", help="Path to folder of the output files ")
+
+	# read arguments from the command line
+	args = parser.parse_args()
+	if not args.pdb:  
+	    print("A pdb file is required \n Use --help for more details")
+	    sys.exit(1)
+	if not args.fasta:  
+	    print("A fasta file is required \n Use --help for more details")
+	    sys.exit(1)
+	if not args.output:  
+	    output = './'
+	else:
+		output = args.output
+
+	# Parse the reference fasta file
+	my_sequence = ParseFASTA(args.fasta)
+	fileSeqs =  my_sequence.readFASTA()
+	# Parse the protein PDB file
+	my_pdb = ParsePDB(args.pdb)
+	# generate themapping betwenn PDB and fasta
+	my_pdb.isInSeq( fileSeqs )
+	# Calculate the per AA sasa and the hbonds and SS
+	my_pdb.fillProperties()
+	# outpu to tsv files
+	my_pdb.propertiesToTsv(output)
