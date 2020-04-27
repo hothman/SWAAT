@@ -200,14 +200,15 @@ class ParsePDB:
 	def propertiesToTsv(self, output):
 		"""  Output self.properties to tsv file """
 		for chain in self.properties: 
+			chainID = chain["chain"]
 			outputfile = output+'/'+chain['header'][1]+'_'+chain['chain']+'.tsv'
 			basename = self.pdb_file.split('/')[-1]
 			with open( outputfile , 'w') as file:
 				file.writelines( '#'+' '.join(chain['header'] )+' '+basename+'\n' )
-				TSVhead = 'AA\tID\tIDref\tsasa\tsasa_ratio\tSS\tn_HBonds\n'
-				file.writelines( TSVhead )
+				TSVhead = ["AA", "ID", "IDref", "sasa", "sasa_ratio", "SS", "n_HBonds", "chainID\n"]
+				file.writelines( '\t'.join(TSVhead) )
 				for seq, ids, posinref, sasa, sasa_ratio, ss, h_bonds in zip( chain['seq'], chain['ids'], chain['posinref'], chain['sasa'], chain['sasa_ratio'], chain['SS'], chain['hbonds'] ) :
-					file.writelines( seq+'\t'+str(ids)+'\t'+str(posinref)+'\t'+str(sasa)+'\t'+str(sasa_ratio)+'\t'+ss+'\t'+str(h_bonds)+'\n' )
+					file.writelines('\t'.join([seq, str(ids), str(posinref), str(sasa), str(sasa_ratio), ss, str(h_bonds), chainID+"\n" ] ) )
 			file.close()
 
 class ParseFASTA:
