@@ -139,14 +139,15 @@ if ( params.calculate_PSSM == true ) {
 	}
 }
 
-//		 Alanine scanning  to generate hotspot patch map 
-// 		 Will run the alanine scanning prorocol of FoldX over the
-//		 PDB structures than will apply an algorithm to locate and 
-//		 index the hotspot islands withing the structure 
-//		 The PDB file must have the Uniprot ID as basename 
-//		 example P04798.pdb
-//		 Only proteins defined in the list file 'params.PROTLIST'
-//		 Are processed by the workflow
+/*		 Alanine scanning  to generate hotspot patch map 
+		 Will run the alanine scanning prorocol of FoldX over the
+		 PDB structures than will apply an algorithm to locate and 
+		 index the hotspot islands withing the structure 
+		 The PDB file must have the Uniprot ID as basename 
+		 example P04798.pdb
+		 Only proteins defined in the list file 'params.PROTLIST'
+		 Are processed by the workflow
+*/
 
 
 if ( params.calculate_hotspots == true ) {
@@ -159,7 +160,6 @@ if ( params.calculate_hotspots == true ) {
 	uniprot_id  = uniprot_list.readLines()
 	uniprot_id.remove(0)   // remove the header
 
-	PDBFILES = Channel.fromPath("${params.PDBFILESPATH}/*.pdb") 
 
 	process Hospotislands {
 		input:
@@ -181,3 +181,28 @@ if ( params.calculate_hotspots == true ) {
 }
 
 
+/*
+		Calculating the covariance matrix and the eigenvectors fors 
+		the reference structure using EnCom. 
+		The current version of EncoM has an issue with nextflow caused by an exit status
+		of 1. To make it work with SWAAT, modify line 370 in src/build_encom.c from "return(1)" with 
+		"return(0)" then compile again
+*/
+
+PDBLIST = Channel.fromPath("${params.PDBFILESPATH}/*.pdb")
+
+process encomXWT {
+	publishDir "${params.OUTFOLDER}/ENCoM/", mode:'copy'
+	input:
+		file pdb from PDBLIST
+	output: 
+		file "${name}.eige"
+		file "${name}.cov"
+	script: 
+		name = pdb.baseName.replaceFirst(".pdb","")
+
+
+	"""
+	build_encom -i $pdb -cov ${name}.cov -o ${name}.eige 
+	"""
+}
