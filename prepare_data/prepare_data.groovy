@@ -33,7 +33,7 @@ process GetSequences {
 }
 
 
-sequences.into {seq_for_mapping ; seq_for_annotation }
+sequences.into {seq_for_mapping ; seq_for_annotation ; seq_for_chains}
 
 PROTLIST = Channel.fromPath("$params.PROTLIST")
 // output annotation files to the prot_annotation directory
@@ -79,6 +79,27 @@ process GetCoordinates {
    """
 } 
 
+
+/* 		which of the chains in the PDB file correspond to 
+		The sequence of the protein.
+*/ 
+// output mapping files to the 'maps' directory
+seq2chain_dir  = file("${params.OUTFOLDER}/Seq2Chain")
+seq2chain_dir.mkdir() 
+
+process geneToChainMapping {
+	publishDir seq2chain_dir , mode:'copy'
+	input:
+		file sequence from seq_for_chains.flatMap()
+	output: 
+		file "${name}_2PDBchain.tsv"
+	script: 
+		name = sequence.baseName.replaceFirst(".fa","")
+
+	"""
+	python  ${params.SCRIPTHOME}/whichPdb.py --pdbpath ${params.PDBFILESPATH}  --fasta ${sequence} --output ${name}_2PDBchain.tsv
+	"""
+}
 
 // 		Will  calculate the PSSM for each protein, requires PRODRES
 // 		If you use our precalculated PSSM matrices then turn this parameters to False 
@@ -160,7 +181,3 @@ if ( params.calculate_hotspots == true ) {
 }
 
 
-if ( params.calculate_hotspots == true ) {
-
-
-} 
