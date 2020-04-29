@@ -203,7 +203,7 @@ class MissenseVars(VCF, Prot2GenMap ):
 		if len(self.swaat_vars ) > 1:
 			for variant in self.swaat_vars : 
 				with open(swaat_input, "a") as file:
-					file.writelines( "\t".join([variant[0], variant[1]+variant[2]+variant[3]+"\n" ] ) )
+					file.writelines( "\t".join([variant[0], variant[1], variant[2],variant[3]+"\n" ] ) )
 		else: 
 			print("No variants to report")
 
@@ -225,11 +225,15 @@ if __name__ == "__main__" :
 	myclass.isInProt()
 	try: 
 		myclass.varToprot(output_file=args.output)
+		print("		output to file {}".format(args.output) )
 	except: 
 		myclass.varToprot()
+		print("	output to file ./output_vars.csv")
 	
 	try: 
 		myclass.swaatOutput(swaat_input=args.swaat)
+		print("	output to file {}".format(args.swaat) )
 	except: 
 		myclass.swaatOutput()
+		print("	output to file ./swaat_input.tsv")
 		
