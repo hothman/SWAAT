@@ -33,7 +33,7 @@ process GetSequences {
 }
 
 
-sequences.into {seq_for_mapping ; seq_for_annotation ; seq_for_chains}
+sequences.into {seq_for_mapping ; seq_for_annotation ; seq_for_chains; seq_for_pdb}
 
 PROTLIST = Channel.fromPath("$params.PROTLIST")
 // output annotation files to the prot_annotation directory
@@ -92,13 +92,38 @@ process geneToChainMapping {
 	input:
 		file sequence from seq_for_chains.flatMap()
 	output: 
-		file "${name}_2PDBchain.tsv"
+		file "${name}_2PDBchain.tsv" into gene2PDBchains
 	script: 
 		name = sequence.baseName.replaceFirst(".fa","")
 
 	"""
 	python  ${params.SCRIPTHOME}/whichPdb.py --pdbpath ${params.PDBFILESPATH}  --fasta ${sequence} --output ${name}_2PDBchain.tsv
 	"""
+}
+
+/* 		This process generates the mapping between the Uniprot
+  		sequence to PDB and calculates sasa, sasa ratio, SS element and H_bonds number
+  		per amino acid
+*/ 
+gene2PDB_dir  = file("${params.OUTFOLDER}/gene2PDBmap")
+gene2PDB_dir.mkdir() 
+process gene2PDB {
+	publishDir gene2PDB_dir , mode:'copy'
+	input: 
+		file fasta from seq_for_pdb.flatMap()
+		file gene2PDBchain from gene2PDBchains
+	output: 
+		file "*.tsv"
+
+	"""
+	gene_name=\$(cut -f 1  $gene2PDBchain)
+	pdbfile=\$(cut -f 4  $gene2PDBchain)
+	fasta_file=\$(ls \${gene_name}*.fa)
+	python ${params.SCRIPTHOME}/parsePDB.py --fasta \$fasta_file  --pdb ${params.PDBFILESPATH}/\$pdbfile
+	
+
+	"""
+
 }
 
 // 		Will  calculate the PSSM for each protein, requires PRODRES
@@ -191,7 +216,7 @@ if ( params.calculate_hotspots == true ) {
 
 PDBLIST = Channel.fromPath("${params.PDBFILESPATH}/*.pdb")
 
-process encomXWT {
+process encomWT {
 	publishDir "${params.OUTFOLDER}/ENCoM/", mode:'copy'
 	input:
 		file pdb from PDBLIST
