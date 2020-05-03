@@ -105,12 +105,12 @@ process geneToChainMapping {
   		sequence to PDB and calculates sasa, sasa ratio, SS element and H_bonds number
   		per amino acid
 */ 
-gene2PDB_dir  = file("${params.OUTFOLDER}/gene2PDBmap")
-gene2PDB_dir.mkdir() 
-process gene2PDB {
-	publishDir gene2PDB_dir , mode:'copy'
+process uniprot2PDB {
+	uniprot2PDB_dir  = file("${params.OUTFOLDER}/uniprot2PDBmap")
+	uniprot2PDB_dir.mkdir() 
+	publishDir uniprot2PDB_dir , mode:'copy'
 	input: 
-		file fasta from seq_for_pdb.flatMap()
+		file "*" from seq_for_pdb.collect()  //  "*" is used to keep the original names of the files
 		file gene2PDBchain from gene2PDBchains
 	output: 
 		file "*.tsv"
@@ -120,10 +120,8 @@ process gene2PDB {
 	pdbfile=\$(cut -f 4  $gene2PDBchain)
 	fasta_file=\$(ls \${gene_name}*.fa)
 	python ${params.SCRIPTHOME}/parsePDB.py --fasta \$fasta_file  --pdb ${params.PDBFILESPATH}/\$pdbfile
-	
-
+	rm *_2PDBchain.tsv
 	"""
-
 }
 
 // 		Will  calculate the PSSM for each protein, requires PRODRES
