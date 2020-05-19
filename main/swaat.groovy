@@ -28,6 +28,8 @@ params.SCRIPTHOME = "/home/houcemeddine/BILIM/SWAAT/scripts/"
 // home to PDBs 
 params.PDBFILESPATH = "/home/houcemeddine/BILIM/testing_SWAAT/PDBs" 
 
+// home to PDBs 
+params.PDBFILEFIXED = "/home/houcemeddine/BILIM/testing_SWAAT/PDBs" 
 
 // generate a channel from the gene list and replace "\n"  
 genes = Channel.fromPath("$params.GENELIST").splitText()  { it.replaceAll("\n", "") }
@@ -65,7 +67,6 @@ process filterVars {
 	 exons or, it is not covered by the protein structure. or 
 	 no *not_processed.tsv is generated 
 	*/
-	//errorStrategy 'ignore'
 	
 	input: 
 		file(variants) from swaat_input
@@ -73,7 +74,7 @@ process filterVars {
 		file("${name}_retained.tsv") optional true into retained_vars
 		file("${name}_not_processed.tsv") optional true into gaps_and_non_processed
 		//file("${name}_pointer.tsv") optional true into pointerfile
-  		val name into receiver
+  		val name into bigreceiver
 
 	publishDir "${params.OUTFOLDER}/$name", mode:'copy'
 
@@ -117,23 +118,92 @@ process filterVars {
 }
 
 
+bigreceiver.into {receiver1 ; receiver2; receiver3 }
+
 /*
 This process generates the guiding file (which sequence and which PDB for the mutation)
 */
 
 process generateGuidingFile {
 	input: 
-		val variant from vars.flatMap()
-		val name from receiver
+		//val variant from vars.flatMap()
+		val name from receiver1
 	output: 
 		file "${name}_whichPDB.tsv" into guidingFile
 
 	"""
 	python ${params.SCRIPTHOME}/whichPdb.py --fasta     ${params.DATABASE}/sequences/${name}.fa \
-											--pdbpath  ${params.PDBFILESPATH} --output   ${name}_whichPDB.tsv
+											--pdbpath  ${params.PDBFILESPATH} --output ${name}_whichPDB.tsv
 	"""
 	}
 
 
 vars = retained_vars.splitText() { it.replaceAll("\n", "") }
 //thepointer = pointerfile.splitText() { it.replaceAll("\n", "") }
+// foldx 
+
+vars.into { vars4foldx; vars4encom }
+
+
+process foldX {
+	 input:
+	 	val variant from vars4foldx.flatMap()
+	 	val name from receiver2
+	 output: 
+	 	file "${name}*.fxout" into mutation_dif_file 
+	 	file "*_1.pdb" into mutant_structure_encom, mutant_structure_freesasa
+
+	"""
+	echo $variant >afile.txt
+	python  ${params.SCRIPTHOME}/processFoldX.py --var afile.txt --seq2chain ${params.DATABASE}/Seq2Chain --output ${name}
+	mutation_suffix=\$(sed 's/;//' individual_list_${name}.txt |sed 's/,//')
+	pdbfile=\$(cat ${name}_pdb.txt )
+	ln -s ${params.PDBFILEFIXED}/\$pdbfile
+	foldx --command=BuildModel --pdb=\$pdbfile --mutant-file=individual_list_${name}.txt
+	mv Dif_*.fxout ${name}_\${mutation_suffix}.fxout
+
+	"""
+}
+
+// encom 
+
+
+process encom {
+	input: 
+		val(variant) from vars4encom.flatMap()
+		file(pdb_mutant) from mutant_structure_encom
+		file(mutfile) from mutation_dif_file
+	output: 
+		file "${var_name}.cov" into covarience
+		file "${var_name}.eigen"
+
+	 script: 
+	 	var_name = mutfile.baseName.replaceFirst(".fxout","")
+
+	//script:
+	//name = variants.baseName.replaceFirst(".swaat","")
+
+	"""
+	build_encom -i $pdb_mutant -cov ${var_name}.cov -o ${var_name}.eigen
+	"""
+
+}
+
+process freesasa {
+	input: 
+		file(pdb_mutant) from mutant_structure_freesasa
+
+
+	"""
+	echo hello
+	"""
+
+}
+
+// automute 
+
+
+// freesasa 
+
+//
+
