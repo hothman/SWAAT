@@ -144,14 +144,14 @@ vars = retained_vars.splitText() { it.replaceAll("\n", "") }
 
 vars.into { vars4foldx; vars4encom }
 
-
 process foldX {
 	 input:
 	 	val variant from vars4foldx.flatMap()
 	 	val name from receiver2
 	 output: 
 	 	file "${name}*.fxout" into mutation_dif_file 
-	 	file "*_1.pdb" into mutant_structure_encom, mutant_structure_freesasa
+	 	file "*_1.pdb" into mutant_structure_encom, mutant_structure_freesasa, mutant_structure_automute
+	 	file "WT_${name}_repaired.pdb" into wt_PDB_repaired
 
 	"""
 	echo $variant >afile.txt
@@ -161,7 +161,7 @@ process foldX {
 	ln -s ${params.PDBFILEFIXED}/\$pdbfile
 	foldx --command=BuildModel --pdb=\$pdbfile --mutant-file=individual_list_${name}.txt
 	mv Dif_*.fxout ${name}_\${mutation_suffix}.fxout
-
+	mv  WT_*.pdb  WT_${name}_repaired.pdb
 	"""
 }
 
@@ -176,12 +176,9 @@ process encom {
 	output: 
 		file "${var_name}.cov" into covarience
 		file "${var_name}.eigen"
-
+		val var_name into var_ID1, var_ID2
 	 script: 
 	 	var_name = mutfile.baseName.replaceFirst(".fxout","")
-
-	//script:
-	//name = variants.baseName.replaceFirst(".swaat","")
 
 	"""
 	build_encom -i $pdb_mutant -cov ${var_name}.cov -o ${var_name}.eigen
@@ -192,18 +189,35 @@ process encom {
 process freesasa {
 	input: 
 		file(pdb_mutant) from mutant_structure_freesasa
+		val var_name from var_ID1
+	"""
+	freesasa --format seq -n 200 $pdb_mutant >${var_name}.sasa
+	"""
+
+}
 
 
+process stride {
+	input: 
+		file(pdb_mutant) from mutant_structure_automute
+		file(pdb_wt) from wt_PDB_repaired
+		val(var_name) from var_ID2
+	output: 
+		file "Hbond_${var_name}_mut.dat"
+		file "Hbond_${var_name}_wt.dat"
 	"""
-	echo hello
+	stride -f $pdb_mutant  -h >Hbond_${var_name}_mut.dat
+	stride -f $pdb_wt  -h >Hbond_${var_name}_wt.dat
+
 	"""
+
 
 }
 
 // automute 
 
 
-// freesasa 
+// stride 
 
 //
 
