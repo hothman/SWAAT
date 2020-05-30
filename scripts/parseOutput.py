@@ -463,7 +463,6 @@ parser.add_argument("--modesMut", help="EnCOM eigenvectors file of the mutant st
 parser.add_argument("--modesWT", help="EnCOM eigenvectors file of the wild type structure")
 parser.add_argument("--diff", help="Foldx diff file")
 parser.add_argument("--indiv", help="Foldx individual file")
-parser.add_argument("--automute", help="Automute output file")
 parser.add_argument("--matrix", help="Substitution matrix file")
 parser.add_argument("--stride", help="stride output file WT")
 parser.add_argument("--freesasa", help="freesasa outputfile")
@@ -495,14 +494,6 @@ if __name__ == "__main__":
 	except: 
 		energy = ""	
 
-	try: 
-		my_automute = CollectAutomute(args.automute)
-		automute_data = my_automute.get_mut_data()
-		tag = automute_data[0]
-		conf = str(automute_data[1])
-	except: 
-		tag = ""
-		conf = ""
 
 	try:		
 		# RMSIP
@@ -621,7 +612,7 @@ if __name__ == "__main__":
 		pssm_wt = ''
 
 	outputlist = [wt_res, mut_res, position ,chain, 
-				 energy, tag, conf,
+				 energy, 
 				 ss, rmsip, entropy,
 				 blusom, classwt, classmut, 
 				 sasa, sasaWT, 
@@ -633,7 +624,7 @@ if __name__ == "__main__":
 				 pssm_mut, pssm_wt ]
 
 	outputheader = ['wt_res','mut_res', 'position', 'chain',  
-					'dG', 'AutomuteTag', 'AutomuteConf',
+					'dG', 
 					'SecStruc', 'RMSIP', 'dS', 'subScore',
 					 'classWT', 'classMut', 'sasa_mut', 
 					 'sasa_wt', 'hb_mut', 'hb_wt', 'sb_mut', 
