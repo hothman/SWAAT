@@ -208,7 +208,7 @@ class ParsePDB:
 				TSVhead = ["AA", "ID", "IDref", "sasa", "sasa_ratio", "SS", "n_HBonds", "chainID\n"]
 				file.writelines( '\t'.join(TSVhead) )
 				for seq, ids, posinref, sasa, sasa_ratio, ss, h_bonds in zip( chain['seq'], chain['ids'], chain['posinref'], chain['sasa'], chain['sasa_ratio'], chain['SS'], chain['hbonds'] ) :
-					file.writelines('\t'.join([seq, str(ids), str(posinref), str(sasa), str(sasa_ratio), ss, str(h_bonds), chainID+"\n" ] ) )
+					file.writelines('\t'.join([seq, str(ids), str(posinref+1), str(sasa), str(sasa_ratio), ss, str(h_bonds), chainID+"\n" ] ) )
 			file.close()
 
 class ParseFASTA:
@@ -234,6 +234,7 @@ class ParseFASTA:
         	my_seqs.append( { 'header': header, 'sequence':seq.strip()})
         self.my_seqs = my_seqs
         return self.my_seqs
+
 
 def alignProteinseq( seq1, seq2):
 	matrix = matlist.blosum62
