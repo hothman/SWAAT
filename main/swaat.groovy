@@ -15,21 +15,20 @@ params.MAPHOME="/home/houcemeddine/BILIM/SWAAT/exampleInputs/maps/"
 params.SCRIPTS="/home/houcemeddine/BILIM/SWAAT/scripts"
 // Directory for all outputs 
 params.OUTFOLDER = "/home/houcemeddine/BILIM/testing_SWAAT/swaat_output"
-
 // Path to database HOME
 params.DATABASE="/home/houcemeddine/BILIM/testing_SWAAT/myoutput"
-
 // list of gene name to process (one gene name per line)
 params.GENELIST="../exampleInputs/gene_list.txt"
-
 // home to script file 
 params.SCRIPTHOME = "/home/houcemeddine/BILIM/SWAAT/scripts/"
-
 // home to PDBs 
 params.PDBFILESPATH = "/home/houcemeddine/BILIM/testing_SWAAT/PDBs" 
-
 // home to PDBs 
 params.PDBFILEFIXED = "/home/houcemeddine/BILIM/testing_SWAAT/PDBs" 
+// Home to folder containing Blosum62, Grantham and Sneath matrices
+params.MATRICES="/home/houcemeddine/BILIM/testing_SWAAT/matrices"
+
+
 
 // generate a channel from the gene list and replace "\n"  
 genes = Channel.fromPath("$params.GENELIST").splitText()  { it.replaceAll("\n", "") }
@@ -71,7 +70,7 @@ process filterVars {
 	input: 
 		file(variants) from swaat_input
 	output: 
-		file("${name}_retained.tsv") optional true into retained_vars
+		file("${name}_retained.tsv") optional true into (retained_vars, retained)
 		file("${name}_not_processed.tsv") optional true into gaps_and_non_processed
 		//file("${name}_pointer.tsv") optional true into pointerfile
   		val name into bigreceiver
@@ -117,65 +116,88 @@ process filterVars {
 
 }
 
+retained.collect().println()
 
 bigreceiver.into {receiver1 ; receiver2; receiver3 }
-
-/*
-This process generates the guiding file (which sequence and which PDB for the mutation)
-*/
-
-process generateGuidingFile {
-	input: 
-		//val variant from vars.flatMap()
-		val name from receiver1
-	output: 
-		file "${name}_whichPDB.tsv" into guidingFile
-
-	"""
-	python ${params.SCRIPTHOME}/whichPdb.py --fasta     ${params.DATABASE}/sequences/${name}.fa \
-											--pdbpath  ${params.PDBFILESPATH} --output ${name}_whichPDB.tsv
-	"""
-	}
 
 
 vars = retained_vars.splitText() { it.replaceAll("\n", "") }
 //thepointer = pointerfile.splitText() { it.replaceAll("\n", "") }
 // foldx 
+vars.into { vars4foldx; vars4encom ; vars4suffix ; tata; tata2}
 
-vars.into { vars4foldx; vars4encom }
 
+
+/*
+This process generates the guiding file (which sequence and which PDB for the mutation)
+*/
+process generateGuidingFile {
+	echo true
+	input: 
+		val variant from vars4suffix.flatMap()
+	output: 
+		file "*.id" into id, idpdb
+		file "*_whichPDB.tsv" into guidingFile
+	publishDir "/home/houcemeddine/BILIM/SWAAT/main/out" , mode:'copy'
+	"""
+	id=\$(echo $variant |sed 's/ /-/g')
+	touch \$id.id
+	gene=\$(echo $variant| awk {'print \$1'}  )
+	filename=\$(echo \$gene.fa )
+	echo \$filename >mygene
+	python ${params.SCRIPTHOME}/whichPdb.py --fasta     ${params.DATABASE}/sequences/\$filename \
+											--pdbpath   ${params.PDBFILESPATH} --output \${id}_whichPDB.tsv
+
+	"""
+}
+	
+
+tata.flatMap().println()
 process foldX {
 	 input:
 	 	val variant from vars4foldx.flatMap()
-	 	val name from receiver2
+	 	file(my_id) from id
 	 output: 
-	 	file "${name}*.fxout" into mutation_dif_file 
-	 	file "*_1.pdb" into mutant_structure_encom, mutant_structure_freesasa, mutant_structure_automute
-	 	file "WT_${name}_repaired.pdb" into wt_PDB_repaired
+	 	file "${the_id}*.fxout" into mutation_dif_file_encom,  mutation_dif_file_collect
+	 	file "${the_id}_mutant.pdb" into mutant_structure_encom,  mutant_structure_collection
+	 	file "WT_${the_id}_repaired.pdb" into wt_PDB_repaired_freesasa, wt_PDB_repaired_collection
+	 	file "individual_list_${the_id}.txt" into indiv_file
+	 	file "seq_coord_${the_id}.txt" into seq_coord
+	 	val true into done_ch
+
+	 script:
+		the_id = my_id.baseName.replaceFirst(".id","")
 
 	"""
-	echo $variant >afile.txt
-	python  ${params.SCRIPTHOME}/processFoldX.py --var afile.txt --seq2chain ${params.DATABASE}/Seq2Chain --output ${name}
-	mutation_suffix=\$(sed 's/;//' individual_list_${name}.txt |sed 's/,//')
-	pdbfile=\$(cat ${name}_pdb.txt )
+	echo $variant >seq_coord_${the_id}.txt
+	python  ${params.SCRIPTHOME}/processFoldX.py --var seq_coord_${the_id}.txt --seq2chain ${params.DATABASE}/Seq2Chain --output ${the_id}
+	mutation_suffix=\$(sed 's/;//' individual_list_${the_id}.txt |sed 's/,//')
+	pdbfile=\$(cat ${the_id}_pdb.txt )
 	ln -s ${params.PDBFILEFIXED}/\$pdbfile
-	foldx --command=BuildModel --pdb=\$pdbfile --mutant-file=individual_list_${name}.txt
-	mv Dif_*.fxout ${name}_\${mutation_suffix}.fxout
-	mv  WT_*.pdb  WT_${name}_repaired.pdb
+	foldx --command=BuildModel --pdb=\$pdbfile --mutant-file=individual_list_${the_id}.txt
+	mv Dif_*.fxout ${the_id}_\${mutation_suffix}_suffixed.fxout
+	mv  WT_*.pdb  WT_${the_id}_repaired.pdb
+	mv *_1.pdb ${the_id}_mutant.pdb
+	build_encom -i ${the_id}_mutant.pdb -cov ${the_id}.cov -o ${the_id}.eigen
+	freesasa -n 200 ${the_id}_mutant.pdb >${the_id}_mut.sasa
+	stride -f ${the_id}_mutant.pdb -h >Hbond_${the_id}_wt.dat
+
 	"""
 }
 
-// encom 
 
+
+// encom 
 
 process encom {
 	input: 
 		val(variant) from vars4encom.flatMap()
 		file(pdb_mutant) from mutant_structure_encom
-		file(mutfile) from mutation_dif_file
+		file(mutfile) from mutation_dif_file_encom
 	output: 
 		file "${var_name}.cov" into covarience
-		file "${var_name}.eigen"
+		file "${var_name}.eigen" into eigen_mut
+		file "$pdb_mutant" into mutant_structure_freesasa
 		val var_name into var_ID1, var_ID2
 	 script: 
 	 	var_name = mutfile.baseName.replaceFirst(".fxout","")
@@ -189,35 +211,78 @@ process encom {
 process freesasa {
 	input: 
 		file(pdb_mutant) from mutant_structure_freesasa
+		file(pdb_wt) from wt_PDB_repaired_freesasa
 		val var_name from var_ID1
+	output: 
+		file "${var_name}_mut.sasa" into freesasa_mut
+		file "${var_name}_wt.sasa" into freesasa_wt
+		file "${var_name}_perAA.sasa" into perAA_wt_sasa
+		file "$pdb_mutant" into mutant_structure_stride
+		file "$pdb_wt" into wt_PDB_repaired_stride
+
 	"""
-	freesasa --format seq -n 200 $pdb_mutant >${var_name}.sasa
+	freesasa -n 200 $pdb_wt >${var_name}_wt.sasa
+	freesasa  -n 200 $pdb_mutant >${var_name}_mut.sasa
+	freesasa --format seq -n 200 $pdb_wt >${var_name}_perAA.sasa  
 	"""
 
 }
+
 
 
 process stride {
 	input: 
-		file(pdb_mutant) from mutant_structure_automute
-		file(pdb_wt) from wt_PDB_repaired
+		file(pdb_mutant) from mutant_structure_stride
+		file(pdb_wt) from wt_PDB_repaired_stride
 		val(var_name) from var_ID2
+		val flag from done_ch
 	output: 
-		file "Hbond_${var_name}_mut.dat"
-		file "Hbond_${var_name}_wt.dat"
+		file "Hbond_${var_name}_mut.dat" into hbond_mut
+		file "Hbond_${var_name}_wt.dat" into hbond_wt
 	"""
-	stride -f $pdb_mutant  -h >Hbond_${var_name}_mut.dat
-	stride -f $pdb_wt  -h >Hbond_${var_name}_wt.dat
-
+	stride -f $pdb_mutant -h >Hbond_${var_name}_mut.dat
+	stride -f $pdb_wt -h >Hbond_${var_name}_wt.dat
 	"""
-
 
 }
 
-// automute 
+
+process collect {
+	input: 
+		file(dif_file) from mutation_dif_file_collect
+		file(indiv) from indiv_file 
+		file(mut_hbond) from hbond_mut
+		file(wt_hbond) from hbond_wt
+		file(sasa_perAA) from perAA_wt_sasa
+		file(mut_sasa) from freesasa_mut
+		file(wt_sasa) from freesasa_wt
+		file(mod_mut) from eigen_mut
+		file(mut_structure) from mutant_structure_collection
+		file(wt_structure) from wt_PDB_repaired_collection
+		file(guide) from guidingFile
+		file(coor_in_seq) from seq_coord 
+
+	"""
+	name_up=\$(awk {'print \$2'} $guide)
+	gene_names=\$(awk {'print \$1'} $guide)
+	coor_in_ref=\$(awk {'print \$1'} $coor_in_seq)
 
 
-// stride 
+	#python  ${params.SCRIPTHOME}/parseOutput.py --diff $dif_file  \
+	#										    --matrix ${params.MATRICES}/blosum62.txt \
+	#										    --stride $mut_hbond \
+	#										    --freesasa $mut_sasa \
+	#										    --freesasaWT $wt_sasa \
+	#										    --aasasa $sasa_perAA \
+	#										    --indiv $indiv \
+	#										    --pdbMut $mut_structure \
+	#										    --pdbWT $wt_structure \
+	#										    --modesMut $mod_mut \
+	#										    --modesWT ${params.DATABASE}/ENCoM/\$name_up.eige \
+	#										    --pssm ${params.DATABASE}/PSSMs/\$gene_names.pssm \
 
-//
+
+	"""
+}
+
 
