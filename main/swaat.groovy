@@ -26,7 +26,7 @@ params.PDBFILESPATH = "/home/houcemeddine/BILIM/testing_SWAAT/PDBs"
 // home to PDBs 
 params.PDBFILEFIXED = "/home/houcemeddine/BILIM/testing_SWAAT/PDBs" 
 // Home to folder containing Blosum62, Grantham and Sneath matrices
-params.MATRICES="/home/houcemeddine/BILIM/testing_SWAAT/matrices"
+params.MATRICES="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/matrices/"
 
 
 
@@ -141,7 +141,7 @@ process generateGuidingFile {
 	publishDir "/home/houcemeddine/BILIM/SWAAT/main/out" , mode:'copy'
 	"""
 	id=\$(echo $variant |sed 's/ /-/g')
-	touch \$id.id
+	echo $variant > \$id.id
 	gene=\$(echo $variant| awk {'print \$1'}  )
 	filename=\$(echo \$gene.fa )
 	echo \$filename >mygene
@@ -163,6 +163,15 @@ process foldX {
 	 	file "WT_${the_id}_repaired.pdb" into wt_PDB_repaired_freesasa, wt_PDB_repaired_collection
 	 	file "individual_list_${the_id}.txt" into indiv_file
 	 	file "seq_coord_${the_id}.txt" into seq_coord
+	 	file "${the_id}_pdb.txt" into pdbid
+	 	file "*.pointer" into pointer_ID_uniprot
+	 	file "${the_id}.eigen" into eigen_mut
+	 	file "${the_id}_mut.sasa" into freesasa_mut
+		file "${the_id}_wt.sasa" into freesasa_wt
+		file "${the_id}_perAA.sasa" into perAA_wt_sasa
+		file "Hbond_${the_id}_mut.dat" into hbond_mut
+		file "Hbond_${the_id}_wt.dat" into hbond_wt
+		file(my_id) into varid
 	 	val true into done_ch
 
 	 script:
@@ -173,20 +182,78 @@ process foldX {
 	python  ${params.SCRIPTHOME}/processFoldX.py --var seq_coord_${the_id}.txt --seq2chain ${params.DATABASE}/Seq2Chain --output ${the_id}
 	mutation_suffix=\$(sed 's/;//' individual_list_${the_id}.txt |sed 's/,//')
 	pdbfile=\$(cat ${the_id}_pdb.txt )
+	Uniprot=\$(basename \$pdbfile .pdb)
+	touch \$Uniprot.pointer 
 	ln -s ${params.PDBFILEFIXED}/\$pdbfile
 	foldx --command=BuildModel --pdb=\$pdbfile --mutant-file=individual_list_${the_id}.txt
 	mv Dif_*.fxout ${the_id}_\${mutation_suffix}_suffixed.fxout
 	mv  WT_*.pdb  WT_${the_id}_repaired.pdb
 	mv *_1.pdb ${the_id}_mutant.pdb
+
+
 	build_encom -i ${the_id}_mutant.pdb -cov ${the_id}.cov -o ${the_id}.eigen
+	
 	freesasa -n 200 ${the_id}_mutant.pdb >${the_id}_mut.sasa
-	stride -f ${the_id}_mutant.pdb -h >Hbond_${the_id}_wt.dat
+	freesasa -n 200 WT_${the_id}_repaired.pdb >${the_id}_wt.sasa
+	freesasa --format seq -n 200 WT_${the_id}_repaired.pdb >${the_id}_perAA.sasa 
+
+	stride -f ${the_id}_mutant.pdb -h >Hbond_${the_id}_mut.dat
+	stride -f WT_${the_id}_repaired.pdb -h >Hbond_${the_id}_wt.dat
 
 	"""
 }
 
 
+process collect {
+	echo true
+	input: 
+		file(dif_file) from mutation_dif_file_collect
+		file(indiv) from indiv_file 
+		file(mut_hbond) from hbond_mut
+		file(wt_hbond) from hbond_wt
+		file(sasa_perAA) from perAA_wt_sasa
+		file(mut_sasa) from freesasa_mut
+		file(wt_sasa) from freesasa_wt
+		file(mod_mut) from eigen_mut
+		file(mut_structure) from mutant_structure_collection
+		file(wt_structure) from wt_PDB_repaired_collection
+		file(guide) from guidingFile
+		file(coor_in_seq) from seq_coord 
+		file(myWTpdb) from pdbid
+		file(pointer) from pointer_ID_uniprot
+		file(var_id) from varid
 
+	"""
+	gene_names=\$(awk {'print \$1'} $var_id)
+	coor_in_ref=\$(awk {'print \$1'} $coor_in_seq)
+	
+	ID=\$(basename $pointer .pointer )
+	eigefile=\$(echo \$ID.eige)
+	echo \$eigefile
+
+
+
+	python  ${params.SCRIPTHOME}/parseOutput.py --diff $dif_file  \
+											    --matrix ${params.MATRICES}/blosum62.txt \
+											    --stride $mut_hbond \
+											    --freesasa $mut_sasa \
+												--sneath ${params.MATRICES}/sneath.txt \
+												--grantham ${params.MATRICES}/grantham.txt \
+											    --freesasaWT $wt_sasa \
+											    --aasasa $sasa_perAA \
+											    --indiv $indiv \
+											    --pdbMut $mut_structure \
+											    --pdbWT $wt_structure \
+											    --modesMut $mod_mut \
+											    --modesWT ${params.DATABASE}/ENCoM/\$eigefile \
+											    --pssm ${params.DATABASE}/PSSMs/\$gene_names.pssm \
+											    --genename \$gene_names
+
+
+	"""
+}
+
+/*
 // encom 
 
 process encom {
@@ -229,7 +296,6 @@ process freesasa {
 }
 
 
-
 process stride {
 	input: 
 		file(pdb_mutant) from mutant_structure_stride
@@ -247,7 +313,9 @@ process stride {
 }
 
 
+
 process collect {
+	echo true
 	input: 
 		file(dif_file) from mutation_dif_file_collect
 		file(indiv) from indiv_file 
@@ -261,28 +329,37 @@ process collect {
 		file(wt_structure) from wt_PDB_repaired_collection
 		file(guide) from guidingFile
 		file(coor_in_seq) from seq_coord 
+		file(myWTpdb) from pdbid
+		file(pointer) from pointer_ID_uniprot
 
 	"""
 	name_up=\$(awk {'print \$2'} $guide)
 	gene_names=\$(awk {'print \$1'} $guide)
 	coor_in_ref=\$(awk {'print \$1'} $coor_in_seq)
+	
+	ID=\$(basename $pointer .pointer )
+	eigefile=\$(echo \$ID.eige)
+	echo \$eigefile
 
 
-	#python  ${params.SCRIPTHOME}/parseOutput.py --diff $dif_file  \
-	#										    --matrix ${params.MATRICES}/blosum62.txt \
-	#										    --stride $mut_hbond \
-	#										    --freesasa $mut_sasa \
-	#										    --freesasaWT $wt_sasa \
-	#										    --aasasa $sasa_perAA \
-	#										    --indiv $indiv \
-	#										    --pdbMut $mut_structure \
-	#										    --pdbWT $wt_structure \
-	#										    --modesMut $mod_mut \
-	#										    --modesWT ${params.DATABASE}/ENCoM/\$name_up.eige \
-	#										    --pssm ${params.DATABASE}/PSSMs/\$gene_names.pssm \
+
+	python  ${params.SCRIPTHOME}/parseOutput.py --diff $dif_file  \
+											    --matrix ${params.MATRICES}/blosum62.txt \
+											    --stride $mut_hbond \
+											    --freesasa $mut_sasa \
+												--sneath ${params.MATRICES}/sneath.txt \
+												--grantham ${params.MATRICES}/grantham.txt \
+											    --freesasaWT $wt_sasa \
+											    --aasasa $sasa_perAA \
+											    --indiv $indiv \
+											    --pdbMut $mut_structure \
+											    --pdbWT $wt_structure \
+											    --modesMut $mod_mut \
+											    --modesWT ${params.DATABASE}/ENCoM/\$eigefile \
+											    --pssm ${params.DATABASE}/PSSMs/\$gene_names.pssm \
 
 
 	"""
 }
 
-
+*/
