@@ -455,6 +455,7 @@ def getVolume(foldxIndivFile):
 	mut = amino_acids[indiv[1]]
 	return volume[wt], volume[mut]
 
+
 parser = argparse.ArgumentParser(description=" A script to extract and calculate data from \
 									FoldX, ENcom, Automutate2, stride and freesasa.")
 
@@ -473,6 +474,10 @@ parser.add_argument("--pdbWT", help="PDB structure of the reference")
 parser.add_argument("--pssm", help="Path to BLAST PSSM file")
 parser.add_argument("--output", help="outputfile")
 parser.add_argument("--grantham", help="Grantham matrix file")
+parser.add_argument("--sneath", help="Sneath matrix file")
+parser.add_argument("--genename", help="Gene name")
+
+
 
 
 args = parser.parse_args()
@@ -486,14 +491,14 @@ if __name__ == "__main__":
 
 	chain = whatMutation(args.indiv)[3]
 	position = whatMutation(args.indiv)[2]
-	wt_res = position = whatMutation(args.indiv)[0]
-	mut_res = position = whatMutation(args.indiv)[1]
+	print(position)
+	wt_res =  whatMutation(args.indiv)[0]
+	mut_res =  whatMutation(args.indiv)[1]
 
 	try : 
 		energy = str( round(CollectFoldxEnergy(args.diff) ,3) )
 	except: 
 		energy = ""	
-
 
 	try:		
 		# RMSIP
@@ -520,6 +525,7 @@ if __name__ == "__main__":
 		score_blosum_class = blosumAaClass(args.indiv, args.matrix)
 		blusom = str( score_blosum_class[0] )
 		classwt = score_blosum_class[1]
+		print(classwt)
 		classmut = score_blosum_class[2]
 	except: 
 		blusom = ""
@@ -532,6 +538,14 @@ if __name__ == "__main__":
 
 	except: 
 		grantham = ""
+
+	try: 
+		# Sneath distance uses the same method for blosum matrix
+		score_sneath_class = blosumAaClass(args.indiv, args.sneath)
+		sneath = str( score_sneath_class[0] )
+
+	except: 
+		sneath = ""
 	try: 
 		# sasa
 		my_sasa = collectSASA(args.freesasa)
@@ -599,22 +613,19 @@ if __name__ == "__main__":
 	except:
 		volumeWT = ''
 		volumeMut = ''
-	try : 
-		mystructure = ParsePDB(args.pdbWT)
-		start_res =  mystructure.pdbAttributes(chain=chain)[0]
-		shift = start_res -1 
-		my_pssm = Pssm(args.pssm)
-		pssm_mut = str(my_pssm.getscore( position-shift, mut_res))
-		pssm_wt = str(my_pssm.getscore( position-shift, wt_res) )
-		print(my_pssm.getscore( position-shift, mut_res),',',my_pssm.getscore( position-shift, wt_res))
-	except: 
-		pssm_mut = ''
-		pssm_wt = ''
 
-	outputlist = [wt_res, mut_res, position ,chain, 
+
+	mystructure = ParsePDB(args.pdbWT)
+	start_res =  mystructure.pdbAttributes(chain=chain)[0]
+	my_pssm = Pssm(args.pssm)
+	pssm_mut = str(my_pssm.getscore( position, mut_res) )
+	pssm_wt = str(my_pssm.getscore( position, wt_res) )
+
+
+	outputlist = [args.genename, wt_res, mut_res, position ,chain, 
 				 energy, 
 				 ss, rmsip, entropy,
-				 blusom, classwt, classmut, 
+				 blusom, grantham, sneath, classwt, classmut, 
 				 sasa, sasaWT, 
 				 hb_mut, hb_wt, 
 				 is_salt_bridge_mut, is_salt_bridge_wt, 
@@ -623,14 +634,14 @@ if __name__ == "__main__":
 				 volumeWT, volumeMut, 
 				 pssm_mut, pssm_wt ]
 
-	outputheader = ['wt_res','mut_res', 'position', 'chain',  
+	outputheader = ['gene_name', 'wt_res','mut_res', 'position', 'chain',  
 					'dG', 
-					'SecStruc', 'RMSIP', 'dS', 'subScore',
-					 'classWT', 'classMut', 'sasa_mut', 
-					 'sasa_wt', 'hb_mut', 'hb_wt', 'sb_mut', 
-					 'sb_wt', 'sasa_ratio' , 
-					 'hyrophob_WT', 'hyrophob_Mut',
-					  'volume_WT', 'volume_Mut', 'pssm_mut', 'pssm_wt']
+					'SecStruc', 'RMSIP', 'dS', 'subScore', 'grantham','sneath',
+					'classWT', 'classMut', 'sasa_mut', 
+					'sasa_wt', 'hb_mut', 'hb_wt', 'sb_mut', 
+					'sb_wt', 'sasa_ratio' , 
+					'hyrophob_WT', 'hyrophob_Mut',
+					'volume_WT', 'volume_Mut', 'pssm_mut', 'pssm_wt']
 
 # create csv file 
 	with open( output+'/data.txt' , 'w') as file:
