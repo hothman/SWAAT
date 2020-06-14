@@ -25,6 +25,9 @@ transvar panno -i 'PIK3CA:p.E545K' --ucsc --ccds
 ```
 pip install biopython
 # Or if you prefer conda 
-conda install -c anaconda biopython 
+conda install -c anaconda biopython
+conda install -c anaconda pandas
+conda install -c anaconda scikit-learn 
+ 
 ```
 
