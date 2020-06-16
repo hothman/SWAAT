@@ -27,6 +27,8 @@ params.PDBFILESPATH = "/home/houcemeddine/BILIM/testing_SWAAT/PDBs"
 params.PDBFILEFIXED = "/home/houcemeddine/BILIM/testing_SWAAT/PDBs" 
 // Home to folder containing Blosum62, Grantham and Sneath matrices
 params.MATRICES="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/matrices/"
+// Path to the pickle file for Random forest prediction 
+params.RFMLM="/home/houcemeddine/BILIM/ADME_PGx/SnpsInPdb/MLmodel/swaat_rf.ML"
 
 
 
@@ -158,21 +160,7 @@ process foldX {
 	 	val variant from vars4foldx.flatMap()
 	 	file(my_id) from id
 	 output: 
-	 	file "${the_id}*.fxout" into mutation_dif_file_encom,  mutation_dif_file_collect
-	 	file "${the_id}_mutant.pdb" into mutant_structure_encom,  mutant_structure_collection
-	 	file "WT_${the_id}_repaired.pdb" into wt_PDB_repaired_freesasa, wt_PDB_repaired_collection
-	 	file "individual_list_${the_id}.txt" into indiv_file
-	 	file "seq_coord_${the_id}.txt" into seq_coord
-	 	file "${the_id}_pdb.txt" into pdbid
-	 	file "*.pointer" into pointer_ID_uniprot
-	 	file "${the_id}.eigen" into eigen_mut
-	 	file "${the_id}_mut.sasa" into freesasa_mut
-		file "${the_id}_wt.sasa" into freesasa_wt
-		file "${the_id}_perAA.sasa" into perAA_wt_sasa
-		file "Hbond_${the_id}_mut.dat" into hbond_mut
-		file "Hbond_${the_id}_wt.dat" into hbond_wt
-		file(my_id) into varid
-	 	val true into done_ch
+	 	file "${the_id}_swaat.csv"  into calculated_parameters
 
 	 script:
 		the_id = my_id.baseName.replaceFirst(".id","")
@@ -200,10 +188,34 @@ process foldX {
 	stride -f ${the_id}_mutant.pdb -h >Hbond_${the_id}_mut.dat
 	stride -f WT_${the_id}_repaired.pdb -h >Hbond_${the_id}_wt.dat
 
+	gene_names=\$(awk {'print \$1'} $my_id)
+	coor_in_ref=\$(awk {'print \$1'} seq_coord_${the_id}.txt) 
+
+	ID=\$(basename *.pointer .pointer )
+	eigefile=\$(echo \$ID.eige)
+
+
+	python  ${params.SCRIPTHOME}/parseOutput.py --diff ${the_id}*.fxout  \
+											    --matrix ${params.MATRICES}/blosum62.txt \
+											    --stride Hbond_${the_id}_mut.dat \
+											    --freesasa ${the_id}_mut.sasa \
+												--sneath ${params.MATRICES}/sneath.txt \
+												--grantham ${params.MATRICES}/grantham.txt \
+											    --freesasaWT ${the_id}_wt.sasa \
+											    --aasasa ${the_id}_perAA.sasa \
+											    --indiv individual_list_${the_id}.txt \
+											    --pdbMut ${the_id}_mutant.pdb \
+											    --pdbWT WT_${the_id}_repaired.pdb \
+											    --modesMut ${the_id}.eigen \
+											    --modesWT ${params.DATABASE}/ENCoM/\$eigefile \
+											    --pssm ${params.DATABASE}/PSSMs/\$gene_names.pssm \
+											    --genename \$gene_names \
+											    --output ${the_id}_swaat.csv
+
 	"""
 }
 
-
+/*
 process collect {
 	echo true
 	input: 
@@ -222,6 +234,12 @@ process collect {
 		file(myWTpdb) from pdbid
 		file(pointer) from pointer_ID_uniprot
 		file(var_id) from varid
+	output: 
+		file "${the_id}_swaat.csv"  into calculated_parameters
+	
+
+	script:
+		the_id = var_id.baseName.replaceFirst(".id","")
 
 	"""
 	gene_names=\$(awk {'print \$1'} $var_id)
@@ -229,7 +247,7 @@ process collect {
 	
 	ID=\$(basename $pointer .pointer )
 	eigefile=\$(echo \$ID.eige)
-	echo \$eigefile
+	cat  $var_id
 
 
 
@@ -247,119 +265,43 @@ process collect {
 											    --modesMut $mod_mut \
 											    --modesWT ${params.DATABASE}/ENCoM/\$eigefile \
 											    --pssm ${params.DATABASE}/PSSMs/\$gene_names.pssm \
-											    --genename \$gene_names
-
-
-	"""
-}
-
-/*
-// encom 
-
-process encom {
-	input: 
-		val(variant) from vars4encom.flatMap()
-		file(pdb_mutant) from mutant_structure_encom
-		file(mutfile) from mutation_dif_file_encom
-	output: 
-		file "${var_name}.cov" into covarience
-		file "${var_name}.eigen" into eigen_mut
-		file "$pdb_mutant" into mutant_structure_freesasa
-		val var_name into var_ID1, var_ID2
-	 script: 
-	 	var_name = mutfile.baseName.replaceFirst(".fxout","")
-
-	"""
-	build_encom -i $pdb_mutant -cov ${var_name}.cov -o ${var_name}.eigen
-	"""
-
-}
-
-process freesasa {
-	input: 
-		file(pdb_mutant) from mutant_structure_freesasa
-		file(pdb_wt) from wt_PDB_repaired_freesasa
-		val var_name from var_ID1
-	output: 
-		file "${var_name}_mut.sasa" into freesasa_mut
-		file "${var_name}_wt.sasa" into freesasa_wt
-		file "${var_name}_perAA.sasa" into perAA_wt_sasa
-		file "$pdb_mutant" into mutant_structure_stride
-		file "$pdb_wt" into wt_PDB_repaired_stride
-
-	"""
-	freesasa -n 200 $pdb_wt >${var_name}_wt.sasa
-	freesasa  -n 200 $pdb_mutant >${var_name}_mut.sasa
-	freesasa --format seq -n 200 $pdb_wt >${var_name}_perAA.sasa  
-	"""
-
-}
-
-
-process stride {
-	input: 
-		file(pdb_mutant) from mutant_structure_stride
-		file(pdb_wt) from wt_PDB_repaired_stride
-		val(var_name) from var_ID2
-		val flag from done_ch
-	output: 
-		file "Hbond_${var_name}_mut.dat" into hbond_mut
-		file "Hbond_${var_name}_wt.dat" into hbond_wt
-	"""
-	stride -f $pdb_mutant -h >Hbond_${var_name}_mut.dat
-	stride -f $pdb_wt -h >Hbond_${var_name}_wt.dat
-	"""
-
-}
-
-
-
-process collect {
-	echo true
-	input: 
-		file(dif_file) from mutation_dif_file_collect
-		file(indiv) from indiv_file 
-		file(mut_hbond) from hbond_mut
-		file(wt_hbond) from hbond_wt
-		file(sasa_perAA) from perAA_wt_sasa
-		file(mut_sasa) from freesasa_mut
-		file(wt_sasa) from freesasa_wt
-		file(mod_mut) from eigen_mut
-		file(mut_structure) from mutant_structure_collection
-		file(wt_structure) from wt_PDB_repaired_collection
-		file(guide) from guidingFile
-		file(coor_in_seq) from seq_coord 
-		file(myWTpdb) from pdbid
-		file(pointer) from pointer_ID_uniprot
-
-	"""
-	name_up=\$(awk {'print \$2'} $guide)
-	gene_names=\$(awk {'print \$1'} $guide)
-	coor_in_ref=\$(awk {'print \$1'} $coor_in_seq)
-	
-	ID=\$(basename $pointer .pointer )
-	eigefile=\$(echo \$ID.eige)
-	echo \$eigefile
-
-
-
-	python  ${params.SCRIPTHOME}/parseOutput.py --diff $dif_file  \
-											    --matrix ${params.MATRICES}/blosum62.txt \
-											    --stride $mut_hbond \
-											    --freesasa $mut_sasa \
-												--sneath ${params.MATRICES}/sneath.txt \
-												--grantham ${params.MATRICES}/grantham.txt \
-											    --freesasaWT $wt_sasa \
-											    --aasasa $sasa_perAA \
-											    --indiv $indiv \
-											    --pdbMut $mut_structure \
-											    --pdbWT $wt_structure \
-											    --modesMut $mod_mut \
-											    --modesWT ${params.DATABASE}/ENCoM/\$eigefile \
-											    --pssm ${params.DATABASE}/PSSMs/\$gene_names.pssm \
+											    --genename \$gene_names \
+											    --output ${the_id}_swaat.csv
 
 
 	"""
 }
 
 */
+data_vars = calculated_parameters.collectFile(name: "./swaatall" ,  newLine: false, skip: 1, keepHeader: true)
+
+
+process predict_var  {
+	input: 
+		file(data4allAavars) from data_vars
+
+	output: 
+		file "predicted_outcomes.csv" into predicted_outcomes
+
+	"""
+	python ${params.SCRIPTHOME}/deployML.py --inputdata ${data4allAavars} --modelpickle ${params.RFMLM} --output predicted_outcomes.csv 
+	"""
+
+
+} 
+
+
+process formatReport {
+	input: 
+		file vars from var2aa_report.collect()
+
+	"""
+	for treeFile in ${vars}
+	do
+		tail -n +2 \$treeFile >>allVariantsInOneFile.csv
+	done
+
+	"""
+
+}
+
