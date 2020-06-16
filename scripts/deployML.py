@@ -34,9 +34,10 @@ def predictVariant(test_data_frame):
 	#result = loaded_model.score(test_data_frame)
 	# 0: no effect, has an effect: with effect deleterious or stabilizing 
 	predictions = loaded_model.predict(test_data_frame)
+	print(predictions)
 	return predictions
 
-def outputPredictions(dataframe, predictions, output="predictions_swaat.csv"):
+def outputPredictions(dataframe, predictions, output):
 	dataframe["swaat_prediction"]=predictions
 	dataframe.to_csv(output, index=False)
 
@@ -50,17 +51,18 @@ if __name__ == "__main__":
 	parser.add_argument("--output", help="outputname")
 	args = parser.parse_args()
 	MODELHOME=args.modelpickle
-	try:
-		outpufile = args.output
-	except: 
-		outputfile= "predictions_swaat.csv"
 
 
 	#MODELHOME="/home/houcemeddine/BILIM/ADME_PGx/SnpsInPdb/MLmodel/swaat_rf.ML"
 	#file="/home/houcemeddine/BILIM/SWAAT/main/swaatall"
 	cleandf, rawdf = cleanData(args.inputdata)
 	predictions=predictVariant(cleandf)
-	outputPredictions(rawdf,predictions )
+
+	if args.output == None:
+		outputPredictions(rawdf,predictions, output="predictions_swaat.csv" )
+		
+	else: 
+		outputPredictions(rawdf,predictions, output= args.output )
 
 
 
