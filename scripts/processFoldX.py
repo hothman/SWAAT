@@ -54,6 +54,5 @@ if __name__ == "__main__":
 	myvar = readVar(args.var)
 	# myindiv = scanFolder("/home/houcemeddine/BILIM/testing_SWAAT/myoutput/Seq2Chain/", myvar)
 	myindiv = scanFolder(args.seq2chain, myvar)
-	print(myindiv)
 	# outputfile(myindiv, "output_4swaat.indiv", "pdbfile.txt")
 	outputfile(myindiv, "individual_list_"+args.output+".txt", args.output+"_pdb.txt")

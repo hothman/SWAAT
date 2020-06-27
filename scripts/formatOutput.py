@@ -7,7 +7,8 @@ __email__ = "houcemoo@gmail.com"
 
 import pandas as pd 
 import re as re 
-
+import datetime as dt
+import glob  
 
 features = { 1:'signal peptide', 
 2: 'propeptide',
@@ -32,6 +33,21 @@ features = { 1:'signal peptide',
 uniprot2PDBmapHOME="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/sequences"
 ANNOTATIONHOME="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/prot_annotation"
 HOTSPOTSPATCHES="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/hotspots"
+UNIPROT2PDBHOME="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/uniprot2PDBmap"
+
+
+template_header= """
+  
+<!DOCTYPE html>
+<html>
+<head>
+	<title>{0}</title>
+	<h1>{0}</h1> 
+	<h2>{1}</h2> 
+</head>
+
+""".format("SWAAT report",  dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
 
 class cleanData:
 	"""docstring for cleanData"""
@@ -55,9 +71,19 @@ class cleanData:
 		self.predicted_data["var_id"]=list1
 		# generate the ID column for var_data
 		self.var_data["var_id"] = list2
-
 		self.merged_data = pd.merge(self.var_data, self.predicted_data,on='var_id',how='left')
-		print(self.merged_data)
+
+	def addAnnotation(self):
+		annotation = getAnnotationList(self.merged_data)
+		hotspotpatch = getHotSpotPatch(self.merged_data)
+		coverage = isCovered(self.merged_data)
+		self.merged_data["annotation"] = annotation
+		self.merged_data["hotspotpatch"] = hotspotpatch
+		self.merged_data["Covered by the structure"] = coverage
+
+
+
+
 
 def _getUNIPROT(genename):
     """
@@ -85,6 +111,23 @@ def _getAnnotation(genename, res_position):
             annot_list.append(all_annotation)    
     return '\n'.join(annot_list)
 
+def isCovered(combineddataframe):
+	inrange_list=[]
+	for i in range(0,len(combineddataframe)):
+		gene = combineddataframe.iloc[i]['gene_name_x']
+		
+		mapfile = UNIPROT2PDBHOME+"/"+gene+"*.tsv"
+		path_to_map=glob.glob(mapfile)[0]    # because pandas does not read wildcards 
+
+		map_data=pd.read_csv(path_to_map, sep="\t", comment='#')
+		list_of_covered_residues = map_data.ID
+		if combineddataframe.iloc[i]['AA_position'] in list_of_covered_residues: 
+			inrange_list.append(True)
+		else: 
+			inrange_list.append(False)
+	return inrange_list
+		
+
 
 def getAnnotationList(combineddataframe):
     """
@@ -100,25 +143,122 @@ def getAnnotationList(combineddataframe):
     return annotation_list
 
 def getHotSpotPatch(combineddataframe): 
-    gene = combineddataframe.iloc[i]['gene_name_x']
-    uniprot= _getUNIPROT(gene) 
-    hotspot_file = HOTSPOTSPATCHES+"/"+uniprot+"_residueClus.csv"
-    hs_data = pd.read_csv(hotspot_file)
     hs_list = []
     for index in range(0,len(combineddataframe)) :
-        aa_position = combineddataframe.iloc[i]['AA_position']
+        gene = combineddataframe.iloc[index]['gene_name_x']
+        uniprot= _getUNIPROT(gene) 
+        hotspot_file = HOTSPOTSPATCHES+"/"+uniprot+"_residueClus.csv"
+        hs_data = pd.read_csv(hotspot_file)
+        aa_position = combineddataframe.iloc[index]['AA_position']
         if aa_position in hs_data["res_ID"]: 
             hs_list.append("Hotspot patch")
         else: 
-            hs_list.append("Not a hotspot")    
+            hs_list.append("Not a hotspot") 
     return hs_list
 
 
+class formatHtML(): 
+    def __init__(self, dataframe):
+        self.dataframe = dataframe
+
+    def list_of_genes(self) : 
+    	self.genes =  list( set(self.dataframe["gene_name_x"]) )
+
+    def _generalStatistics(self, gene):
+    	non_processed_aa= pd.DataFrame(columns = self.dataframe.columns)
+    	processed_aa = pd.DataFrame(columns = self.dataframe.columns)
+    	gene_dataframe = self.dataframe[self.dataframe["gene_name_x"] == gene]
+    	total_number_of_coding_variants = len(gene_dataframe)
+    	number_of_indels = 0
+    	for i in range(0, len(gene_dataframe)) : 
+    		if "_" in  gene_dataframe.iloc[i].mutant_AA : 
+    			number_of_indels =+ 1
+
+    		if  pd.isnull(gene_dataframe.iloc[i].swaat_prediction) :
+    			non_processed_aa = non_processed_aa.append(gene_dataframe.iloc[i]) 
+    		else: 
+    			#print(gene_dataframe.iloc[i])
+    			processed_aa = processed_aa.append(gene_dataframe.iloc[i], ignore_index=True) 
+    	return total_number_of_coding_variants, number_of_indels, len(non_processed_aa), len(processed_aa), non_processed_aa, processed_aa
+
+    def _cleanHtmlDf(self, dataframe1):
+    	dataframe1 = dataframe1.drop(columns=["gene_name_x", "gene_name_y", "wt_res","var_id", "mut_res"
+    		, "position_y", "subScore", "grantham", "sneath", "classWT", 
+    		"classMut", "sasa_mut", "sasa_wt", "hyrophob_WT", "hyrophob_Mut", 
+    		"volume_WT", "volume_Mut", "pssm_mut", "pssm_wt"])
+
+    	dataframe1.columns =["Chromosome", "position", "Reference Allele",
+    	 "Aternative allele", "Reference residue", "Residue position", "Residue variant", 
+    	 "Chain", "dG (kcal/mol)", "Secondary structure", "RMSIP", "dS (kcal/mol)", "#hydrogen bonds ref", 
+    	 "#hydrogen bonds var", "#salt bridges ref", "#salt bridges var", "SASA ratio", "ML prediction", "annotation", "Hotspot Patch", "Covered by the structure" ]
+
+    	return dataframe1
+
+
+
+    def outputHtml(self): 
+    	with open("swaat.html", "w") as file:
+    		file.write(template_header) 
+    		file.write("<ul>")
+    		for gene in self.genes : 
+    			file.write("<li><a href='https://www.uniprot.org/'>{0}</a> </li>".format(gene))
+    		file.write("</ul>")
+
+    		for gene in self.genes: 
+    			# reporting counts of variants by category 
+    			n_variants, n_indels, n_non_processed, n_processed, df_nonprecessed, df_processed = self._generalStatistics(gene)
+    			file.write("<h3>{0}</h3>".format(gene))
+    			file.write("<p style='margin-left: 40px' >Total number of coding variants: {0}  \
+    				<ul> <li> Processed variants: {1} </li> \
+    				     <li> Non processed variants: {2} </li> \
+    				     <li> indels: {3} </li> </ul> </p>".format(n_variants, n_processed, n_non_processed, n_indels))
+
+    			file.write(self.dataframe.to_html(index=False))
+    			# subset varisnts only for 'gene'
+    			vars_for_gene = self.dataframe[self.dataframe["gene_name_x"] == gene]
+    			print(vars_for_gene)
+
+
+    			# report non covered 
+    			file.write("<h4>Non processed variants summary</h4>")
+    			if vars_for_gene[vars_for_gene["Covered by the structure"] == False].empty : 
+    				file.write("<p>All variants are covered by the PDB structure</p>")
+    			else: 
+    				html_non_processed = vars_for_gene[vars_for_gene["Covered by the structure"] == False].to_html(index=False)
+    				file.write(html_non_processed)
+
+    			# report indels 
+    			file.write("<h4>Indels summary</h4>")
+    			indel_table = vars_for_gene[vars_for_gene["mutant_AA"] == "_"]
+    			file.write(indel_table.to_html(index=False))
+
+
+    			# reporting details for processed variants
+    			df_processed = self._cleanHtmlDf(df_processed)
+    			file.write("<h4>Processed variants summary</h4>")
+
+    			html_processed = df_processed.to_html(index=False)
+    			file.write(html_processed)
+    			file.write("<hr>")
+
+
+    			
+
+
+
+
+
+
+
+
+    
 
 instance = cleanData("/home/houcemeddine/BILIM/SWAAT/main/work/0f/bc7f5cd1366e0d39af480d8b1152fb/predicted_outcomes.csv",
 "/home/houcemeddine/BILIM/SWAAT/main/work/97/2644424bab5a4c4feb16bd21f3ca97/allVariantsInOneFile.csv" )
 
 instance.readFiles()
-
 instance.cleanDf()
-
+instance.addAnnotation()
+html = formatHtML( instance.merged_data)
+html.list_of_genes()
+html.outputHtml()

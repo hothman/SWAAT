@@ -483,7 +483,7 @@ parser.add_argument("--genename", help="Gene name")
 args = parser.parse_args()
 
 if not args.output:  
-    output = './'
+    output = './data.txt'
 else:
 	output = args.output
 
@@ -491,7 +491,6 @@ if __name__ == "__main__":
 
 	chain = whatMutation(args.indiv)[3]
 	position = whatMutation(args.indiv)[2]
-	print(position)
 	wt_res =  whatMutation(args.indiv)[0]
 	mut_res =  whatMutation(args.indiv)[1]
 
@@ -525,7 +524,6 @@ if __name__ == "__main__":
 		score_blosum_class = blosumAaClass(args.indiv, args.matrix)
 		blusom = str( score_blosum_class[0] )
 		classwt = score_blosum_class[1]
-		print(classwt)
 		classmut = score_blosum_class[2]
 	except: 
 		blusom = ""
@@ -617,9 +615,13 @@ if __name__ == "__main__":
 
 	mystructure = ParsePDB(args.pdbWT)
 	start_res =  mystructure.pdbAttributes(chain=chain)[0]
-	my_pssm = Pssm(args.pssm)
-	pssm_mut = str(my_pssm.getscore( position, mut_res) )
-	pssm_wt = str(my_pssm.getscore( position, wt_res) )
+	try:
+		my_pssm = Pssm(args.pssm)
+		pssm_mut = str(my_pssm.getscore( position, mut_res) )
+		pssm_wt = str(my_pssm.getscore( position, wt_res) )
+	except: 
+		pssm_mut=""
+		pssm_wt=""
 
 
 	outputlist = [args.genename, wt_res, mut_res, position ,chain, 
@@ -644,7 +646,7 @@ if __name__ == "__main__":
 					'volume_WT', 'volume_Mut', 'pssm_mut', 'pssm_wt']
 
 # create csv file 
-	with open( output+'/data.txt' , 'w') as file:
+	with open( output , 'w') as file:
 		file.writelines( ','.join( outputheader  )+'\n' )
 		file.writelines( ','.join( str(item) for item in outputlist  )+'\n' )
 
