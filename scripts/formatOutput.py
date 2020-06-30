@@ -28,7 +28,7 @@ features = { 1:'signal peptide',
 16: 'residue involved in covalent binding of a lipid moiety',
 17: 'residue involved in the attachment with a glycan group',
 18: 'residue involved in a disulfide bond',
-19: 'residue involved with a crosslink bondin gwith another amino acid'}
+19: 'residue involved with a crosslink bonding with another amino acid'}
 
 uniprot2PDBmapHOME="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/sequences"
 ANNOTATIONHOME="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/prot_annotation"
@@ -39,11 +39,30 @@ UNIPROT2PDBHOME="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/uniprot2PDBmap"
 template_header= """
   
 <!DOCTYPE html>
+<style>
+body {{ font-family: sans-serif; 
+}}
+table, td, th {{
+    background: #f5f5f5;
+    border-collapse: collapse;
+    border: 1px solid silver;
+    box-shadow: inset 0 1px 0 #fff;
+    font-size: 10px;
+    line-height: 24px;
+    margin: 40px auto;
+    text-align: left;
+    width: 800px;
+
+}}
+</style>
+
 <html>
 <head>
 	<title>{0}</title>
 	<h1>{0}</h1> 
 	<h2>{1}</h2> 
+	<p> Please consider citing the following reference for SWAAT</p>
+
 </head>
 
 """.format("SWAAT report",  dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
@@ -185,14 +204,25 @@ class formatHtML():
     	dataframe1 = dataframe1.drop(columns=["gene_name_x", "gene_name_y", "wt_res","var_id", "mut_res"
     		, "position_y", "subScore", "grantham", "sneath", "classWT", 
     		"classMut", "sasa_mut", "sasa_wt", "hyrophob_WT", "hyrophob_Mut", 
-    		"volume_WT", "volume_Mut", "pssm_mut", "pssm_wt"])
+    		"volume_WT", "volume_Mut", "pssm_mut", "pssm_wt", "Covered by the structure"])
 
     	dataframe1.columns =["Chromosome", "position", "Reference Allele",
     	 "Aternative allele", "Reference residue", "Residue position", "Residue variant", 
     	 "Chain", "dG (kcal/mol)", "Secondary structure", "RMSIP", "dS (kcal/mol)", "#hydrogen bonds ref", 
-    	 "#hydrogen bonds var", "#salt bridges ref", "#salt bridges var", "SASA ratio", "ML prediction", "annotation", "Hotspot Patch", "Covered by the structure" ]
-
+    	 "#hydrogen bonds var", "#salt bridges ref", "#salt bridges var", "SASA ratio", "ML prediction", "annotation", "Hotspot Patch"]
     	return dataframe1
+
+    def _cleanIndels(self, dataframe): 
+    	newdf = (dataframe[["gene_name_x" ,"chromosome" ,"position_x" ,"ref_allele" ,"alt_allele", "ref_AA" ,"AA_position", "annotation"]])
+    	newdf.columns= ["Gene name", "Chromosome", "Position", "Reference Allele", "Aternative allele", "Reference residue", "Residue position", "annotation" ]
+    	return newdf
+
+    def _cleanNonProcessed(self, dataframe):
+    	newdf = (dataframe[["gene_name_x" ,"chromosome" ,"position_x" ,"ref_allele" ,"alt_allele", "annotation"]])
+    	newdf.columns= ["Gene name", "Chromosome", "Position", "Reference Allele", "Aternative allele", "annotation" ]
+    	return newdf
+
+
 
 
 
@@ -213,10 +243,8 @@ class formatHtML():
     				     <li> Non processed variants: {2} </li> \
     				     <li> indels: {3} </li> </ul> </p>".format(n_variants, n_processed, n_non_processed, n_indels))
 
-    			file.write(self.dataframe.to_html(index=False))
     			# subset varisnts only for 'gene'
     			vars_for_gene = self.dataframe[self.dataframe["gene_name_x"] == gene]
-    			print(vars_for_gene)
 
 
     			# report non covered 
@@ -228,9 +256,12 @@ class formatHtML():
     				file.write(html_non_processed)
 
     			# report indels 
-    			file.write("<h4>Indels summary</h4>")
+    			
     			indel_table = vars_for_gene[vars_for_gene["mutant_AA"] == "_"]
-    			file.write(indel_table.to_html(index=False))
+    			if not indel_table.empty:
+    				file.write("<h4>Indels summary</h4>")
+    				indel_table = self._cleanIndels(indel_table)
+    				file.write(indel_table.to_html(index=False))
 
 
     			# reporting details for processed variants
@@ -242,15 +273,7 @@ class formatHtML():
     			file.write("<hr>")
 
 
-    			
-
-
-
-
-
-
-
-
+    		
     
 
 instance = cleanData("/home/houcemeddine/BILIM/SWAAT/main/work/0f/bc7f5cd1366e0d39af480d8b1152fb/predicted_outcomes.csv",
