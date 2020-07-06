@@ -13,6 +13,31 @@
 	*/
 
 
+// Where the running scripts are located 
+params.SCRIPTHOME = "/home/houcemeddine/BILIM/SWAAT/scripts/"
+// List of uniprot codes (one column with a header)
+params.PROTLIST = "/home/houcemeddine/BILIM/SWAT/list.csv"
+// PDB files 
+params.PDBFILESPATH="/home/houcemeddine/BILIM/testing_SWAAT/PDBs"
+// name and path of the output directory
+params.OUTFOLDER="/home/houcemeddine/BILIM/testing_SWAAT/myoutput"
+// 'false' if you don't want to calculate PSSMs for each protein
+params.calculate_PSSM = true
+// 'false' if you don't want to calculate the hotspot islands
+params.calculate_hotspots = true
+// path to FTMAP files 
+params.FTMAPPATH = 
+
+// Parameters that have to be set to run the calculation of PSSM (to run PRODRES pipeline) 
+// of each sequence
+params.PRODRESPATH = '/home/houcemeddine/modules/PRODRES/PRODRES'
+params.PRODRESDB = '/home/houcemeddine/modules/PRODRES/db/prodres_db.nr100.sqlite3'
+params.PRODRESPFAMSCAN = '/home/houcemeddine/modules/PRODRES/PfamScan/pfam_scan.pl'
+params.UNIREF90 = '/home/houcemeddine/modules/PRODRES/db/uniprot/uniref90.fasta'
+params.PFAM = '/home/houcemeddine/modules/PRODRES/db/pfam'
+
+
+
 PROTLIST = Channel.fromPath("$params.PROTLIST")
 // output sequences to 'sequences' directory 
 sequence_dir  = file("${params.OUTFOLDER}/sequences")
@@ -309,7 +334,6 @@ Y 30 34 36 36 34 37 29 28 32 32 29 34 34 34 34 36 0 13 21 23
 F 19 22 26 29 26 27 24 24 24 28 25 29 35 35 28 34 13 0 13 18
 W 30 34 37 39 36 37 31 32 31 38 35 37 43 45 34 36 21 13 0 25
 H 25 28 31 34 29 36 27 24 30 34 28 31 27 35 27 31 23 18 25 0" >sneath.txt
-
 	"""
 }
 
