@@ -74,49 +74,48 @@ class ParseUniprotAnnotation(object):
 		elif self.uniprot_accession != '':
 			raw_data = self._download_uniprot()
 		else: 
-			raise ValueError("Provide a Uniprot accession or a path to file.")
-		
+			raise ValueError("Provide a Uniprot accession or a path to file.")	
 
 		self.lines_to_output = []
+		sequence = []
 		for counter,line  in enumerate(raw_data) : 
 			is_feature = bool( re.match(r'^FT', line)  ) 
 			is_gene_name = bool( re.match(r'^GN\s+Name=', line)  ) 
 			is_uniprot_accession = bool( re.match(r'^AC', line)  ) 
 			is_refseq_accession = bool( re.match(r'^DR.+RefSeq;', line)  )
 			is_ensembl_accession = bool( re.match(r'^DR\s+Ensembl;', line)  )
-			
+			is_sequence = bool( re.match(r'^\s+', line)  )
+
+			# fill the sequence list (each emtpty line in the uniprot file)
+			if is_sequence: 
+				sequence.append(re.sub(r"[\s]", '', line))
+
 			# get transcript ID
-			try: transcript
+			try: self.transcript
 			except: 	
 				if is_refseq_accession:
 					for element in line.split(): 
 						if "NM_" in element: 
-							transcript = element.split('.')[0]
-							print(transcript)	
+							self.transcript = element.split('.')[0]
 
-			try: ensembl_id
+			try: self.ensembl_id
 			except: 
 				if is_ensembl_accession:
 					ll = line.split() 
 					for element in ll: 
 						if 'ENSG' in element: 
-							ensembl_id=element.replace('.','')
-							print(ensembl_id)
-
-
-
+							self.ensembl_id=element.replace('.','')
 			try: 
 				self.uniprot_accession
 			except:
 				if is_uniprot_accession : 
 					self.uniprot_accession = line.split()[1].replace(';', '' ) 
 			try:
-				gene_name
+				self.gene_name
 			except:
 				if is_gene_name: 
 					match = re.search(r'Name=\w+', line) 
-					gene_name = match.group().replace('Name=', '') 
-
+					self.gene_name = match.group().replace('Name=', '') 
 
 			if is_feature :
 				feature_splitted = re.split( "\s\s+" ,line) 
@@ -136,14 +135,15 @@ class ParseUniprotAnnotation(object):
 							end_residue = int( res_range[0])
 						residue_list_with_common_annotation =   list(range(start_residue,end_residue+1) ) 
 						for res in residue_list_with_common_annotation: 
-						 	self.lines_to_output.append( [str(res), gene_name, self.uniprot_accession , features[feature][1], specific_annotation] )
-		print(self.uniprot_accession, gene_name, transcript  )
+						 	self.lines_to_output.append( [str(res), self.gene_name, self.uniprot_accession , features[feature][1], specific_annotation] )
+
+		# join the sequence together 
+		self.sequence = ''.join(sequence) 
+		seq_header = ">{0}|{1}|{2}|{3}\n".format(self.uniprot_accession, self.gene_name, self.ensembl_id, self.transcript  )
+		self.sequence = seq_header+self.sequence
 		return self.lines_to_output, self.uniprot_accession
 		
-
-
 parser = argparse.ArgumentParser(description=" A script to pull annotations from uniprot file. Provide either the uniprot accession code a path to uniprot text file.")
-
 # add long and short argument
 parser.add_argument("--uniprot_file", help="PDB structure of the reference")
 parser.add_argument("--accession", help="Uniprot accession")
@@ -170,4 +170,9 @@ if __name__ == "__main__":
 		file.writelines( ','.join( outputheader  )+'\n' )
 		for line in annotation: 
 			file.writelines( ','.join( line  )+'\n' )
+	fasta_filename = myprot.gene_name+".fa"
+
+	print("print sequence file to {}".format(fasta_filename) )	
+	with open( fasta_filename, 'w' ) as fasta_file:
+		fasta_file.write(myprot.sequence)
 	
