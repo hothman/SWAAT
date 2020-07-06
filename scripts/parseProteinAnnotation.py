@@ -75,17 +75,20 @@ class ParseUniprotAnnotation(object):
 			raw_data = self._download_uniprot()
 		else: 
 			raise ValueError("Provide a Uniprot accession or a path to file.")
+		
 
 		self.lines_to_output = []
 		for counter,line  in enumerate(raw_data) : 
 			is_feature = bool( re.match(r'^FT', line)  ) 
-			is_gene_name = bool( re.match(r'^GN', line)  ) 
+			is_gene_name = bool( re.match(r'^GN\s+Name=', line)  ) 
 			is_uniprot_accession = bool( re.match(r'^AC', line)  ) 
+		
 			if is_uniprot_accession : 
 				self.uniprot_accession = line.split()[1].replace(';', '' ) 
 			if is_gene_name : 
 				match = re.search(r'Name=\w+', line) 
 				gene_name = match.group().replace('Name=', '') 
+				print(gene_name)
 			if is_feature :
 				feature_splitted = re.split( "\s\s+" ,line) 
 				for feature in KEYS : 
@@ -107,6 +110,7 @@ class ParseUniprotAnnotation(object):
 						for res in residue_list_with_common_annotation: 
 						 	self.lines_to_output.append( [str(res), gene_name, self.uniprot_accession , features[feature][1], specific_annotation] )
 		return self.lines_to_output, self.uniprot_accession
+		
 
 
 parser = argparse.ArgumentParser(description=" A script to pull annotations from uniprot file. Provide either the uniprot accession code a path to uniprot text file.")
@@ -129,7 +133,6 @@ if __name__ == "__main__":
 	elif args.uniprot_file != None: 
 		myprot=ParseUniprotAnnotation(uniprot_file = args.uniprot_file)
 	output_annotation = myprot.parse_uniprot() 
-	
 	annotation = output_annotation[0] 
 	output_name = output+'/'+output_annotation[1]+'_annotation.csv'
 	outputheader = ['residue_id', 'gene_symbol', 'uniprot_accession', 'annotation_tag' , 'note' ]
