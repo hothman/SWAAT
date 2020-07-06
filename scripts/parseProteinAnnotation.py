@@ -82,13 +82,42 @@ class ParseUniprotAnnotation(object):
 			is_feature = bool( re.match(r'^FT', line)  ) 
 			is_gene_name = bool( re.match(r'^GN\s+Name=', line)  ) 
 			is_uniprot_accession = bool( re.match(r'^AC', line)  ) 
-		
-			if is_uniprot_accession : 
-				self.uniprot_accession = line.split()[1].replace(';', '' ) 
-			if is_gene_name : 
-				match = re.search(r'Name=\w+', line) 
-				gene_name = match.group().replace('Name=', '') 
-				print(gene_name)
+			is_refseq_accession = bool( re.match(r'^DR.+RefSeq;', line)  )
+			is_ensembl_accession = bool( re.match(r'^DR\s+Ensembl;', line)  )
+			
+			# get transcript ID
+			try: transcript
+			except: 	
+				if is_refseq_accession:
+					for element in line.split(): 
+						if "NM_" in element: 
+							transcript = element.split('.')[0]
+							print(transcript)	
+
+			try: ensembl_id
+			except: 
+				if is_ensembl_accession:
+					ll = line.split() 
+					for element in ll: 
+						if 'ENSG' in element: 
+							ensembl_id=element.replace('.','')
+							print(ensembl_id)
+
+
+
+			try: 
+				self.uniprot_accession
+			except:
+				if is_uniprot_accession : 
+					self.uniprot_accession = line.split()[1].replace(';', '' ) 
+			try:
+				gene_name
+			except:
+				if is_gene_name: 
+					match = re.search(r'Name=\w+', line) 
+					gene_name = match.group().replace('Name=', '') 
+
+
 			if is_feature :
 				feature_splitted = re.split( "\s\s+" ,line) 
 				for feature in KEYS : 
@@ -97,7 +126,6 @@ class ParseUniprotAnnotation(object):
 							specific_annotation = raw_data[counter+1].split("note=")[-1].replace('"', '')
 						else: 
 							specific_annotation=""
-						print(specific_annotation)
 						anotation_line = re.split( "\s\s+" ,line) 
 						annotation_type = anotation_line[1]
 						res_range = anotation_line[-1].split("..")
@@ -109,6 +137,7 @@ class ParseUniprotAnnotation(object):
 						residue_list_with_common_annotation =   list(range(start_residue,end_residue+1) ) 
 						for res in residue_list_with_common_annotation: 
 						 	self.lines_to_output.append( [str(res), gene_name, self.uniprot_accession , features[feature][1], specific_annotation] )
+		print(self.uniprot_accession, gene_name, transcript  )
 		return self.lines_to_output, self.uniprot_accession
 		
 
