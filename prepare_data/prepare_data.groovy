@@ -27,7 +27,6 @@ params.calculate_PSSM = true
 params.calculate_hotspots = true
 // path to FTMAP files 
 params.FTMAPPATH = 
-
 // Parameters that have to be set to run the calculation of PSSM (to run PRODRES pipeline) 
 // of each sequence
 params.PRODRESPATH = '/home/houcemeddine/modules/PRODRES/PRODRES'
@@ -43,25 +42,11 @@ PROTLIST = Channel.fromPath("$params.PROTLIST")
 sequence_dir  = file("${params.OUTFOLDER}/sequences")
 sequence_dir.mkdir() 
 
-// fetch sequences 
-process GetSequences {
-	input: 
-		file proteins from PROTLIST
-	output:
-		file '*.fa' into sequences
-
-	publishDir sequence_dir, mode:'copy'
-
-	"""
-	Rscript ${params.SCRIPTHOME}/fetch_seq.R ${params.PROTLIST} ./
-	"""
-}
-
-
-sequences.into {seq_for_mapping ; seq_for_annotation ; seq_for_chains; seq_for_pdb}
-
 PROTLIST = Channel.fromPath("$params.PROTLIST")
-// output annotation files to the prot_annotation directory
+
+/* output annotation files to the prot_annotation directory
+   extracts the fasta file from Uniprot
+*/
 prot_annotation_dir  = file("${params.OUTFOLDER}/prot_annotation")
 prot_annotation_dir.mkdir() 
 
@@ -70,8 +55,10 @@ process GetProteinAnnotation {
 		file(list_of_proteins) from PROTLIST
 	output: 
 		file '*_annotation.csv' into prot_annotation_file
+		file '*.fa' into sequences 
 
 	publishDir prot_annotation_dir, mode:'copy'
+	publishDir sequence_dir, mode:'copy'
 
 	"""
 	tail -n +2  $list_of_proteins >list_of_uniprot_ids
@@ -83,6 +70,8 @@ process GetProteinAnnotation {
 	done < list_of_uniprot_ids
 	"""
 }
+
+sequences.into {seq_for_mapping ; seq_for_annotation ; seq_for_chains; seq_for_pdb}
 
 
 // output mapping files to the 'maps' directory
@@ -108,6 +97,7 @@ process GetCoordinates {
 /* 		which of the chains in the PDB file correspond to 
 		The sequence of the protein.
 */ 
+
 // output mapping files to the 'maps' directory
 seq2chain_dir  = file("${params.OUTFOLDER}/Seq2Chain")
 seq2chain_dir.mkdir() 
@@ -337,4 +327,3 @@ H 25 28 31 34 29 36 27 24 30 34 28 31 27 35 27 31 23 18 25 0" >sneath.txt
 	"""
 }
 
-// stride mutant 
