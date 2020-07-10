@@ -12,6 +12,7 @@ usage:
 
 import glob
 import argparse
+import warnings 
 
 def readVar(var_input):
 	with open(var_input, 'r') as file: 
@@ -21,41 +22,48 @@ def readVar(var_input):
 		else: 
 			return mylines1[0].split() 
 
-def readMap(map_file):
+def _readMap(gene_name, path_to_maps):
 	"""
 	Required to convert from the seq coordinates to Pdb coordinates
 	"""
-	with open(map_file, "r") as mapfile:
+	try:
+		matching_files = glob.glob(path_to_maps+"/"+gene_name+"*.tsv")
+		if len(matching_files) > 1: 
+			warnings.warn("Multiple files that matches the gene name {}, will only read the first match".format(gene_name))
+	except IOError : 
+		print("No file in {0} that matches the gene name {1}".format(path_to_maps, gene_name ))
+	
+	with open(matching_files[0], "r") as mapfile:
 		map_lines = mapfile.readlines()
 		gene_from_map_file = map_lines[0].split()[1] 
+
 	ID_in_uniprot = []
 	ID_in_PDB = []
 	for line in map_lines: 
 		ID_in_PDB.append(line.split()[1])
 		ID_in_uniprot.append(line.split()[2])
 	return gene_from_map_file, ID_in_PDB, ID_in_uniprot
+	
 
 
-def scanFolder(gene_chain_input, vartable, map_file):
+def scanFolder(gene_chain_input, vartable, path_to_maps):
 	for data_file in glob.glob(gene_chain_input + "/*2PDBchain.tsv"): 
 		with open(data_file, "r") as file : 
 			gene = file.readlines()[0].split('\t')
-			gene_name_in_map, ids_in_pdb , ids_in_uniprot_seq = readMap(map_file)
-
 			if gene[0] == myvar[0]: 
 				indiv_table = []
+				gene_name_in_map, ids_in_pdb , ids_in_uniprot_seq = _readMap(gene[0], path_to_maps)
+
 				for chain in gene[2].split(","): 
 					# convert from the seq coordinates to Pdb coordinates of the var
 					index_var = ids_in_uniprot_seq.index(myvar[2])
 					var_id_in_pdb = ids_in_pdb[index_var]
 					indiv_table.append(myvar[1]+chain+var_id_in_pdb+myvar[3])
-					print(indiv_table)
 				indiv_table[-1] = indiv_table[-1]+";\n"
-				print(indiv_table)
-
 				return ','.join(indiv_table), gene[-1].replace("\n",'') 
 
 def outputfile(indiv_expression, outputindiv, outputpdbname):
+	print(indiv_expression)
 	with open(outputindiv, "w") as outputfile: 
 		outputfile.writelines(indiv_expression[0])
 
@@ -77,5 +85,6 @@ if __name__ == "__main__":
 	myvar = readVar(args.var)
 	# myindiv = scanFolder("/home/houcemeddine/BILIM/testing_SWAAT/myoutput/Seq2Chain/", myvar)
 	myindiv = scanFolder(args.seq2chain, myvar, args.map)
-	# outputfile(myindiv, "output_4swaat.indiv", "pdbfile.txt")
+	print(myindiv)
+	#outputfile(myindiv, "output_4swaat.indiv", "pdbfile.txt")
 	outputfile(myindiv, "individual_list_"+args.output+".txt", args.output+"_pdb.txt")
