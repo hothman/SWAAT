@@ -60,10 +60,10 @@ def scanFolder(gene_chain_input, vartable, path_to_maps):
 					var_id_in_pdb = ids_in_pdb[index_var]
 					indiv_table.append(myvar[1]+chain+var_id_in_pdb+myvar[3])
 				indiv_table[-1] = indiv_table[-1]+";\n"
+				print("{4} mutation {0}/{1} in fasta at position {2} --> {3} in PDB structure".format(myvar[1], myvar[3], myvar[2], var_id_in_pdb,  gene[0]   ))
 				return ','.join(indiv_table), gene[-1].replace("\n",'') 
 
 def outputfile(indiv_expression, outputindiv, outputpdbname):
-	print(indiv_expression)
 	with open(outputindiv, "w") as outputfile: 
 		outputfile.writelines(indiv_expression[0])
 
@@ -85,6 +85,5 @@ if __name__ == "__main__":
 	myvar = readVar(args.var)
 	# myindiv = scanFolder("/home/houcemeddine/BILIM/testing_SWAAT/myoutput/Seq2Chain/", myvar)
 	myindiv = scanFolder(args.seq2chain, myvar, args.map)
-	print(myindiv)
 	#outputfile(myindiv, "output_4swaat.indiv", "pdbfile.txt")
 	outputfile(myindiv, "individual_list_"+args.output+".txt", args.output+"_pdb.txt")
