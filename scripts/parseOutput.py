@@ -455,6 +455,18 @@ def getVolume(foldxIndivFile):
 	mut = amino_acids[indiv[1]]
 	return volume[wt], volume[mut]
 
+def mapPosition(wt_residue, position, mapfile):
+	with open(mapfile, 'r') as file: 
+		lines = file.readlines() 
+	for residue in lines: 
+		splitted_line = residue.split()
+		if str(splitted_line[1]) == str(position) and str(splitted_line[0]) == wt_residue : 
+			real_position = splitted_line[2]
+			return real_position
+	if not real_position:
+			raise Exception("residue {0}{1} does not exist in the map file".format(wt_residue, position ) ) 
+
+
 
 parser = argparse.ArgumentParser(description=" A script to extract and calculate data from \
 									FoldX, ENcom, Automutate2, stride and freesasa.")
@@ -472,12 +484,11 @@ parser.add_argument("--aasasa", help="per residue sasa file")
 parser.add_argument("--pdbMut", help="PDB structure of the mutant")
 parser.add_argument("--pdbWT", help="PDB structure of the reference")
 parser.add_argument("--pssm", help="Path to BLAST PSSM file")
+parser.add_argument("--map", help="Path from sequence to pdb file")
 parser.add_argument("--output", help="outputfile")
 parser.add_argument("--grantham", help="Grantham matrix file")
 parser.add_argument("--sneath", help="Sneath matrix file")
 parser.add_argument("--genename", help="Gene name")
-
-
 
 
 args = parser.parse_args()
@@ -488,11 +499,12 @@ else:
 	output = args.output
 
 if __name__ == "__main__":
-
+	
 	chain = whatMutation(args.indiv)[3]
 	position = whatMutation(args.indiv)[2]
 	wt_res =  whatMutation(args.indiv)[0]
 	mut_res =  whatMutation(args.indiv)[1]
+	real_position = mapPosition( wt_res ,position, args.map)
 
 	try : 
 		energy = str( round(CollectFoldxEnergy(args.diff) ,3) )
@@ -605,7 +617,7 @@ if __name__ == "__main__":
 		hydrophobicityWT = ''
 		hydrophobicityMut = ''
 	try:
-		volume_wt_mut = getHydrophobicity(args.indiv)
+		volume_wt_mut = getVolume(args.indiv)
 		volumeWT = str(volume_wt_mut[0])
 		volumeMut = str(volume_wt_mut[1])
 	except:
@@ -617,14 +629,14 @@ if __name__ == "__main__":
 	start_res =  mystructure.pdbAttributes(chain=chain)[0]
 	try:
 		my_pssm = Pssm(args.pssm)
-		pssm_mut = str(my_pssm.getscore( position, mut_res) )
-		pssm_wt = str(my_pssm.getscore( position, wt_res) )
+		pssm_mut = str(my_pssm.getscore( real_position, mut_res) )
+		pssm_wt = str(my_pssm.getscore( real_position, wt_res) )
 	except: 
 		pssm_mut=""
 		pssm_wt=""
 
 
-	outputlist = [args.genename, wt_res, mut_res, position ,chain, 
+	outputlist = [args.genename, wt_res, mut_res, real_position ,chain, 
 				 energy, 
 				 ss, rmsip, entropy,
 				 blusom, grantham, sneath, classwt, classmut, 
