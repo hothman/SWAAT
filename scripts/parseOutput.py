@@ -188,7 +188,7 @@ class collectSASA:
 			return self.SASA
 		elif mode == 'per_res':
 			for line in self.lines: 
-				if 'SEQ' in line and( int(line.split()[2])  == kwargs['id'] ) and ( line.split()[1]  == kwargs['chain'] ) : 
+				if 'SEQ' in line and( int(line.split()[2])  == int(kwargs['id']) ) and ( line.split()[1]  == kwargs['chain'] ) : 
 					sasa_res = float( line.split()[5] )
 					res_type = line.split()[3]
 					sasa_ref = SASAref[res_type]
@@ -486,22 +486,26 @@ class missense3D:
 	"""# Missense3D paper: Ittisoponpisan et al. 2019 https://doi.org/10.1016/j.jmb.2019.04.009
 	This is a modified version of the code by Sherlyn Jemimah, Indian Institute of Technology, 
 	"""
-	def __init__(self, pdb_wt, pdb_mutant, mutation):
+	def __init__(self, pdb_wt, pdb_mutant, mutation, aa_sasa_wt, aa_sasa_mut ):
 		print(mutation)
-
 		self.pdb_wt = pdb_wt 
 		self.mutation = mutation
+		self.position = mutation[2:-1]
+		self.chain = mutation[1]
+		self.aa_sasa_wt = aa_sasa_wt
+		self.perResSASA()
 
 		s = PDBParser( QUIET=True ).get_structure( "thestructure", pdb_wt)
 		self.pdb_WT = s[0] 
 		c = self.pdb_WT[ mutation[1] ]
-		print(c)
-		r = c[ int( mutation[2:-1] ) ]
+		r = c[ int( self.position ) ]
+		if mutation[0] !=  olc[r.get_resname()]:
+			raise Exception(" wild type residue {0}{1} is not the PDB file ".format(mutation[0], self.position))
+
 		self.target = r
-		self.mutation = mutation
 		dssp_WT  = DSSP( self.pdb_WT, pdb_wt, dssp="/home/houcemeddine/modules/dssp/bin/dssp-2.0.4-linux-i386" )
 		self.ss_WT, self.rsa_WT = dssp_WT[( self.mutation[1], self.target.get_id() )][2], dssp_WT[( self.mutation[1], self.target.get_id() )][3]
-		print(dssp_WT)
+		print(self.rsa_WT)
 
 		if mutation[0] != olc[ r.get_resname() ]:
 			return "Given mutation does not match structure information" # or False??
@@ -510,7 +514,7 @@ class missense3D:
 			s = PDBParser( QUIET=True ).get_structure( "mutant", pdb_mutant )
 			self.pdb_MUT = s[0] # MUT model
 			c = self.pdb_MUT[ mutation[1] ]
-			r = c[ int( mutation[2:-1] ) ]
+			r = c[ int( self.position ) ]
 
 			self.mutres = r
 			dssp_MUT  = DSSP( self.pdb_MUT, pdb_mutant, dssp="/home/houcemeddine/modules/dssp/bin/dssp-2.0.4-linux-i386" )
@@ -526,7 +530,8 @@ class missense3D:
                        "buried_charge_replaced": missense3D.buried_charge_replaced( self ),
                        "buried_exposed_switch": missense3D.buried_exposed_switch( self ),
                        "gly_bend": missense3D.gly_bend( self ),
-                       "buried_hydrophilic_introduced": missense3D.buried_hydrophilic_introduced( self ) }
+                       "buried_hydrophilic_introduced": missense3D.buried_hydrophilic_introduced( self ),
+                       "sasa": missense3D.perResSASA( self ) }
 
 			print(output)
 
@@ -606,13 +611,16 @@ class missense3D:
 		else:
 			return False
 
+	def perResSASA(self): 
+		per_res_sasa = collectSASA(self.aa_sasa_wt)
+		sasa_ratio =  per_res_sasa.get_sasa(mode='per_res', chain=self.chain, id=self.position )
+		return sasa_ratio
 
-
-
-
-
-
+	def getSS(self): 
+		pass
 		
+
+
 
 parser = argparse.ArgumentParser(description=" A script to extract and calculate data from \
 									FoldX, ENcom, Automutate2, stride and freesasa.")
@@ -626,7 +634,8 @@ parser.add_argument("--matrix", help="Substitution matrix file")
 parser.add_argument("--stride", help="stride output file WT")
 parser.add_argument("--freesasa", help="freesasa outputfile")
 parser.add_argument("--freesasaWT", help="freesasa outputfile WT")
-parser.add_argument("--aasasa", help="per residue sasa file")
+parser.add_argument("--aasasa", help="per residue sasa file wt")
+parser.add_argument("--aasasamut", help="per residue sasa file mut")
 parser.add_argument("--pdbMut", help="PDB structure of the mutant")
 parser.add_argument("--pdbWT", help="PDB structure of the reference")
 parser.add_argument("--pssm", help="Path to BLAST PSSM file")
@@ -637,12 +646,11 @@ parser.add_argument("--sneath", help="Sneath matrix file")
 parser.add_argument("--genename", help="Gene name")
 args = parser.parse_args()
 
+red_flags = missense3D(args.pdbWT, args.pdbMut,  "RA58P", aa_sasa_wt = args.aasasa, aa_sasa_mut=)
 
-red_flags = missense3D(args.pdbWT, args.pdbMut,  "RA58P")
+
 
 """
-
-
 if not args.output:  
     output = './data.txt'
 else:
