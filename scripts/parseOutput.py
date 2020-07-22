@@ -16,6 +16,7 @@ import warnings
 from Bio.PDB.PDBParser import PDBParser 
 from Bio.PDB import NeighborSearch, Selection, NeighborSearch
 from Bio.PDB.Selection import unfold_entities
+from Bio.PDB import DSSP
 
 # check if you have python 3
 if sys.version_info[0] < 3:
@@ -142,6 +143,21 @@ amino_acids = { 'A':'ALA', 'R':'ARG',
 				'Y':'TYR', 'V':'VAL',
 				'I':'ILE'
 			}
+
+# one-letter-code
+olc = { 'ALA':'A', 'CYS':'C', 'ASP':'D', 'GLU':'E', 'PHE':'F', 'GLY':'G', 'HIS':'H', 'ILE':'I', 'LYS':'K', 'LEU':'L',
+        'MET':'M', 'ASN':'N', 'PRO':'P', 'GLN':'Q', 'ARG':'R', 'SER':'S', 'THR':'T', 'VAL':'V', 'TRP':'W', 'TYR':'Y', }
+
+# residue groups
+hydrophobic = 'ACFILMVW'
+hydrophilic = 'DEHKNQR'
+neutral     = 'GPSTY'
+positive    = 'HKR'
+negative    = 'DE'
+
+# DSSP sec_structure code
+ssc = { 'H': 'Alpha helix', 'B': 'Beta bridge', 'E': 'Strand', 'G': '3-10 helix', 'I': 'Pi helix', 'T': 'Turn', 'S': 'Bend', '-':'None', 'C':'Coil' }
+
 
 class collectSASA:
 	"""
@@ -466,7 +482,137 @@ def mapPosition(wt_residue, position, mapfile):
 	if not real_position:
 			raise Exception("residue {0}{1} does not exist in the map file".format(wt_residue, position ) ) 
 
+class missense3D:
+	"""# Missense3D paper: Ittisoponpisan et al. 2019 https://doi.org/10.1016/j.jmb.2019.04.009
+	This is a modified version of the code by Sherlyn Jemimah, Indian Institute of Technology, 
+	"""
+	def __init__(self, pdb_wt, pdb_mutant, mutation):
+		print(mutation)
 
+		self.pdb_wt = pdb_wt 
+		self.mutation = mutation
+
+		s = PDBParser( QUIET=True ).get_structure( "thestructure", pdb_wt)
+		self.pdb_WT = s[0] 
+		c = self.pdb_WT[ mutation[1] ]
+		print(c)
+		r = c[ int( mutation[2:-1] ) ]
+		self.target = r
+		self.mutation = mutation
+		dssp_WT  = DSSP( self.pdb_WT, pdb_wt, dssp="/home/houcemeddine/modules/dssp/bin/dssp-2.0.4-linux-i386" )
+		self.ss_WT, self.rsa_WT = dssp_WT[( self.mutation[1], self.target.get_id() )][2], dssp_WT[( self.mutation[1], self.target.get_id() )][3]
+		print(dssp_WT)
+
+		if mutation[0] != olc[ r.get_resname() ]:
+			return "Given mutation does not match structure information" # or False??
+			# validation: wt residue to match input mutation
+		else: 
+			s = PDBParser( QUIET=True ).get_structure( "mutant", pdb_mutant )
+			self.pdb_MUT = s[0] # MUT model
+			c = self.pdb_MUT[ mutation[1] ]
+			r = c[ int( mutation[2:-1] ) ]
+
+			self.mutres = r
+			dssp_MUT  = DSSP( self.pdb_MUT, pdb_mutant, dssp="/home/houcemeddine/modules/dssp/bin/dssp-2.0.4-linux-i386" )
+			self.ss_MUT, self.rsa_MUT = dssp_MUT[( self.mutation[1], self.mutres.get_id() )][2], dssp_MUT[( self.mutation[1], self.mutres.get_id() )][3]
+
+			output = { "disulfide_breakage":missense3D.disulfide_breakage( self ),
+                       "buried_Pro_introduced": missense3D.buried_Pro_introduced( self ),
+                       "buried_glycine_replaced": missense3D.buried_glycine_replaced( self ),
+                       "buried_hydrophilic_introduced": missense3D.buried_hydrophilic_introduced( self ),
+                       "buried_charge_introduced": missense3D.buried_charge_introduced( self ),
+                       "buried_charge_switch": missense3D.buried_charge_switch( self ),
+                       "sec_struct_change": missense3D.sec_struct_change( self ),
+                       "buried_charge_replaced": missense3D.buried_charge_replaced( self ),
+                       "buried_exposed_switch": missense3D.buried_exposed_switch( self ),
+                       "gly_bend": missense3D.gly_bend( self ),
+                       "buried_hydrophilic_introduced": missense3D.buried_hydrophilic_introduced( self ) }
+
+			print(output)
+
+	def disulfide_breakage(self): 
+		if self.mutation[0] == 'C':
+			for res in self.pdb_WT[mutation[1]]:
+				if res.get_resname() == 'CYS':
+					if res['SG'] - self.target['SG'] <= 3.3:
+						return "Disulfide breakage"
+		else: 
+			return False
+
+	def buried_Pro_introduced( self ):
+		if self.rsa_WT < 0.09 and self.mutation[-1]=='P':
+			return "Buried Pro introduced"
+		else: 
+			return False
+
+	def buried_glycine_replaced( self ):
+		if self.target.get_resname() == 'GLY' and self.rsa_WT < 0.09:
+			return "Buried Gly replaced"
+		else:
+			return False
+
+	def buried_hydrophilic_introduced( self ):
+		if self.mutation[0] in hydrophobic and self.mutation[-1] in hydrophilic and self.rsa_WT < 0.09:
+			return "Buried hydrophilic %s introduced"%self.mutres.get_resname()
+		else:
+			return False
+
+	def buried_charge_introduced( self ):
+		if self.mutation[0] not in positive+negative and self.mutation[-1] in positive+negative and self.rsa_WT < 0.09:
+			return "Buried charge %s introduced"%self.mutres.get_resname()
+		else:
+			return False
+
+	def buried_charge_switch( self ):
+		if self.rsa_WT < 0.09:
+			if self.mutation[0] in positive and  self.mutation[-1] in negative:
+				return "Charge switch from positive to negative"
+			elif self.mutation[0] in negative and  self.mutation[-1] in positive:
+				return "Charge switch from negative to positive" 
+			else:
+				return False
+		else:
+			return False
+
+	def sec_struct_change( self ):
+		if self.ss_WT != self.ss_MUT:
+			return "Change in secondary structure"
+		else:
+			return False
+
+	def buried_charge_replaced( self ):
+		if self.mutation[0] in positive+negative and self.mutation[-1] not in positive+negative and self.rsa_WT < 0.09:
+			return "Buried charge %s replaced"%self.target.get_resname()
+		else:
+			return False
+
+	def buried_exposed_switch( self ):
+		if self.rsa_WT < 0.09 and self.rsa_MUT >= 0.09:
+			return "Buried residue is exposed"
+		elif self.rsa_WT >= 0.09 and self.rsa_MUT < 0.09:
+			return "Exposed residue is buried"
+		else:
+			return False
+
+	def gly_bend( self ):
+		if self.mutation[0] == 'G' and self.ss_WT == 'S':
+			return "Gly in bend replaced" 
+		else:
+			return False
+
+	def buried_hydrophilic_introduced( self ):
+		if self.mutation[0] in hydrophilic and  self.mutation[-1] in hydrophobic and self.rsa_WT > 0.09:
+			return "Buried hydrophilic %s introduced"%self.mutres.get_resname() #OR True
+		else:
+			return False
+
+
+
+
+
+
+
+		
 
 parser = argparse.ArgumentParser(description=" A script to extract and calculate data from \
 									FoldX, ENcom, Automutate2, stride and freesasa.")
@@ -489,9 +635,13 @@ parser.add_argument("--output", help="outputfile")
 parser.add_argument("--grantham", help="Grantham matrix file")
 parser.add_argument("--sneath", help="Sneath matrix file")
 parser.add_argument("--genename", help="Gene name")
-
-
 args = parser.parse_args()
+
+
+red_flags = missense3D(args.pdbWT, args.pdbMut,  "RA58P")
+
+"""
+
 
 if not args.output:  
     output = './data.txt'
@@ -662,3 +812,4 @@ if __name__ == "__main__":
 		file.writelines( ','.join( outputheader  )+'\n' )
 		file.writelines( ','.join( str(item) for item in outputlist  )+'\n' )
 
+"""
