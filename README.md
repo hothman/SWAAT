@@ -30,4 +30,20 @@ conda install -c anaconda pandas
 conda install -c anaconda scikit-learn 
  
 ```
+### Installing dssp
+
+```
+git clone https://github.com/cmbi/dssp.git
+cd dssp 
+./autogen.sh
+./configure
+make
+```
+
+### Preparation of the PDB structures
+A structuer is a chain
+A structure must contain a chain identifier
+Heteroatoms are not taken into account
+
+
 
