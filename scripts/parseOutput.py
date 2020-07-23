@@ -493,7 +493,8 @@ class missense3D:
 		self.position = mutation[2:-1]
 		self.chain = mutation[1]
 		self.aa_sasa_wt = aa_sasa_wt
-		self.perResSASA()
+		self.aa_sasa_mut = aa_sasa_mut
+		self.rsa_WT, self.rsa_MUT = self.perResSASA()
 
 		s = PDBParser( QUIET=True ).get_structure( "thestructure", pdb_wt)
 		self.pdb_WT = s[0] 
@@ -503,8 +504,9 @@ class missense3D:
 			raise Exception(" wild type residue {0}{1} is not the PDB file ".format(mutation[0], self.position))
 
 		self.target = r
-		dssp_WT  = DSSP( self.pdb_WT, pdb_wt, dssp="/home/houcemeddine/modules/dssp/bin/dssp-2.0.4-linux-i386" )
-		self.ss_WT, self.rsa_WT = dssp_WT[( self.mutation[1], self.target.get_id() )][2], dssp_WT[( self.mutation[1], self.target.get_id() )][3]
+		dssp_WT  = DSSP( self.pdb_WT, pdb_wt, dssp="/home/houcemeddine/modules/dssp_1/bin/dssp-2.0.4-linux-i386" )
+		print(dssp_WT)
+		self.ss_WT, a = dssp_WT[( self.mutation[1], self.target.get_id() )][2], dssp_WT[( self.mutation[1], self.target.get_id() )][3]
 		print(self.rsa_WT)
 
 		if mutation[0] != olc[ r.get_resname() ]:
@@ -517,8 +519,8 @@ class missense3D:
 			r = c[ int( self.position ) ]
 
 			self.mutres = r
-			dssp_MUT  = DSSP( self.pdb_MUT, pdb_mutant, dssp="/home/houcemeddine/modules/dssp/bin/dssp-2.0.4-linux-i386" )
-			self.ss_MUT, self.rsa_MUT = dssp_MUT[( self.mutation[1], self.mutres.get_id() )][2], dssp_MUT[( self.mutation[1], self.mutres.get_id() )][3]
+			dssp_MUT  = DSSP( self.pdb_MUT, pdb_mutant, dssp="/home/houcemeddine/modules/dssp_1/bin/dssp-2.0.4-linux-i386" )
+			self.ss_MUT, b = dssp_MUT[( self.mutation[1], self.mutres.get_id() )][2], dssp_MUT[( self.mutation[1], self.mutres.get_id() )][3]
 
 			output = { "disulfide_breakage":missense3D.disulfide_breakage( self ),
                        "buried_Pro_introduced": missense3D.buried_Pro_introduced( self ),
@@ -530,7 +532,7 @@ class missense3D:
                        "buried_charge_replaced": missense3D.buried_charge_replaced( self ),
                        "buried_exposed_switch": missense3D.buried_exposed_switch( self ),
                        "gly_bend": missense3D.gly_bend( self ),
-                       "buried_hydrophilic_introduced": missense3D.buried_hydrophilic_introduced( self ),
+                       "buried_hydrophilic_introduced": missense3D.exposed_hydrophilic_introduced( self ),
                        "sasa": missense3D.perResSASA( self ) }
 
 			print(output)
@@ -605,7 +607,7 @@ class missense3D:
 		else:
 			return False
 
-	def buried_hydrophilic_introduced( self ):
+	def exposed_hydrophilic_introduced( self ):
 		if self.mutation[0] in hydrophilic and  self.mutation[-1] in hydrophobic and self.rsa_WT > 0.09:
 			return "Buried hydrophilic %s introduced"%self.mutres.get_resname() #OR True
 		else:
@@ -613,8 +615,11 @@ class missense3D:
 
 	def perResSASA(self): 
 		per_res_sasa = collectSASA(self.aa_sasa_wt)
-		sasa_ratio =  per_res_sasa.get_sasa(mode='per_res', chain=self.chain, id=self.position )
-		return sasa_ratio
+		sasa_ratio_wt =  per_res_sasa.get_sasa(mode='per_res', chain=self.chain, id=self.position )
+		per_res_sasa = collectSASA(self.aa_sasa_mut)
+		sasa_ratio_mut =  per_res_sasa.get_sasa(mode='per_res', chain=self.chain, id=self.position )
+		print(sasa_ratio_wt, sasa_ratio_mut )
+		return sasa_ratio_wt, sasa_ratio_mut
 
 	def getSS(self): 
 		pass
@@ -646,7 +651,7 @@ parser.add_argument("--sneath", help="Sneath matrix file")
 parser.add_argument("--genename", help="Gene name")
 args = parser.parse_args()
 
-red_flags = missense3D(args.pdbWT, args.pdbMut,  "RA58P", aa_sasa_wt = args.aasasa, aa_sasa_mut=)
+red_flags = missense3D(args.pdbWT, args.pdbMut,  "PA4S", aa_sasa_wt = args.aasasa, aa_sasa_mut=args.aasasamut)
 
 
 
