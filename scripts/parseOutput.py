@@ -486,7 +486,7 @@ class missense3D:
 	"""# Missense3D paper: Ittisoponpisan et al. 2019 https://doi.org/10.1016/j.jmb.2019.04.009
 	This is a modified version of the code by Sherlyn Jemimah, Indian Institute of Technology, 
 	"""
-	def __init__(self, pdb_wt, pdb_mutant, mutation, aa_sasa_wt, aa_sasa_mut ):
+	def __init__(self, pdb_wt, pdb_mutant, mutation, aa_sasa_wt, aa_sasa_mut, stride_wt, stride_mut ):
 		self.pdb_wt = pdb_wt 
 		self.pdb_mutant  = pdb_mutant
 		self.mutation = mutation
@@ -504,8 +504,8 @@ class missense3D:
 			raise Exception(" wild type residue {0}{1} is not the PDB file ".format(mutation[0], self.position))
 
 		self.target = r
-		dssp_WT  = DSSP( self.pdb_WT, pdb_wt, dssp="/home/houcemeddine/modules/dssp_1/bin/dssp-2.0.4-linux-i386" )
-		self.ss_WT, a = dssp_WT[( self.mutation[1], self.target.get_id() )][2], dssp_WT[( self.mutation[1], self.target.get_id() )][3]
+		self.ss_WT = print(strideSS(self.chain , self.position, stride_wt))
+		self.ss_MUT = print(strideSS(self.chain , self.position, stride_mut))
 
 		if mutation[0] != olc[ r.get_resname() ]:
 			return "Given mutation does not match structure information" # or False??
@@ -515,102 +515,96 @@ class missense3D:
 			self.pdb_MUT = s[0] # MUT model
 			c = self.pdb_MUT[ mutation[1] ]
 			r = c[ int( self.position ) ]
-
 			self.mutres = r
-			dssp_MUT  = DSSP( self.pdb_MUT, pdb_mutant, dssp="/home/houcemeddine/modules/dssp_1/bin/dssp-2.0.4-linux-i386" )
-			self.ss_MUT, b = dssp_MUT[( self.mutation[1], self.mutres.get_id() )][2], dssp_MUT[( self.mutation[1], self.mutres.get_id() )][3]
-
-			print(missense3D.buriedSaltBridge(self))
 
 			output = { "disulfide_breakage":missense3D.disulfide_breakage( self ),
-                       "buried_Pro_introduced": missense3D.buried_Pro_introduced( self ),
-                       "buried_glycine_replaced": missense3D.buried_glycine_replaced( self ),
-                       "buried_hydrophilic_introduced": missense3D.buried_hydrophilic_introduced( self ),
-                       "buried_charge_introduced": missense3D.buried_charge_introduced( self ),
-                       "buried_charge_switch": missense3D.buried_charge_switch( self ),
-                       "sec_struct_change": missense3D.sec_struct_change( self ),
-                       "buried_charge_replaced": missense3D.buried_charge_replaced( self ),
-                       "buried_exposed_switch": missense3D.buried_exposed_switch( self ),
-                       "buried_hydrophilic_introduced": missense3D.exposed_hydrophilic_introduced( self ),
-                       "sasa": missense3D.perResSASA( self ) }
-
-
+			"buried_Pro_introduced": missense3D.buried_Pro_introduced( self ),
+			"buried_glycine_replaced": missense3D.buried_glycine_replaced( self ),
+			"buried_hydrophilic_introduced": missense3D.buried_hydrophilic_introduced( self ),
+			"buried_charge_introduced": missense3D.buried_charge_introduced( self ),
+			"buried_charge_switch": missense3D.buried_charge_switch( self ),
+			"sec_struct_change": missense3D.sec_struct_change( self ),
+			"buried_charge_replaced": missense3D.buried_charge_replaced( self ),
+			"buried_exposed_switch": missense3D.buried_exposed_switch( self ),
+			"exposed_hydrophilic_introduced": missense3D.exposed_hydrophilic_introduced( self ),
+			"Buried salt bridge breakage": missense3D.buriedSaltBridgeBreackage( self )}
+			print(output)
 
 	def disulfide_breakage(self): 
 		if self.mutation[0] == 'C':
 			for res in self.pdb_WT[mutation[1]]:
 				if res.get_resname() == 'CYS':
 					if res['SG'] - self.target['SG'] <= 3.3:
-						return "Disulfide breakage"
+						return 1
 		else: 
-			return False
+			return 0
 
 	def buried_Pro_introduced( self ):
 		if self.rsa_WT < 0.09 and self.mutation[-1]=='P':
-			return "Buried Pro introduced"
+			return 1
 		else: 
-			return False
+			return 0
 
 	def buried_glycine_replaced( self ):
 		if self.target.get_resname() == 'GLY' and self.rsa_WT < 0.09:
-			return "Buried Gly replaced"
+			return 1
 		else:
-			return False
+			return 0
 
 	def buried_hydrophilic_introduced( self ):
 		if self.mutation[0] in hydrophobic and self.mutation[-1] in hydrophilic and self.rsa_WT < 0.09:
-			return "Buried hydrophilic %s introduced"%self.mutres.get_resname()
+			return 1
 		else:
-			return False
+			return 0
 
 	def buried_charge_introduced( self ):
 		if self.mutation[0] not in positive+negative and self.mutation[-1] in positive+negative and self.rsa_WT < 0.09:
-			return "Buried charge %s introduced"%self.mutres.get_resname()
+			return 1
 		else:
-			return False
+			return 0
 
 	def buried_charge_switch( self ):
 		if self.rsa_WT < 0.09:
 			if self.mutation[0] in positive and  self.mutation[-1] in negative:
-				return "Charge switch from positive to negative"
+				return 1
 			elif self.mutation[0] in negative and  self.mutation[-1] in positive:
-				return "Charge switch from negative to positive" 
+				return 1 
 			else:
-				return False
+				return 0
 		else:
-			return False
+			return 0
 
 	def sec_struct_change( self ):
 		if self.ss_WT != self.ss_MUT:
-			return "Change in secondary structure"
+			return 1
 		else:
-			return False
+			return 0
 
 	def buried_charge_replaced( self ):
 		if self.mutation[0] in positive+negative and self.mutation[-1] not in positive+negative and self.rsa_WT < 0.09:
-			return "Buried charge %s replaced"%self.target.get_resname()
+			return 1
 		else:
-			return False
+			return 0
 
 	def buried_exposed_switch( self ):
 		if self.rsa_WT < 0.09 and self.rsa_MUT >= 0.09:
-			return "Buried residue is exposed"
+			return 1
 		elif self.rsa_WT >= 0.09 and self.rsa_MUT < 0.09:
-			return "Exposed residue is buried"
+			return 1
 		else:
-			return False
+			return 0
 
 	def gly_bend( self ):
 		if self.mutation[0] == 'G' and self.ss_WT == 'S':
-			return "Gly in bend replaced" 
+			return 1 
 		else:
-			return False
+			return 0
 
 	def exposed_hydrophilic_introduced( self ):
 		if self.mutation[0] in hydrophilic and  self.mutation[-1] in hydrophobic and self.rsa_WT > 0.09:
-			return "Buried hydrophilic %s introduced"%self.mutres.get_resname() #OR True
+			return 1 #OR True
 		else:
-			return False
+			return 0
 
 	def perResSASA(self): 
 		per_res_sasa = collectSASA(self.aa_sasa_wt)
@@ -619,7 +613,7 @@ class missense3D:
 		self.sasa_ratio_mut =  per_res_sasa.get_sasa(mode='per_res', chain=self.chain, id=self.position )
 		return self.sasa_ratio_wt, self.sasa_ratio_mut
 
-	def buriedSaltBridge(self):
+	def buriedSaltBridgeBreackage(self):
 		print(self.rsa_WT) 
 		if (self.mutation[0] in "KRHDE") and  (self.mutation[-1] in "KRHDE") and (self.sasa_ratio_wt < 0.09) :
 			hbonds_wt = Hbonds(self.pdb_wt)
@@ -627,9 +621,10 @@ class missense3D:
 			wt_is_in_salt_bridge =  hbonds_wt.collectSaltBridge(int(self.position), self.chain)
 			mut_is_in_salt_bridge = hbonds_mut.collectSaltBridge( int(self.position), self.chain )
 			if (wt_is_in_salt_bridge == 1) and (mut_is_in_salt_bridge == 0) :
-				return True
+				return 1
 		else:
-			return False
+			return 0
+
 
 
 parser = argparse.ArgumentParser(description=" A script to extract and calculate data from \
@@ -641,7 +636,8 @@ parser.add_argument("--modesWT", help="EnCOM eigenvectors file of the wild type 
 parser.add_argument("--diff", help="Foldx diff file")
 parser.add_argument("--indiv", help="Foldx individual file")
 parser.add_argument("--matrix", help="Substitution matrix file")
-parser.add_argument("--stride", help="stride output file WT")
+parser.add_argument("--strideWT", help="stride output file WT")
+parser.add_argument("--strideMut", help="stride output file WT")
 parser.add_argument("--freesasa", help="freesasa outputfile")
 parser.add_argument("--freesasaWT", help="freesasa outputfile WT")
 parser.add_argument("--aasasa", help="per residue sasa file wt")
@@ -656,7 +652,7 @@ parser.add_argument("--sneath", help="Sneath matrix file")
 parser.add_argument("--genename", help="Gene name")
 args = parser.parse_args()
 
-red_flags = missense3D(args.pdbWT, args.pdbMut,  "PA4S", aa_sasa_wt = args.aasasa, aa_sasa_mut=args.aasasamut )
+red_flags = missense3D(args.pdbWT, args.pdbMut,  "PA4S", aa_sasa_wt = args.aasasa, aa_sasa_mut=args.aasasamut, stride_wt=args.strideWT, stride_mut=args.strideMut )
 
 
 
