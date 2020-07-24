@@ -311,7 +311,7 @@ class Hbonds(ParsePDB):
 			for atom in myres: 
 				atom_id = atom.get_full_id() 
 				if atom_id[4][0] in [ 'NH1', 'NH2','NZ' ]:
-					close_atoms = ns.search(atom.coord, 3.2) 
+					close_atoms = ns.search(atom.coord, 5.0) 
 					if 'OE1' or 'OE2' in [atomtype.id for atomtype in close_atoms]: 
 						is_sb =  1
 						break
@@ -319,7 +319,7 @@ class Hbonds(ParsePDB):
 						is_sb =  0
 						break
 				elif atom_id[4][0] in [ 'OE1', 'OE2' ]:
-					close_atoms = ns.search(atom.coord, 3.2)
+					close_atoms = ns.search(atom.coord, 5.0)
 					if 'NH1' or 'NH2' or 'NZ' in [atomtype.id for atomtype in close_atoms]: 
 						is_sb =  1
 						break
@@ -487,8 +487,8 @@ class missense3D:
 	This is a modified version of the code by Sherlyn Jemimah, Indian Institute of Technology, 
 	"""
 	def __init__(self, pdb_wt, pdb_mutant, mutation, aa_sasa_wt, aa_sasa_mut ):
-		print(mutation)
 		self.pdb_wt = pdb_wt 
+		self.pdb_mutant  = pdb_mutant
 		self.mutation = mutation
 		self.position = mutation[2:-1]
 		self.chain = mutation[1]
@@ -505,9 +505,7 @@ class missense3D:
 
 		self.target = r
 		dssp_WT  = DSSP( self.pdb_WT, pdb_wt, dssp="/home/houcemeddine/modules/dssp_1/bin/dssp-2.0.4-linux-i386" )
-		print(dssp_WT)
 		self.ss_WT, a = dssp_WT[( self.mutation[1], self.target.get_id() )][2], dssp_WT[( self.mutation[1], self.target.get_id() )][3]
-		print(self.rsa_WT)
 
 		if mutation[0] != olc[ r.get_resname() ]:
 			return "Given mutation does not match structure information" # or False??
@@ -522,6 +520,8 @@ class missense3D:
 			dssp_MUT  = DSSP( self.pdb_MUT, pdb_mutant, dssp="/home/houcemeddine/modules/dssp_1/bin/dssp-2.0.4-linux-i386" )
 			self.ss_MUT, b = dssp_MUT[( self.mutation[1], self.mutres.get_id() )][2], dssp_MUT[( self.mutation[1], self.mutres.get_id() )][3]
 
+			print(missense3D.buriedSaltBridge(self))
+
 			output = { "disulfide_breakage":missense3D.disulfide_breakage( self ),
                        "buried_Pro_introduced": missense3D.buried_Pro_introduced( self ),
                        "buried_glycine_replaced": missense3D.buried_glycine_replaced( self ),
@@ -531,11 +531,10 @@ class missense3D:
                        "sec_struct_change": missense3D.sec_struct_change( self ),
                        "buried_charge_replaced": missense3D.buried_charge_replaced( self ),
                        "buried_exposed_switch": missense3D.buried_exposed_switch( self ),
-                       "gly_bend": missense3D.gly_bend( self ),
                        "buried_hydrophilic_introduced": missense3D.exposed_hydrophilic_introduced( self ),
                        "sasa": missense3D.perResSASA( self ) }
 
-			print(output)
+
 
 	def disulfide_breakage(self): 
 		if self.mutation[0] == 'C':
@@ -615,16 +614,22 @@ class missense3D:
 
 	def perResSASA(self): 
 		per_res_sasa = collectSASA(self.aa_sasa_wt)
-		sasa_ratio_wt =  per_res_sasa.get_sasa(mode='per_res', chain=self.chain, id=self.position )
+		self.sasa_ratio_wt =  per_res_sasa.get_sasa(mode='per_res', chain=self.chain, id=self.position )
 		per_res_sasa = collectSASA(self.aa_sasa_mut)
-		sasa_ratio_mut =  per_res_sasa.get_sasa(mode='per_res', chain=self.chain, id=self.position )
-		print(sasa_ratio_wt, sasa_ratio_mut )
-		return sasa_ratio_wt, sasa_ratio_mut
+		self.sasa_ratio_mut =  per_res_sasa.get_sasa(mode='per_res', chain=self.chain, id=self.position )
+		return self.sasa_ratio_wt, self.sasa_ratio_mut
 
-	def getSS(self): 
-		pass
-		
-
+	def buriedSaltBridge(self):
+		print(self.rsa_WT) 
+		if (self.mutation[0] in "KRHDE") and  (self.mutation[-1] in "KRHDE") and (self.sasa_ratio_wt < 0.09) :
+			hbonds_wt = Hbonds(self.pdb_wt)
+			hbonds_mut = Hbonds(self.pdb_mutant)
+			wt_is_in_salt_bridge =  hbonds_wt.collectSaltBridge(int(self.position), self.chain)
+			mut_is_in_salt_bridge = hbonds_mut.collectSaltBridge( int(self.position), self.chain )
+			if (wt_is_in_salt_bridge == 1) and (mut_is_in_salt_bridge == 0) :
+				return True
+		else:
+			return False
 
 
 parser = argparse.ArgumentParser(description=" A script to extract and calculate data from \
@@ -651,7 +656,8 @@ parser.add_argument("--sneath", help="Sneath matrix file")
 parser.add_argument("--genename", help="Gene name")
 args = parser.parse_args()
 
-red_flags = missense3D(args.pdbWT, args.pdbMut,  "PA4S", aa_sasa_wt = args.aasasa, aa_sasa_mut=args.aasasamut)
+red_flags = missense3D(args.pdbWT, args.pdbMut,  "PA4S", aa_sasa_wt = args.aasasa, aa_sasa_mut=args.aasasamut )
+
 
 
 
