@@ -504,8 +504,8 @@ class missense3D:
 			raise Exception(" wild type residue {0}{1} is not the PDB file ".format(mutation[0], self.position))
 
 		self.target = r
-		self.ss_WT = print(strideSS(self.chain , self.position, stride_wt))
-		self.ss_MUT = print(strideSS(self.chain , self.position, stride_mut))
+		self.ss_WT = strideSS(self.chain , self.position, stride_wt)
+		self.ss_MUT = strideSS(self.chain , self.position, stride_mut)
 
 		if mutation[0] != olc[ r.get_resname() ]:
 			return "Given mutation does not match structure information" # or False??
@@ -517,7 +517,7 @@ class missense3D:
 			r = c[ int( self.position ) ]
 			self.mutres = r
 
-			output = { "disulfide_breakage":missense3D.disulfide_breakage( self ),
+			self.output = { "disulfide_breakage":missense3D.disulfide_breakage( self ),
 			"buried_Pro_introduced": missense3D.buried_Pro_introduced( self ),
 			"buried_glycine_replaced": missense3D.buried_glycine_replaced( self ),
 			"buried_hydrophilic_introduced": missense3D.buried_hydrophilic_introduced( self ),
@@ -528,7 +528,6 @@ class missense3D:
 			"buried_exposed_switch": missense3D.buried_exposed_switch( self ),
 			"exposed_hydrophilic_introduced": missense3D.exposed_hydrophilic_introduced( self ),
 			"Buried salt bridge breakage": missense3D.buriedSaltBridgeBreackage( self )}
-			print(output)
 
 	def disulfide_breakage(self): 
 		if self.mutation[0] == 'C':
@@ -614,7 +613,6 @@ class missense3D:
 		return self.sasa_ratio_wt, self.sasa_ratio_mut
 
 	def buriedSaltBridgeBreackage(self):
-		print(self.rsa_WT) 
 		if (self.mutation[0] in "KRHDE") and  (self.mutation[-1] in "KRHDE") and (self.sasa_ratio_wt < 0.09) :
 			hbonds_wt = Hbonds(self.pdb_wt)
 			hbonds_mut = Hbonds(self.pdb_mutant)
@@ -652,12 +650,7 @@ parser.add_argument("--sneath", help="Sneath matrix file")
 parser.add_argument("--genename", help="Gene name")
 args = parser.parse_args()
 
-red_flags = missense3D(args.pdbWT, args.pdbMut,  "PA4S", aa_sasa_wt = args.aasasa, aa_sasa_mut=args.aasasamut, stride_wt=args.strideWT, stride_mut=args.strideMut )
 
-
-
-
-"""
 if not args.output:  
     output = './data.txt'
 else:
@@ -670,6 +663,12 @@ if __name__ == "__main__":
 	wt_res =  whatMutation(args.indiv)[0]
 	mut_res =  whatMutation(args.indiv)[1]
 	real_position = mapPosition( wt_res ,position, args.map)
+	muatation = wt_res+chain+str(position)+mut_res
+
+
+	red_flags = missense3D(args.pdbWT, args.pdbMut,  muatation, aa_sasa_wt = args.aasasa, aa_sasa_mut=args.aasasamut, stride_wt=args.strideWT, stride_mut=args.strideMut ) 
+	keys = red_flags.output.keys()
+	values = red_flags.output.values()
 
 	try : 
 		energy = str( round(CollectFoldxEnergy(args.diff) ,3) )
@@ -759,7 +758,7 @@ if __name__ == "__main__":
 
 	# stride secondary structure
 	try: 
-		ss = strideSS(chain , position, args.stride)
+		ss = strideSS(chain , position, args.strideWT)
 	except: 
 		ss=''
 
@@ -811,7 +810,7 @@ if __name__ == "__main__":
 				 sasa_ratio,
 				 hydrophobicityWT, hydrophobicityMut,
 				 volumeWT, volumeMut, 
-				 pssm_mut, pssm_wt ]
+				 pssm_mut, pssm_wt ]+list(values)
 
 	outputheader = ['gene_name', 'wt_res','mut_res', 'position', 'chain',  
 					'dG', 
@@ -820,11 +819,10 @@ if __name__ == "__main__":
 					'sasa_wt', 'hb_mut', 'hb_wt', 'sb_mut', 
 					'sb_wt', 'sasa_ratio' , 
 					'hyrophob_WT', 'hyrophob_Mut',
-					'volume_WT', 'volume_Mut', 'pssm_mut', 'pssm_wt']
+					'volume_WT', 'volume_Mut', 'pssm_mut', 'pssm_wt']+list(keys)
 
 # create csv file 
 	with open( output , 'w') as file:
 		file.writelines( ','.join( outputheader  )+'\n' )
 		file.writelines( ','.join( str(item) for item in outputlist  )+'\n' )
 
-"""
