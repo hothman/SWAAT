@@ -620,6 +620,8 @@ class missense3D:
 			mut_is_in_salt_bridge = hbonds_mut.collectSaltBridge( int(self.position), self.chain )
 			if (wt_is_in_salt_bridge == 1) and (mut_is_in_salt_bridge == 0) :
 				return 1
+			else:
+				return 0
 		else:
 			return 0
 
@@ -636,7 +638,7 @@ parser.add_argument("--indiv", help="Foldx individual file")
 parser.add_argument("--matrix", help="Substitution matrix file")
 parser.add_argument("--strideWT", help="stride output file WT")
 parser.add_argument("--strideMut", help="stride output file WT")
-parser.add_argument("--freesasa", help="freesasa outputfile")
+parser.add_argument("--freesasaMut", help="freesasa outputfile Mut")
 parser.add_argument("--freesasaWT", help="freesasa outputfile WT")
 parser.add_argument("--aasasa", help="per residue sasa file wt")
 parser.add_argument("--aasasamut", help="per residue sasa file mut")
@@ -648,6 +650,8 @@ parser.add_argument("--output", help="outputfile")
 parser.add_argument("--grantham", help="Grantham matrix file")
 parser.add_argument("--sneath", help="Sneath matrix file")
 parser.add_argument("--genename", help="Gene name")
+parser.add_argument("--mode", help="turn on to 'single' otherwise, will calculate in pipeline mode")
+
 args = parser.parse_args()
 
 
@@ -662,9 +666,12 @@ if __name__ == "__main__":
 	position = whatMutation(args.indiv)[2]
 	wt_res =  whatMutation(args.indiv)[0]
 	mut_res =  whatMutation(args.indiv)[1]
-	real_position = mapPosition( wt_res ,position, args.map)
 	muatation = wt_res+chain+str(position)+mut_res
 
+	if args.mode == "single": 
+		real_position = position
+	else: 
+		real_position = mapPosition( wt_res ,position, args.map)
 
 	red_flags = missense3D(args.pdbWT, args.pdbMut,  muatation, aa_sasa_wt = args.aasasa, aa_sasa_mut=args.aasasamut, stride_wt=args.strideWT, stride_mut=args.strideMut ) 
 	keys = red_flags.output.keys()
@@ -722,7 +729,7 @@ if __name__ == "__main__":
 		sneath = ""
 	try: 
 		# sasa
-		my_sasa = collectSASA(args.freesasa)
+		my_sasa = collectSASA(args.freesasaMut)
 		sasa = str( my_sasa.get_sasa(mode='all') )
 	except: 
 		sasa = ""
