@@ -109,13 +109,18 @@ class ParsePDB:
 	def sasa(self, chain):
 		""" Calculates the fraction of exposed surfqace for each 
 		amino acid in the pdb """
+		letter_sequence = []
 		if which("freesasa") == None:
 			sys.exit("freesasa is not in the path")
 		else:
-			constructed_cmd = "freesasa --format seq -n 100 --select "+ " ' anything, chain "+chain+ "' " +self.pdb_file
-			output = str(subprocess.check_output(constructed_cmd, shell=True) ) 			
+			constructed_cmd = "freesasa --format seq -n 200 --select "+ " ' anything, chain "+chain+ "' " +self.pdb_file
+			output = str(subprocess.check_output(constructed_cmd, shell=True) ) 	
 			SASA = re.findall("\d+\.\d+", output)
-			letter_sequence = (re.findall("ALA|ASN|ARG|ASP|CYS|GLN|GLU|GLY|HIS|ILE|LEU|LYS|MET|PHE|PRO|SER|THR|TRP|TYR|TRP", output) )
+			for line in output.split("\\n")[1:]: 
+				try:
+					letter_sequence.append( line.split()[3])
+				except: 
+					pass
 			ratio_values = []
 			sasa_values = []
 			for sasa, amino_acid  in zip( SASA, letter_sequence ):
@@ -139,7 +144,7 @@ class ParsePDB:
 		    				length_reference = len(chain['seq'])
 		    				length_chain = len( seq['sequence'] )		
 		    				start = is_sub_string
-		    				end =  length_chain+9 
+		    				end =  length_chain
 		    				index_structure = list( range(start, end ) )
 		    				chain['posinref'] = index_structure
 		    				chain['header'] = seq['header']
