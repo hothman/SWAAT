@@ -28,7 +28,8 @@ features = { 1:'signal peptide',
 16: 'residue involved in covalent binding of a lipid moiety',
 17: 'residue involved in the attachment with a glycan group',
 18: 'residue involved in a disulfide bond',
-19: 'residue involved with a crosslink bonding with another amino acid'}
+19: 'residue involved with a crosslink bonding with another amino acid',
+20: 'external annotation'}
 
 uniprot2PDBmapHOME="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/sequences"
 ANNOTATIONHOME="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/prot_annotation"
@@ -100,7 +101,8 @@ class cleanData:
 		self.merged_data["annotation"] = annotation
 		self.merged_data["hotspotpatch"] = hotspotpatch
 		self.merged_data["Covered by the structure"] = coverage
-		transformAnnotation(self.merged_data)
+		myannotation=transformAnnotation(self.merged_data)
+		self.merged_data["red flags"] = myannotation
 
 		
 def _getUNIPROT(genename):
@@ -189,7 +191,8 @@ def transformAnnotation(combineddataframe):
 
 class formatHtML(): 
     def __init__(self, dataframe):
-        self.dataframe = dataframe
+    	"""self.dataframe is inhirited from the cleanData class"""
+    	self.dataframe = dataframe
 
     def list_of_genes(self) : 
     	self.genes =  list( set(self.dataframe["gene_name_x"]) )
@@ -211,17 +214,37 @@ class formatHtML():
     			processed_aa = processed_aa.append(gene_dataframe.iloc[i], ignore_index=True) 
     	return total_number_of_coding_variants, number_of_indels, len(non_processed_aa), len(processed_aa), non_processed_aa, processed_aa
 
-    def _cleanHtmlDf(self, dataframe1):
-    	dataframe1 = dataframe1.drop(columns=["gene_name_x", "gene_name_y", "wt_res","var_id", "mut_res"
-    		, "position_y", "subScore", "grantham", "sneath", "classWT", 
-    		"classMut", "sasa_mut", "sasa_wt", "hyrophob_WT", "hyrophob_Mut", 
-    		"volume_WT", "volume_Mut", "pssm_mut", "pssm_wt", "Covered by the structure"])
+    def _cleanHtmlDf(self, dataframe, mode):
+    	to_format_columns = ["gene_name_x", "gene_name_y", "wt_res","var_id", "mut_res", "position_y", 
+    	"subScore", "grantham", "sneath", "classWT",  "classMut", "sasa_mut", "sasa_wt", "hyrophob_WT",
+    	 "hyrophob_Mut",  "volume_WT", "volume_Mut", "pssm_mut", "pssm_wt", "Covered by the structure", 
+    	 'disulfide_breakage', 'buried_Pro_introduced', 'buried_glycine_replaced', 'buried_hydrophilic_introduced',  
+    	 'buried_charge_introduced', 'buried_charge_switch', 'sec_struct_change', 'buried_charge_replaced',
+    	   'buried_exposed_switch', 'exposed_hydrophilic_introduced', 'Buried salt bridge breakage','hotspotpatch']
 
-    	dataframe1.columns =["Chromosome", "position", "Reference Allele",
-    	 "Aternative allele", "Reference residue", "Residue position", "Residue variant", 
-    	 "Chain", "dG (kcal/mol)", "Secondary structure", "dS (kcal/mol)", "#hydrogen bonds ref", 
-    	 "#hydrogen bonds var", "#salt bridges ref", "#salt bridges var", "SASA ratio", "ML prediction", "annotation", "Hotspot Patch"]
-    	return dataframe1
+    	if mode == "processed":
+    		clean_dataframe = dataframe.drop(columns=to_format_columns)
+    		print(clean_dataframe.columns)
+    		clean_dataframe.columns =["Chromosome", "position", "Reference Allele", "Aternative allele", "Reference residue", 
+    		"Residue position", "Residue variant",  "Chain", "dG (kcal/mol)", "Secondary structure", "dS (kcal/mol)", 
+    		"#hydrogen bonds ref", "#hydrogen bonds var", "#salt bridges ref", "#salt bridges var", "SASA ratio", "ML prediction", 
+    		"Annotation", "Red Flags"]
+    		return clean_dataframe
+
+    	elif mode == "non-covered": 
+    		to_format_columns = to_format_columns+["chain", "dG","SecStruc","dS","hb_mut","hb_wt","sb_mut","sb_wt","sasa_ratio","swaat_prediction", "red flags"]
+    		col_names = ["Chromosome", "Position", "Reference Allele", "Aternative allele", "Reference residue", "Residue position", "Residue variant" , "Annotation"] 
+    		is_annotation_empty = list(dataframe["annotation"] == "")  # erturns a list of booleans
+    		print(is_annotation_empty)
+    		if all(is_annotation_empty) : 
+    			to_format_columns=to_format_columns + ["annotation"]
+    			col_names = col_names[0:-1]
+    		clean_dataframe = dataframe.drop(columns=to_format_columns)
+    		clean_dataframe.columns = col_names
+    		
+
+    		return clean_dataframe
+
 
     def _cleanIndels(self, dataframe): 
     	newdf = (dataframe[["gene_name_x" ,"chromosome" ,"position_x" ,"ref_allele" ,"alt_allele", "ref_AA" ,"AA_position", "annotation"]])
@@ -234,11 +257,11 @@ class formatHtML():
     	return newdf
 
 
-
-
-
     def outputHtml(self): 
-    	with open("swaat.html", "w") as file:
+    	"""
+		A arapping mehod to generate HTML report
+    	"""
+    	with open("swaat2.html", "w") as file:
     		file.write(template_header) 
     		file.write("<ul>")
     		for gene in self.genes : 
@@ -253,8 +276,7 @@ class formatHtML():
     				<ul> <li> Processed variants: {1} </li> \
     				     <li> Non processed variants: {2} </li> \
     				     <li> indels: {3} </li> </ul> </p>".format(n_variants, n_processed, n_non_processed, n_indels))
-
-    			# subset varisnts only for 'gene'
+    			# subset variants only for 'gene'
     			vars_for_gene = self.dataframe[self.dataframe["gene_name_x"] == gene]
 
     			# report non covered 
@@ -262,8 +284,10 @@ class formatHtML():
     			if vars_for_gene[vars_for_gene["Covered by the structure"] == False].empty : 
     				file.write("<p>All variants are covered by the PDB structure</p>")
     			else: 
-    				html_non_processed = vars_for_gene[vars_for_gene["Covered by the structure"] == False].to_html(index=False)
+    				df_non_processed = self._cleanHtmlDf( vars_for_gene[vars_for_gene["Covered by the structure"] == False], mode="non-covered" )
+    				html_non_processed = df_non_processed.to_html(index=False)
     				file.write(html_non_processed)
+    			"""
 
     			# report indels 
     			
@@ -273,13 +297,16 @@ class formatHtML():
     				indel_table = self._cleanIndels(indel_table)
     				file.write(indel_table.to_html(index=False))
 
+
     			# reporting details for processed variants
-    			df_processed = self._cleanHtmlDf(df_processed)
-    			file.write("<h4>Processed variants summary</h4>")
+    			self.df_processed = self._cleanHtmlDf(df_processed)
+    			#print(self.df_processed.columns)
+    			#file.write("<h4>Processed variants summary</h4>")
 
     			html_processed = df_processed.to_html(index=False)
     			file.write(html_processed)
     			file.write("<hr>")
+    			"""
 
 
 """  		
