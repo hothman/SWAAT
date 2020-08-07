@@ -482,6 +482,7 @@ def mapPosition(wt_residue, position, mapfile):
 	if not real_position:
 			raise Exception("residue {0}{1} does not exist in the map file".format(wt_residue, position ) ) 
 
+
 class missense3D:
 	"""# Missense3D paper: Ittisoponpisan et al. 2019 https://doi.org/10.1016/j.jmb.2019.04.009
 	This is a modified version of the code by Sherlyn Jemimah, Indian Institute of Technology, 
@@ -527,7 +528,8 @@ class missense3D:
 			"buried_charge_replaced": missense3D.buried_charge_replaced( self ),
 			"buried_exposed_switch": missense3D.buried_exposed_switch( self ),
 			"exposed_hydrophilic_introduced": missense3D.exposed_hydrophilic_introduced( self ),
-			"Buried salt bridge breakage": missense3D.buriedSaltBridgeBreackage( self )}
+			"Buried_salt_bridge_breakage": missense3D.buriedSaltBridgeBreackage( self ), 
+			"Large_helical_penality_in_alpha_helix": missense3D.large_helical_penality( self )}
 
 	def disulfide_breakage(self): 
 		if self.mutation[0] == 'C':
@@ -593,8 +595,8 @@ class missense3D:
 		else:
 			return 0
 
-	def gly_bend( self ):
-		if self.mutation[0] == 'G' and self.ss_WT == 'S':
+	def large_helical_penality( self ):
+		if (self.mutation[0] == 'G') or (self.mutation[0] == 'P') and self.ss_WT == 'H':
 			return 1 
 		else:
 			return 0
@@ -676,7 +678,7 @@ if __name__ == "__main__":
 	red_flags = missense3D(args.pdbWT, args.pdbMut,  muatation, aa_sasa_wt = args.aasasa, aa_sasa_mut=args.aasasamut, stride_wt=args.strideWT, stride_mut=args.strideMut ) 
 	keys = red_flags.output.keys()
 	values = red_flags.output.values()
-
+	print( red_flags.output )
 	try : 
 		energy = str( round(CollectFoldxEnergy(args.diff) ,3) )
 	except: 
@@ -692,7 +694,7 @@ if __name__ == "__main__":
 		wt_encom.parse_eigen()
 		mut_eigenvectors = wt_encom.eigenvectors
 		mut_eigenvalues = wt_encom.eigenvalues
-		rmsip = str( round( calRMSIP(mut_encom ,  wt_encom) ,3) )
+		rmsip=""
 	except: 
 		rmsip = ""
 
@@ -809,7 +811,7 @@ if __name__ == "__main__":
 
 	outputlist = [args.genename, wt_res, mut_res, real_position ,chain, 
 				 energy, 
-				 ss, rmsip, entropy,
+				 ss,  entropy,
 				 blusom, grantham, sneath, classwt, classmut, 
 				 sasa, sasaWT, 
 				 hb_mut, hb_wt, 
@@ -821,7 +823,7 @@ if __name__ == "__main__":
 
 	outputheader = ['gene_name', 'wt_res','mut_res', 'position', 'chain',  
 					'dG', 
-					'SecStruc', 'RMSIP', 'dS', 'subScore', 'grantham','sneath',
+					'SecStruc', 'dS', 'subScore', 'grantham','sneath',
 					'classWT', 'classMut', 'sasa_mut', 
 					'sasa_wt', 'hb_mut', 'hb_wt', 'sb_mut', 
 					'sb_wt', 'sasa_ratio' , 
