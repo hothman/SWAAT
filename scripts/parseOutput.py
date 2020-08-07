@@ -596,7 +596,7 @@ class missense3D:
 			return 0
 
 	def large_helical_penality( self ):
-		if (self.mutation[0] == 'G') or (self.mutation[0] == 'P') and self.ss_WT == 'H':
+		if (self.mutation[0] == 'G' or self.mutation[0] == 'P') and (self.ss_WT == 'H'):
 			return 1 
 		else:
 			return 0
@@ -678,7 +678,6 @@ if __name__ == "__main__":
 	red_flags = missense3D(args.pdbWT, args.pdbMut,  muatation, aa_sasa_wt = args.aasasa, aa_sasa_mut=args.aasasamut, stride_wt=args.strideWT, stride_mut=args.strideMut ) 
 	keys = red_flags.output.keys()
 	values = red_flags.output.values()
-	print( red_flags.output )
 	try : 
 		energy = str( round(CollectFoldxEnergy(args.diff) ,3) )
 	except: 
