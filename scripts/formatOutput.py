@@ -174,20 +174,80 @@ def getHotSpotPatch(combineddataframe):
     return hs_list
 
 def transformAnnotation(combineddataframe):
-	annotations = combineddataframe.iloc[:,list(range(35, 46))+[48]]  # indexes indicaes the 3Dmissense features and the hotspotpatch
+	annotations = combineddataframe.iloc[:,list(range(35, 47))+[49]]  # indexes indicaes the 3Dmissense features and the hotspotpatch
 	annotation_table_for_raws = []
 	for i in range(0,len(annotations)):
 		raw = annotations.iloc[i].to_dict()
 		threed_missense = []
 		for key in raw: 
 			if raw[key] == 1: 
-				threed_missense.append(key)  # this is where you can put the red flag
+				threed_missense.append("<span style='color: #c71100;'>&#9873;</span>"+key)  # this is where you can put the red flag
 		if not threed_missense: 
-			annotation_table_for_raws.append(None)
+			annotation_table_for_raws.append("")
 		else: 
 			annotators = ','.join(threed_missense)
 			annotation_table_for_raws.append(annotators)
 	return annotation_table_for_raws
+
+
+from bokeh.plotting import figure, show
+from scipy.stats import norm
+import numpy as np
+from bokeh.models import  ColumnDataSource, HoverTool
+
+DATAHOME="/home/houcemeddine/BILIM/SWAAT/data/dGdS.csv"  # change this to relative path 
+
+def readData(): 
+    return pd.read_csv(DATAHOME)
+
+def getPdf(data):
+    x=data.sort_values()
+    #remove outlayers
+    mu, std = norm.fit(x)
+    final_list = [energy for energy in x if (energy > mu - 3 * std)]
+    final_list = [energy for energy in final_list if (energy < mu + 3 * std)]
+    mu, std = norm.fit(final_list)
+    return np.array(final_list), norm.pdf(final_list, mu, std)
+    
+    
+class PlotInteractive: 
+    """
+    This is a warapping class to plot interactive graphs 
+    for SWAAT report.
+    """
+    def __init__(self, processsed_dataframe):
+        self.processsed_dataframe = processsed_dataframe
+        self.data = readData()
+        self.dist_dG = getPdf(data['dG'])
+        self.y_coor_dg = dist_dG[1].max()
+        
+        self.dist_dS = getPdf(data['dS'])
+        self.y_coor_ds = dist_dS[1].max()
+            
+    def prepareDataSource(self): 
+        y_coors_dg = np.array( len( self.processsed_dataframe )*[self.y_coor_dg])-0.2
+        aa_variants = self.processsed_dataframe["Reference residue"] + self.processsed_dataframe["Residue position"].astype(str)+ self.processsed_dataframe["Residue variant"] 
+        self.source = ColumnDataSource(data = {"dG": self.processsed_dataframe["dG (kcal/mol)"],
+                                "dS": self.processsed_dataframe["dS (kcal/mol)"],
+                                "Chromosome": self.processsed_dataframe.Chromosome, 
+                                "Genome_position": self.processsed_dataframe.position, 
+                                "y_coors_dg":y_coors_dg ,
+                                "aa_variants": aa_variants } )
+    
+    def PlotGraph(self): 
+        tooltips = [("dG", "@dG"),
+                   ("Chromosome", "@Chromosome"),
+                   ("Position", "@Genome_position"),
+                   ("Variant", "@aa_variants"), ]
+        p = figure(title="simple line example", x_axis_label='dG(kcal/mol)', 
+                   y_axis_label='Probability', tooltips=tooltips)
+        
+        p.line(self.dist_dG[0], self.dist_dG[1], legend_label="Temp.", line_width=2)
+        p.circle(x="dG", y= "y_coors_dg", source=self.source, size=5, color="red")
+        p.vbar(x="dG", bottom=0, top="y_coors_dg", source=self.source, width=0.02, color="red" )
+        show(p)
+        
+    
 
 class formatHtML(): 
     def __init__(self, dataframe):
@@ -220,11 +280,11 @@ class formatHtML():
     	 "hyrophob_Mut",  "volume_WT", "volume_Mut", "pssm_mut", "pssm_wt", "Covered by the structure", 
     	 'disulfide_breakage', 'buried_Pro_introduced', 'buried_glycine_replaced', 'buried_hydrophilic_introduced',  
     	 'buried_charge_introduced', 'buried_charge_switch', 'sec_struct_change', 'buried_charge_replaced',
-    	   'buried_exposed_switch', 'exposed_hydrophilic_introduced', 'Buried salt bridge breakage','hotspotpatch']
+    	   'buried_exposed_switch', 'exposed_hydrophilic_introduced', 'Buried_salt_bridge_breakage', "Large_helical_penality_in_alpha_helix", 'hotspotpatch']
 
     	if mode == "processed":
+    		is_annotation_empty = list(dataframe["annotation"] == "")
     		clean_dataframe = dataframe.drop(columns=to_format_columns)
-    		print(clean_dataframe.columns)
     		clean_dataframe.columns =["Chromosome", "position", "Reference Allele", "Aternative allele", "Reference residue", 
     		"Residue position", "Residue variant",  "Chain", "dG (kcal/mol)", "Secondary structure", "dS (kcal/mol)", 
     		"#hydrogen bonds ref", "#hydrogen bonds var", "#salt bridges ref", "#salt bridges var", "SASA ratio", "ML prediction", 
@@ -235,14 +295,11 @@ class formatHtML():
     		to_format_columns = to_format_columns+["chain", "dG","SecStruc","dS","hb_mut","hb_wt","sb_mut","sb_wt","sasa_ratio","swaat_prediction", "red flags"]
     		col_names = ["Chromosome", "Position", "Reference Allele", "Aternative allele", "Reference residue", "Residue position", "Residue variant" , "Annotation"] 
     		is_annotation_empty = list(dataframe["annotation"] == "")  # erturns a list of booleans
-    		print(is_annotation_empty)
     		if all(is_annotation_empty) : 
     			to_format_columns=to_format_columns + ["annotation"]
     			col_names = col_names[0:-1]
     		clean_dataframe = dataframe.drop(columns=to_format_columns)
     		clean_dataframe.columns = col_names
-    		
-
     		return clean_dataframe
 
 
@@ -285,9 +342,8 @@ class formatHtML():
     				file.write("<p>All variants are covered by the PDB structure</p>")
     			else: 
     				df_non_processed = self._cleanHtmlDf( vars_for_gene[vars_for_gene["Covered by the structure"] == False], mode="non-covered" )
-    				html_non_processed = df_non_processed.to_html(index=False)
+    				html_non_processed = df_non_processed.to_html(index=False, escape=False)
     				file.write(html_non_processed)
-    			"""
 
     			# report indels 
     			
@@ -295,18 +351,17 @@ class formatHtML():
     			if not indel_table.empty:
     				file.write("<h4>Indels summary</h4>")
     				indel_table = self._cleanIndels(indel_table)
-    				file.write(indel_table.to_html(index=False))
+    				file.write(indel_table.to_html(index=False, escape=False))
 
 
     			# reporting details for processed variants
-    			self.df_processed = self._cleanHtmlDf(df_processed)
+    			self.df_processed = self._cleanHtmlDf(df_processed, mode="processed")
     			#print(self.df_processed.columns)
-    			#file.write("<h4>Processed variants summary</h4>")
+    			file.write("<h4>Processed variants summary</h4>")
 
-    			html_processed = df_processed.to_html(index=False)
+    			html_processed = self.df_processed.to_html(index=False, escape=False)
     			file.write(html_processed)
     			file.write("<hr>")
-    			"""
 
 
 """  		
