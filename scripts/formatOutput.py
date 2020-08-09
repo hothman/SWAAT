@@ -10,6 +10,17 @@ import re as re
 import datetime as dt
 import glob  
 
+try: 
+	from bokeh.plotting import figure, show
+	from scipy.stats import norm
+	import numpy as np
+	from bokeh.models import  ColumnDataSource, HoverTool, Cross
+	from bokeh.layouts import row
+	from bokeh.embed import components
+except: 
+	pass
+
+
 features = { 1:'signal peptide', 
 2: 'propeptide',
 3: 'transit peptide',
@@ -35,6 +46,8 @@ uniprot2PDBmapHOME="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/sequences"
 ANNOTATIONHOME="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/prot_annotation"
 HOTSPOTSPATCHES="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/hotspots"
 UNIPROT2PDBHOME="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/uniprot2PDBmap"
+DATAHOME="/home/houcemeddine/BILIM/SWAAT/data/dGdS.csv"  # change this to relative path 
+
 
 
 template_header= """
@@ -63,6 +76,9 @@ table, td, th {{
 	<h1>{0}</h1> 
 	<h2>{1}</h2> 
 	<p> Please consider citing the following reference for SWAAT</p>
+	#+HTML_HEAD: <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-0.11.1.min.css" type="text/css" />
+#+HTML_HEAD: <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-0.11.1.min.js"></script>
+
 
 </head>
 
@@ -190,12 +206,9 @@ def transformAnnotation(combineddataframe):
 	return annotation_table_for_raws
 
 
-from bokeh.plotting import figure, show
-from scipy.stats import norm
-import numpy as np
-from bokeh.models import  ColumnDataSource, HoverTool
-
-DATAHOME="/home/houcemeddine/BILIM/SWAAT/data/dGdS.csv"  # change this to relative path 
+######################## 
+## A class for interactive plotting
+#######################
 
 def readData(): 
     return pd.read_csv(DATAHOME)
@@ -210,46 +223,85 @@ def getPdf(data):
     return np.array(final_list), norm.pdf(final_list, mu, std)
     
     
-class PlotInteractive: 
+class Plot: 
     """
     This is a warapping class to plot interactive graphs 
     for SWAAT report.
+    takes as argument the dataframe of the processed variants
     """
     def __init__(self, processsed_dataframe):
         self.processsed_dataframe = processsed_dataframe
         self.data = readData()
-        self.dist_dG = getPdf(data['dG'])
-        self.y_coor_dg = dist_dG[1].max()
+        self.dist_dG = getPdf(self.data['dG'])
+        self.y_coor_dg = self.dist_dG[1].max()      
+        self.dist_dS = getPdf(self.data['dS'])
+        self.y_coor_ds = self.dist_dS[1].max()
+        ## Wrapping 
+        Plot.prepareDataSource(self)
+        Plot.renderGraph(self)
+        Plot.embedingCode(self)
         
-        self.dist_dS = getPdf(data['dS'])
-        self.y_coor_ds = dist_dS[1].max()
-            
+   
     def prepareDataSource(self): 
         y_coors_dg = np.array( len( self.processsed_dataframe )*[self.y_coor_dg])-0.2
+        y_coors_ds = np.array( len( self.processsed_dataframe )*[self.y_coor_ds])-0.7
         aa_variants = self.processsed_dataframe["Reference residue"] + self.processsed_dataframe["Residue position"].astype(str)+ self.processsed_dataframe["Residue variant"] 
         self.source = ColumnDataSource(data = {"dG": self.processsed_dataframe["dG (kcal/mol)"],
                                 "dS": self.processsed_dataframe["dS (kcal/mol)"],
                                 "Chromosome": self.processsed_dataframe.Chromosome, 
                                 "Genome_position": self.processsed_dataframe.position, 
                                 "y_coors_dg":y_coors_dg ,
+                                "y_coors_ds":y_coors_ds ,
                                 "aa_variants": aa_variants } )
     
-    def PlotGraph(self): 
-        tooltips = [("dG", "@dG"),
+    def PlotGraph(self, title, x_axis_label, y_axis_label, x, y, energy_tag, energy_column): 
+        p = figure(title=title, x_axis_label=x_axis_label, 
+                   y_axis_label=y_axis_label,
+                  plot_width=400, plot_height=400)
+        g1 = Cross(x=x, y=y)
+        p.add_glyph(source_or_glyph=self.source, glyph=g1)
+        g1_r = p.add_glyph(source_or_glyph=self.source, glyph=g1)
+        g1_hover = HoverTool(renderers=[g1_r],
+                         tooltips=[(energy_tag, energy_column),
                    ("Chromosome", "@Chromosome"),
                    ("Position", "@Genome_position"),
-                   ("Variant", "@aa_variants"), ]
-        p = figure(title="simple line example", x_axis_label='dG(kcal/mol)', 
-                   y_axis_label='Probability', tooltips=tooltips)
-        
-        p.line(self.dist_dG[0], self.dist_dG[1], legend_label="Temp.", line_width=2)
-        p.circle(x="dG", y= "y_coors_dg", source=self.source, size=5, color="red")
-        p.vbar(x="dG", bottom=0, top="y_coors_dg", source=self.source, width=0.02, color="red" )
-        show(p)
-        
+                   ("Variant", "@aa_variants")])
+        p.add_tools(g1_hover)
+        if energy_tag == "dG": 
+            fit_data = self.dist_dG
+            legend_label = "PDF(dG)"
+        elif energy_tag == "dS": 
+            fit_data = self.dist_dS
+            legend_label = "PDF(dS)"        
+        p.line(fit_data[0], fit_data[1], legend_label=legend_label, line_width=2, color="green")
+        p.circle(x=x, y= y, source=self.source, size=5, color="red")
+        p.vbar(x=x, bottom=0, top=y, source=self.source, width=0.01, color="red" )
+        return p
     
+    def renderGraph(self): 
+        plot1= self.PlotGraph(title="", x_axis_label='dG(kcal/mol)', 
+                          y_axis_label="Probability", x="dG", y='y_coors_dg', 
+                          energy_tag="dG", energy_column="@dG")
+        plot2= self.PlotGraph(title="", x_axis_label='dS(kcal/mol)', 
+                          y_axis_label="Probability", x="dS", y='y_coors_ds', 
+                          energy_tag="dS", energy_column="@dS")
+        self.plot = row(plot1, plot2)
+    
+    def embedingCode(self): 
+        script, div = components(self.plot)
+        script = '\n'.join(['#+HTML_HEAD_EXTRA: ' + line for line in script.split('\n')])
+        self.code = '''{script}
+        #+BEGIN_HTML
+        <a name="figure"></a>
+        {div}
+        #+END_HTML'''.format(script=script, div=div)
+    
+##################
+# End of Plot class
+##################
 
-class formatHtML(): 
+
+class formatHtML: 
     def __init__(self, dataframe):
     	"""self.dataframe is inhirited from the cleanData class"""
     	self.dataframe = dataframe
@@ -362,6 +414,13 @@ class formatHtML():
     			html_processed = self.df_processed.to_html(index=False, escape=False)
     			file.write(html_processed)
     			file.write("<hr>")
+
+    			# integrate interactive plot (needs bokeh library)
+    			interactive_plot = Plot(self.df_processed)
+    			file.write(interactive_plot.code)
+
+
+
 
 
 """  		
