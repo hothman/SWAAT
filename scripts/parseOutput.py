@@ -307,12 +307,12 @@ class Hbonds(ParsePDB):
 
 		
 		ns = NeighborSearch(atoms)
-		if myres.get_resname() not in [ 'ARG', 'LYS', 'ASP', 'GLU' ]: 
+		if myres.get_resname() not in [ 'ARG', 'LYS', 'ASP', 'GLU' , 'HIS']: 
 			is_sb =  0
 		else: 
 			for atom in myres: 
 				atom_id = atom.get_full_id()
-				if atom_id[4][0] in [ 'NH1', 'NH2','NZ' ]:
+				if atom_id[4][0] in [ 'NH1', 'NH2','NZ', 'NE2' ]:
 					close_atoms = ns.search(atom.coord, 4.5)    # cutoff of 4 crieria fixed by Barlow, J M Thornton (PMID6887253) +0.5A to account for the unoptimised side chain 
 					if any(atom  in [atomtype.id for atomtype in close_atoms] for atom in ['OE1','OE2','OD1','OD2']): 
 						is_sb =  1
@@ -323,7 +323,7 @@ class Hbonds(ParsePDB):
 				elif atom_id[4][0] in [ 'OE1', 'OE2', 'OD1', 'OD2' ]:
 					close_atoms = ns.search(atom.coord, 4.5)
 
-					if any( atom  in [atomtype.id for atomtype in close_atoms] for atom in ['NH1','NH2','NZ'] ): 
+					if any( atom  in [atomtype.id for atomtype in close_atoms] for atom in ['NH1','NH2','NZ', 'NE2'] ): 
 						is_sb =  1
 						break
 					else: 
@@ -628,8 +628,6 @@ class missense3D:
 				return 0
 		else:
 			return 0
-
-
 
 parser = argparse.ArgumentParser(description=" A script to extract and calculate data from \
 									FoldX, ENcom, Automutate2, stride and freesasa.")
