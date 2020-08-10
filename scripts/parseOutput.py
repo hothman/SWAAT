@@ -313,7 +313,7 @@ class Hbonds(ParsePDB):
 			for atom in myres: 
 				atom_id = atom.get_full_id()
 				if atom_id[4][0] in [ 'NH1', 'NH2','NZ' ]:
-					close_atoms = ns.search(atom.coord, 4.0)    # cutoff of 4 crieria fixed by Barlow, J M Thornton (PMID6887253) +0.5A to account for the unoptimised side chain 
+					close_atoms = ns.search(atom.coord, 4.5)    # cutoff of 4 crieria fixed by Barlow, J M Thornton (PMID6887253) +0.5A to account for the unoptimised side chain 
 					if any(atom  in [atomtype.id for atomtype in close_atoms] for atom in ['OE1','OE2','OD1','OD2']): 
 						is_sb =  1
 						break
@@ -321,7 +321,7 @@ class Hbonds(ParsePDB):
 						is_sb =  0
 						break
 				elif atom_id[4][0] in [ 'OE1', 'OE2', 'OD1', 'OD2' ]:
-					close_atoms = ns.search(atom.coord, 4.0)
+					close_atoms = ns.search(atom.coord, 4.5)
 
 					if any( atom  in [atomtype.id for atomtype in close_atoms] for atom in ['NH1','NH2','NZ'] ): 
 						is_sb =  1
