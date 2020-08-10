@@ -76,10 +76,6 @@ table, td, th {{
 	<h1>{0}</h1> 
 	<h2>{1}</h2> 
 	<p> Please consider citing the following reference for SWAAT</p>
-	#+HTML_HEAD: <link rel="stylesheet" href="http://cdn.pydata.org/bokeh/release/bokeh-0.11.1.min.css" type="text/css" />
-#+HTML_HEAD: <script type="text/javascript" src="http://cdn.pydata.org/bokeh/release/bokeh-0.11.1.min.js"></script>
-
-
 </head>
 
 """.format("SWAAT report",  dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
@@ -190,13 +186,23 @@ def getHotSpotPatch(combineddataframe):
     return hs_list
 
 def transformAnnotation(combineddataframe):
-	annotations = combineddataframe.iloc[:,list(range(35, 47))+[49]]  # indexes indicaes the 3Dmissense features and the hotspotpatch
+	salt_bridge_diff = combineddataframe["sb_wt"]-combineddataframe["sb_mut"] 
+	combineddataframe.insert(47, 'Salt bridge breakage', salt_bridge_diff)
+	print(combineddataframe.columns)
+
+	
+	annotations = combineddataframe.iloc[:,list(range(35, 48))+[50]]  # indexes indicaes the 3Dmissense features and the hotspotpatch
+	print(annotations.columns)
+	
 	annotation_table_for_raws = []
 	for i in range(0,len(annotations)):
 		raw = annotations.iloc[i].to_dict()
+		print(raw)
 		threed_missense = []
 		for key in raw: 
-			if raw[key] == 1: 
+			if raw[key] in [1, "1"] : 
+				print(key)
+				print("<span style='color: #c71100;'>&#9873;</span>"+key)
 				threed_missense.append("<span style='color: #c71100;'>&#9873;</span>"+key)  # this is where you can put the red flag
 		if not threed_missense: 
 			annotation_table_for_raws.append("")
@@ -332,14 +338,14 @@ class formatHtML:
     	 "hyrophob_Mut",  "volume_WT", "volume_Mut", "pssm_mut", "pssm_wt", "Covered by the structure", 
     	 'disulfide_breakage', 'buried_Pro_introduced', 'buried_glycine_replaced', 'buried_hydrophilic_introduced',  
     	 'buried_charge_introduced', 'buried_charge_switch', 'sec_struct_change', 'buried_charge_replaced',
-    	   'buried_exposed_switch', 'exposed_hydrophilic_introduced', 'Buried_salt_bridge_breakage', "Large_helical_penality_in_alpha_helix", 'hotspotpatch']
+    	   'buried_exposed_switch', 'exposed_hydrophilic_introduced', 'Buried_salt_bridge_breakage', "Large_helical_penality_in_alpha_helix", 'hotspotpatch', 'Salt bridge breakage']
 
     	if mode == "processed":
     		is_annotation_empty = list(dataframe["annotation"] == "")
     		clean_dataframe = dataframe.drop(columns=to_format_columns)
     		clean_dataframe.columns =["Chromosome", "position", "Reference Allele", "Aternative allele", "Reference residue", 
     		"Residue position", "Residue variant",  "Chain", "dG (kcal/mol)", "Secondary structure", "dS (kcal/mol)", 
-    		"#hydrogen bonds ref", "#hydrogen bonds var", "#salt bridges ref", "#salt bridges var", "SASA ratio", "ML prediction", 
+    		"#hydrogen bonds ref", "#hydrogen bonds var", "#salt bridges var", "#salt bridges ref", "SASA ratio", "ML prediction", 
     		"Annotation", "Red Flags"]
     		return clean_dataframe
 
