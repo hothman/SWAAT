@@ -304,29 +304,31 @@ class Hbonds(ParsePDB):
 		model = self.structure[0]	
 		myres = model[chain][position]
 		atoms  = Selection.unfold_entities(model, 'A') # A for atoms
+
+		
 		ns = NeighborSearch(atoms)
 		if myres.get_resname() not in [ 'ARG', 'LYS', 'ASP', 'GLU' ]: 
 			is_sb =  0
 		else: 
 			for atom in myres: 
-				atom_id = atom.get_full_id() 
+				atom_id = atom.get_full_id()
 				if atom_id[4][0] in [ 'NH1', 'NH2','NZ' ]:
-					close_atoms = ns.search(atom.coord, 5.0) 
-					if 'OE1' or 'OE2' in [atomtype.id for atomtype in close_atoms]: 
+					close_atoms = ns.search(atom.coord, 4.0)    # cutoff of 4 crieria fixed by Barlow, J M Thornton (PMID6887253) +0.5A to account for the unoptimised side chain 
+					if any(atom  in [atomtype.id for atomtype in close_atoms] for atom in ['OE1','OE2','OD1','OD2']): 
 						is_sb =  1
 						break
 					else: 
 						is_sb =  0
 						break
-				elif atom_id[4][0] in [ 'OE1', 'OE2' ]:
-					close_atoms = ns.search(atom.coord, 5.0)
-					if 'NH1' or 'NH2' or 'NZ' in [atomtype.id for atomtype in close_atoms]: 
-						is_sb =  1
-						break
-					else: 
-						is_sb =  0
-						break
+				elif atom_id[4][0] in [ 'OE1', 'OE2', 'OD1', 'OD2' ]:
+					close_atoms = ns.search(atom.coord, 4.0)
 
+					if any( atom  in [atomtype.id for atomtype in close_atoms] for atom in ['NH1','NH2','NZ'] ): 
+						is_sb =  1
+						break
+					else: 
+						is_sb =  0
+						break
 		return is_sb 
 
 residue_order_in_pssm = { 'A':1, 'R':2, 'N':3, 'D':4, 
