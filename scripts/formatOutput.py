@@ -110,7 +110,6 @@ class cleanData:
 		annotation = getAnnotationList(self.merged_data)
 		coverage, offset = isCovered(self.merged_data)
 		hotspotpatch = getHotSpotPatch(self.merged_data, offset = offset)
-		
 		print(offset)
 		self.merged_data["annotation"] = annotation
 		self.merged_data["hotspotpatch"] = hotspotpatch
@@ -193,6 +192,7 @@ def getHotSpotPatch(combineddataframe, offset=0):
 
 def transformAnnotation(combineddataframe):
 	salt_bridge_diff = combineddataframe["sb_wt"]-combineddataframe["sb_mut"] 
+	print(salt_bridge_diff)
 	combineddataframe.insert(47, 'Salt bridge breakage', salt_bridge_diff)	
 	annotations = combineddataframe.iloc[:,list(range(35, 48))+[50]]  # indexes indicaes the 3Dmissense features and the hotspotpatch	
 	annotation_table_for_raws = []
@@ -202,6 +202,8 @@ def transformAnnotation(combineddataframe):
 		for key in raw: 
 			if raw[key] in [1, "1"] : 
 				threed_missense.append("<span style='color: #c71100;'>&#9873;</span>"+key)  # this is where you can put the red flag
+			elif raw[key] in [-1, "-1"] :
+				threed_missense.append("<span style='color: #c71100;'>&#9873;</span>Salt bridge formation")  # -1 value is only in Salt bridge breakage column 
 		if not threed_missense: 
 			annotation_table_for_raws.append("")
 		else: 
@@ -244,8 +246,7 @@ class Plot:
         Plot.prepareDataSource(self)
         Plot.renderGraph(self)
         Plot.embedingCode(self)
-        
-   
+         
     def prepareDataSource(self): 
         y_coors_dg = np.array( len( self.processsed_dataframe )*[self.y_coor_dg])-0.2
         y_coors_ds = np.array( len( self.processsed_dataframe )*[self.y_coor_ds])-0.7
@@ -336,7 +337,8 @@ class formatHtML:
     	 "hyrophob_Mut",  "volume_WT", "volume_Mut", "pssm_mut", "pssm_wt", "Covered by the structure", 
     	 'disulfide_breakage', 'buried_Pro_introduced', 'buried_glycine_replaced', 'buried_hydrophilic_introduced',  
     	 'buried_charge_introduced', 'buried_charge_switch', 'sec_struct_change', 'buried_charge_replaced',
-    	   'buried_exposed_switch', 'exposed_hydrophilic_introduced', 'Buried_salt_bridge_breakage', "Large_helical_penality_in_alpha_helix", 'hotspotpatch', 'Salt bridge breakage']
+    	   'buried_exposed_switch', 'exposed_hydrophilic_introduced', 'Buried_salt_bridge_breakage', "Large_helical_penality_in_alpha_helix", 
+    	   'hotspotpatch', 'Salt bridge breakage']
 
     	if mode == "processed":
     		is_annotation_empty = list(dataframe["annotation"] == "")
