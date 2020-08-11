@@ -11,7 +11,7 @@ import datetime as dt
 import glob  
 
 try: 
-	from bokeh.plotting import figure, show
+	from bokeh.plotting import figure, save,  output_file
 	from scipy.stats import norm
 	import numpy as np
 	from bokeh.models import  ColumnDataSource, HoverTool, Cross
@@ -48,8 +48,6 @@ UNIPROT2PDBHOME="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/uniprot2PDBmap"
 DATAHOME="/home/houcemeddine/BILIM/SWAAT/data/dGdS.csv"  # change this to relative path 
 FASTAHOME="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/sequences"
 
-
-
 template_header= """
   
 <!DOCTYPE html>
@@ -72,6 +70,7 @@ table, td, th {{
 
 <html>
 <head>
+	<script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.1.1.min.js"></script>  
 	<title>{0}</title>
 	<h1>{0}</h1> 
 	<h2>{1}</h2> 
@@ -211,7 +210,6 @@ def transformAnnotation(combineddataframe):
 			annotation_table_for_raws.append(annotators)
 	return annotation_table_for_raws
 
-
 ######################## 
 ## A class for interactive plotting
 #######################
@@ -291,15 +289,13 @@ class Plot:
                           y_axis_label="Probability", x="dS", y='y_coors_ds', 
                           energy_tag="dS", energy_column="@dS")
         self.plot = row(plot1, plot2)
+        #output_file("test.html")
+        #save(self.plot)
     
     def embedingCode(self): 
-        script, div = components(self.plot)
-        script = '\n'.join(['#+HTML_HEAD_EXTRA: ' + line for line in script.split('\n')])
-        self.code = '''{script}
-        #+BEGIN_HTML
-        <a name="figure"></a>
-        {div}
-        #+END_HTML'''.format(script=script, div=div)
+        self.script, self.div = components(self.plot)
+        
+
     
 ##################
 # End of Plot class
@@ -411,7 +407,6 @@ class formatHtML:
     				indel_table = self._cleanIndels(indel_table)
     				file.write(indel_table.to_html(index=False, escape=False))
 
-
     			# reporting details for processed variants
     			self.df_processed = self._cleanHtmlDf(df_processed, mode="processed")
     			#print(self.df_processed.columns)
@@ -422,8 +417,12 @@ class formatHtML:
     			file.write("<hr>")
 
     			# integrate interactive plot (needs bokeh library)
-    			interactive_plot = Plot(self.df_processed)
-    			file.write(interactive_plot.code)
+    			try: 
+    				interactive_plot = Plot(self.df_processed)
+    				file.write(interactive_plot.div)
+    				file.write(interactive_plot.script)
+    			except: 
+    				print("Install Bokeh to explore the result interactively")
 
 
 
