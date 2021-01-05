@@ -9,16 +9,19 @@ import pandas as pd
 import re as re 
 import datetime as dt
 import glob  
+import argparse
 
+# Bokeh is optional 
 try: 
-	from bokeh.plotting import figure, save,  output_file
-	from scipy.stats import norm
-	import numpy as np
-	from bokeh.models import  ColumnDataSource, HoverTool, Cross
-	from bokeh.layouts import row
-	from bokeh.embed import components
+    from bokeh.plotting import figure, save,  output_file
+    from scipy.stats import norm
+    import numpy as np
+    from bokeh.models import  ColumnDataSource, HoverTool, Cross
+    from bokeh.layouts import row
+    from bokeh.embed import components
+    bokeh = True
 except: 
-	pass
+    bokeh = False
 
 
 features = { 1:'signal peptide', 
@@ -70,52 +73,50 @@ table, td, th {{
 
 <html>
 <head>
-	<script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.1.1.min.js"></script>  
-	<title>{0}</title>
-	<h1>{0}</h1> 
-	<h2>{1}</h2> 
-	<p> Please consider citing the following reference for SWAAT</p>
+    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.1.1.min.js"></script>  
+    <title>{0}</title>
+    <h1>{0}</h1> 
+    <h2>{1}</h2> 
+    <p> Please consider citing the following reference for SWAAT</p>
 </head>
 
 """.format("SWAAT report",  dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
 
 class cleanData:
-	"""docstring for cleanData"""
-	def __init__(self, swaat_predction, variant_file):
-		self.swaat_predction = swaat_predction
-		self.variant_file = variant_file
-	
-	def readFiles(self): 
-		self.predicted_data = pd.read_csv(self.swaat_predction)
-		self.var_data = pd.read_csv(self.variant_file, names=["gene_name","chromosome","position",
-			"ref_allele","alt_allele","ref_AA","AA_position","mutant_AA"])
+    """docstring for cleanData"""
+    def __init__(self, swaat_predction, variant_file):
+        self.swaat_predction = swaat_predction
+        self.variant_file = variant_file
+    
+    def readFiles(self): 
+        self.predicted_data = pd.read_csv(self.swaat_predction)
+        self.var_data = pd.read_csv(self.variant_file, names=["gene_name","chromosome","position",
+            "ref_allele","alt_allele","ref_AA","AA_position","mutant_AA"])
 
-	def cleanDf(self):
-		# characters are not clean,  need to keep only alpha numerical characters
-		regex = re.compile('[^a-zA-Z0-9]')
-		l1 = list(self.predicted_data["gene_name"]+self.predicted_data["wt_res"]+self.predicted_data["position"].astype(str)+self.predicted_data["mut_res"])
-		l2 = list(self.var_data["gene_name"]+self.var_data["ref_AA"]+self.var_data["AA_position"].astype(str)+self.var_data["mutant_AA"])
-		list1= [regex.sub('', element) for element in l1]
-		list2= [regex.sub('', element) for element in l2]
-		# generate the ID column for predicted_data
-		self.predicted_data["var_id"]=list1
-		# generate the ID column for var_data
-		self.var_data["var_id"] = list2
-		self.merged_data = pd.merge(self.var_data, self.predicted_data,on='var_id',how='left')
-		return self.merged_data
+    def cleanDf(self):
+        # characters are not clean,  need to keep only alpha numerical characters
+        regex = re.compile('[^a-zA-Z0-9]')
+        l1 = list(self.predicted_data["gene_name"]+self.predicted_data["wt_res"]+self.predicted_data["position"].astype(str)+self.predicted_data["mut_res"])
+        l2 = list(self.var_data["gene_name"]+self.var_data["ref_AA"]+self.var_data["AA_position"].astype(str)+self.var_data["mutant_AA"])
+        list1= [regex.sub('', element) for element in l1]
+        list2= [regex.sub('', element) for element in l2]
+        # generate the ID column for predicted_data
+        self.predicted_data["var_id"]=list1
+        # generate the ID column for var_data
+        self.var_data["var_id"] = list2
+        self.merged_data = pd.merge(self.var_data, self.predicted_data,on='var_id',how='left')
+        return self.merged_data
 
-	def addAnnotation(self):
-		annotation = getAnnotationList(self.merged_data)
-		coverage, offset = isCovered(self.merged_data)
-		hotspotpatch = getHotSpotPatch(self.merged_data, offset = offset)
-		print(offset)
-		self.merged_data["annotation"] = annotation
-		self.merged_data["hotspotpatch"] = hotspotpatch
-		print(hotspotpatch)
-		self.merged_data["Covered by the structure"] = coverage
-		myannotation=transformAnnotation(self.merged_data)
-		self.merged_data["red flags"] = myannotation
+    def addAnnotation(self):
+        annotation = getAnnotationList(self.merged_data)
+        coverage, offset = isCovered(self.merged_data)
+        hotspotpatch = getHotSpotPatch(self.merged_data, offset = offset)
+        self.merged_data["annotation"] = annotation
+        self.merged_data["hotspotpatch"] = hotspotpatch
+        self.merged_data["Covered by the structure"] = coverage
+        myannotation=transformAnnotation(self.merged_data)
+        self.merged_data["red flags"] = myannotation
 
 def _getUNIPROT(genename):
     """
@@ -144,22 +145,21 @@ def _getAnnotation(genename, res_position):
     return '\n'.join(annot_list)
 
 def isCovered(combineddataframe):
-	inrange_list=[]
-	for i in range(0,len(combineddataframe)):
-		gene = combineddataframe.iloc[i]['gene_name_x']
-		
-		mapfile = UNIPROT2PDBHOME+"/"+gene+"*.tsv"
-		path_to_map=glob.glob(mapfile)[0]    # because pandas does not read wildcards 
-		map_data=pd.read_csv(path_to_map, sep="\t", comment='#')
-		list_of_covered_residues = list(map_data.IDref)
-		if combineddataframe.iloc[i]['AA_position'] in list_of_covered_residues: 
-			inrange_list.append(True)
-		else: 
-			inrange_list.append(False)
-	offset = map_data.IDref[0]- map_data.ID[0]
-	print(offset)
-	return inrange_list, offset
-		
+    inrange_list=[]
+    for i in range(0,len(combineddataframe)):
+        gene = combineddataframe.iloc[i]['gene_name_x']
+        
+        mapfile = UNIPROT2PDBHOME+"/"+gene+"*.tsv"
+        path_to_map=glob.glob(mapfile)[0]    # because pandas does not read wildcards 
+        map_data=pd.read_csv(path_to_map, sep="\t", comment='#')
+        list_of_covered_residues = list(map_data.IDref)
+        if combineddataframe.iloc[i]['AA_position'] in list_of_covered_residues: 
+            inrange_list.append(True)
+        else: 
+            inrange_list.append(False)
+    offset = map_data.IDref[0]- map_data.ID[0]
+    return inrange_list, offset
+        
 def getAnnotationList(combineddataframe):
     """
     walks through the variants in the list 
@@ -184,31 +184,29 @@ def getHotSpotPatch(combineddataframe, offset=0):
         aa_position = combineddataframe.iloc[index]['AA_position'] 
         if aa_position in corrected_to_real_positions: 
             hs_list.append("1")
-            print(aa_position in corrected_to_real_positions)
         else: 
             hs_list.append("0") 
     return hs_list
 
 def transformAnnotation(combineddataframe):
-	salt_bridge_diff = combineddataframe["sb_wt"]-combineddataframe["sb_mut"] 
-	print(salt_bridge_diff)
-	combineddataframe.insert(47, 'Salt bridge breakage', salt_bridge_diff)	
-	annotations = combineddataframe.iloc[:,list(range(35, 48))+[50]]  # indexes indicaes the 3Dmissense features and the hotspotpatch	
-	annotation_table_for_raws = []
-	for i in range(0,len(annotations)):
-		raw = annotations.iloc[i].to_dict()
-		threed_missense = []
-		for key in raw: 
-			if raw[key] in [1, "1"] : 
-				threed_missense.append("<span style='color: #c71100;'>&#9873;</span>"+key)  # this is where you can put the red flag
-			elif raw[key] in [-1, "-1"] :
-				threed_missense.append("<span style='color: #c71100;'>&#9873;</span>Salt bridge formation")  # -1 value is only in Salt bridge breakage column 
-		if not threed_missense: 
-			annotation_table_for_raws.append("")
-		else: 
-			annotators = ','.join(threed_missense)
-			annotation_table_for_raws.append(annotators)
-	return annotation_table_for_raws
+    salt_bridge_diff = combineddataframe["sb_wt"]-combineddataframe["sb_mut"] 
+    combineddataframe.insert(47, 'Salt bridge breakage', salt_bridge_diff)  
+    annotations = combineddataframe.iloc[:,list(range(35, 48))+[50]]  # indexes indicaes the 3Dmissense features and the hotspotpatch   
+    annotation_table_for_raws = []
+    for i in range(0,len(annotations)):
+        raw = annotations.iloc[i].to_dict()
+        threed_missense = []
+        for key in raw: 
+            if raw[key] in [1, "1"] : 
+                threed_missense.append("<span style='color: #c71100;'>&#9873;</span>"+key)  # this is where you can put the red flag
+            elif raw[key] in [-1, "-1"] :
+                threed_missense.append("<span style='color: #c71100;'>&#9873;</span>Salt bridge formation")  # -1 value is only in Salt bridge breakage column 
+        if not threed_missense: 
+            annotation_table_for_raws.append("")
+        else: 
+            annotators = ','.join(threed_missense)
+            annotation_table_for_raws.append(annotators)
+    return annotation_table_for_raws
 
 ######################## 
 ## A class for interactive plotting
@@ -304,139 +302,149 @@ class Plot:
 
 class formatHtML: 
     def __init__(self, dataframe):
-    	"""self.dataframe is inhirited from the cleanData class"""
-    	self.dataframe = dataframe
+        """self.dataframe is inhirited from the cleanData class"""
+        self.dataframe = dataframe.sort_values(by=["position_x"])
 
     def list_of_genes(self) : 
-    	self.genes =  list( set(self.dataframe["gene_name_x"]) )
+        self.genes =  list( set(self.dataframe["gene_name_x"]) )
 
     def _generalStatistics(self, gene):
-    	non_processed_aa= pd.DataFrame(columns = self.dataframe.columns)
-    	processed_aa = pd.DataFrame(columns = self.dataframe.columns)
-    	gene_dataframe = self.dataframe[self.dataframe["gene_name_x"] == gene]
-    	total_number_of_coding_variants = len(gene_dataframe)
-    	number_of_indels = 0
-    	for i in range(0, len(gene_dataframe)) : 
-    		if "_" in  gene_dataframe.iloc[i].mutant_AA : 
-    			number_of_indels =+ 1
+        non_processed_aa= pd.DataFrame(columns = self.dataframe.columns)
+        processed_aa = pd.DataFrame(columns = self.dataframe.columns)
+        gene_dataframe = self.dataframe[self.dataframe["gene_name_x"] == gene]
+        total_number_of_coding_variants = len(gene_dataframe)
+        number_of_indels = 0
+        for i in range(0, len(gene_dataframe)) : 
+            if "_" in  gene_dataframe.iloc[i].mutant_AA : 
+                number_of_indels =+ 1
 
-    		if  pd.isnull(gene_dataframe.iloc[i].swaat_prediction) :
-    			non_processed_aa = non_processed_aa.append(gene_dataframe.iloc[i]) 
-    		else: 
-    			#print(gene_dataframe.iloc[i])
-    			processed_aa = processed_aa.append(gene_dataframe.iloc[i], ignore_index=True) 
-    	return total_number_of_coding_variants, number_of_indels, len(non_processed_aa), len(processed_aa), non_processed_aa, processed_aa
+            if  pd.isnull(gene_dataframe.iloc[i].swaat_prediction) :
+                non_processed_aa = non_processed_aa.append(gene_dataframe.iloc[i]) 
+            else: 
+                #print(gene_dataframe.iloc[i])
+                processed_aa = processed_aa.append(gene_dataframe.iloc[i], ignore_index=True) 
+        return total_number_of_coding_variants, number_of_indels, len(non_processed_aa), len(processed_aa), non_processed_aa, processed_aa
 
     def _cleanHtmlDf(self, dataframe, mode):
-    	to_format_columns = ["gene_name_x", "gene_name_y", "wt_res","var_id", "mut_res", "position_y", 
-    	"subScore", "grantham", "sneath", "classWT",  "classMut", "sasa_mut", "sasa_wt", "hyrophob_WT",
-    	 "hyrophob_Mut",  "volume_WT", "volume_Mut", "pssm_mut", "pssm_wt", "Covered by the structure", 
-    	 'disulfide_breakage', 'buried_Pro_introduced', 'buried_glycine_replaced', 'buried_hydrophilic_introduced',  
-    	 'buried_charge_introduced', 'buried_charge_switch', 'sec_struct_change', 'buried_charge_replaced',
-    	   'buried_exposed_switch', 'exposed_hydrophilic_introduced', 'Buried_salt_bridge_breakage', "Large_helical_penality_in_alpha_helix", 
-    	   'hotspotpatch', 'Salt bridge breakage']
+        to_format_columns = ["gene_name_x", "gene_name_y", "wt_res","var_id", "mut_res", "position_y", 
+        "subScore", "grantham", "sneath", "classWT",  "classMut", "sasa_mut", "sasa_wt", "hyrophob_WT",
+         "hyrophob_Mut",  "volume_WT", "volume_Mut", "pssm_mut", "pssm_wt", "Covered by the structure", 
+         'disulfide_breakage', 'buried_Pro_introduced', 'buried_glycine_replaced', 'buried_hydrophilic_introduced',  
+         'buried_charge_introduced', 'buried_charge_switch', 'sec_struct_change', 'buried_charge_replaced',
+           'buried_exposed_switch', 'exposed_hydrophilic_introduced', 'Buried_salt_bridge_breakage', "Large_helical_penality_in_alpha_helix", 
+           'hotspotpatch', 'Salt bridge breakage']
 
-    	if mode == "processed":
-    		is_annotation_empty = list(dataframe["annotation"] == "")
-    		clean_dataframe = dataframe.drop(columns=to_format_columns)
-    		clean_dataframe.columns =["Chromosome", "position", "Reference Allele", "Aternative allele", "Reference residue", 
-    		"Residue position", "Residue variant",  "Chain", "dG (kcal/mol)", "Secondary structure", "dS (kcal/mol)", 
-    		"#hydrogen bonds ref", "#hydrogen bonds var", "#salt bridges var", "#salt bridges ref", "SASA ratio", "ML prediction", 
-    		"Annotation", "Red Flags"]
-    		return clean_dataframe
+        if mode == "processed":
+            is_annotation_empty = list(dataframe["annotation"] == "")
+            clean_dataframe = dataframe.drop(columns=to_format_columns)
+            clean_dataframe.columns =["Chromosome", "position", "Reference Allele", "Aternative allele", "Reference residue", 
+            "Residue position", "Residue variant",  "Chain", "dG (kcal/mol)", "Secondary structure", "dS (kcal/mol)", 
+            "#hydrogen bonds ref", "#hydrogen bonds var", "#salt bridges var", "#salt bridges ref", "SASA ratio", "ML prediction", 
+            "Annotation", "Red Flags"]
+            return clean_dataframe
 
-    	elif mode == "non-covered": 
-    		to_format_columns = to_format_columns+["chain", "dG","SecStruc","dS","hb_mut","hb_wt","sb_mut","sb_wt","sasa_ratio","swaat_prediction", "red flags"]
-    		col_names = ["Chromosome", "Position", "Reference Allele", "Aternative allele", "Reference residue", "Residue position", "Residue variant" , "Annotation"] 
-    		is_annotation_empty = list(dataframe["annotation"] == "")  # erturns a list of booleans
-    		if all(is_annotation_empty) : 
-    			to_format_columns=to_format_columns + ["annotation"]
-    			col_names = col_names[0:-1]
-    		clean_dataframe = dataframe.drop(columns=to_format_columns)
-    		clean_dataframe.columns = col_names
-    		return clean_dataframe
+        elif mode == "non-covered": 
+            to_format_columns = to_format_columns+["chain", "dG","SecStruc","dS","hb_mut","hb_wt","sb_mut","sb_wt","sasa_ratio","swaat_prediction", "red flags"]
+            col_names = ["Chromosome", "Position", "Reference Allele", "Aternative allele", "Reference residue", "Residue position", "Residue variant" , "Annotation"] 
+            is_annotation_empty = list(dataframe["annotation"] == "")  # erturns a list of booleans
+            if all(is_annotation_empty) : 
+                to_format_columns=to_format_columns + ["annotation"]
+                col_names = col_names[0:-1]
+            clean_dataframe = dataframe.drop(columns=to_format_columns)
+            clean_dataframe.columns = col_names
+            return clean_dataframe
 
 
     def _cleanIndels(self, dataframe): 
-    	newdf = (dataframe[["gene_name_x" ,"chromosome" ,"position_x" ,"ref_allele" ,"alt_allele", "ref_AA" ,"AA_position", "annotation"]])
-    	newdf.columns= ["Gene name", "Chromosome", "Position", "Reference Allele", "Aternative allele", "Reference residue", "Residue position", "annotation" ]
-    	return newdf
+        newdf = (dataframe[["gene_name_x" ,"chromosome" ,"position_x" ,"ref_allele" ,"alt_allele", "ref_AA" ,"AA_position", "annotation"]])
+        newdf.columns= ["Gene name", "Chromosome", "Position", "Reference Allele", "Aternative allele", "Reference residue", "Residue position", "annotation" ]
+        return newdf
 
     def _cleanNonProcessed(self, dataframe):
-    	newdf = (dataframe[["gene_name_x" ,"chromosome" ,"position_x" ,"ref_allele" ,"alt_allele", "annotation"]])
-    	newdf.columns= ["Gene name", "Chromosome", "Position", "Reference Allele", "Aternative allele", "annotation" ]
-    	return newdf
+        newdf = (dataframe[["gene_name_x" ,"chromosome" ,"position_x" ,"ref_allele" ,"alt_allele", "annotation"]])
+        newdf.columns= ["Gene name", "Chromosome", "Position", "Reference Allele", "Aternative allele", "annotation" ]
+        return newdf
 
 
     def outputHtml(self): 
-    	"""
-		A arapping mehod to generate HTML report
-    	"""
-    	with open("swaat2.html", "w") as file:
-    		file.write(template_header) 
-    		file.write("<ul>")
-    		for gene in self.genes : 
-    			file.write("<li><a href='#{0}'>{0}</a> </li>".format(gene))
-    		file.write("</ul>")
+        """
+        A arapping mehod to generate HTML report
+        """
+        with open("swaat2.html", "w") as file:
+            file.write(template_header) 
+            file.write("<ul>")
+            for gene in self.genes : 
+                file.write("<li><a href='#{0}'>{0}</a> </li>".format(gene))
+            file.write("</ul>")
 
-    		for gene in self.genes: 
-    			# reporting counts of variants by category 
-    			n_variants, n_indels, n_non_processed, n_processed, df_nonprecessed, df_processed = self._generalStatistics(gene)
-    			file.write("<h3 id='{0}'>{0}</h3>".format(gene))
-    			file.write("<p style='margin-left: 40px' >Total number of coding variants: {0}  \
-    				<ul> <li> Processed variants: {1} </li> \
-    				     <li> Non processed variants: {2} </li> \
-    				     <li> indels: {3} </li> </ul> </p>".format(n_variants, n_processed, n_non_processed, n_indels))
-    			# subset variants only for 'gene'
-    			vars_for_gene = self.dataframe[self.dataframe["gene_name_x"] == gene]
+            for gene in self.genes: 
+                # reporting counts of variants by category 
+                n_variants, n_indels, n_non_processed, n_processed, df_nonprecessed, df_processed = self._generalStatistics(gene)
+                file.write("<h3 id='{0}'>{0}</h3>".format(gene))
+                file.write("<p style='margin-left: 40px' >Total number of coding variants: {0}  \
+                    <ul> <li> Processed variants: {1} </li> \
+                         <li> Non processed variants: {2} </li> \
+                         <li> indels: {3} </li> </ul> </p>".format(n_variants, n_processed, n_non_processed, n_indels))
+                # subset variants only for 'gene'
+                vars_for_gene = self.dataframe[self.dataframe["gene_name_x"] == gene]
 
-    			# report non covered 
-    			file.write("<h4>Non processed variants summary</h4>")
-    			if vars_for_gene[vars_for_gene["Covered by the structure"] == False].empty : 
-    				file.write("<p>All variants are covered by the PDB structure</p>")
-    			else: 
-    				df_non_processed = self._cleanHtmlDf( vars_for_gene[vars_for_gene["Covered by the structure"] == False], mode="non-covered" )
-    				html_non_processed = df_non_processed.to_html(index=False, escape=False)
-    				file.write(html_non_processed)
+                # report non covered 
+                file.write("<h4>Non processed variants summary</h4>")
+                if vars_for_gene[vars_for_gene["Covered by the structure"] == False].empty : 
+                    file.write("<p>All variants are covered by the PDB structure</p>")
+                else: 
+                    df_non_processed = self._cleanHtmlDf( vars_for_gene[vars_for_gene["Covered by the structure"] == False], mode="non-covered" )
+                    html_non_processed = df_non_processed.to_html(index=False, escape=False)
+                    file.write(html_non_processed)
 
-    			# report indels 
-    			
-    			indel_table = vars_for_gene[vars_for_gene["mutant_AA"] == "_"]
-    			if not indel_table.empty:
-    				file.write("<h4>Indels summary</h4>")
-    				indel_table = self._cleanIndels(indel_table)
-    				file.write(indel_table.to_html(index=False, escape=False))
+                # report indels 
+                
+                indel_table = vars_for_gene[vars_for_gene["mutant_AA"] == "_"]
+                if not indel_table.empty:
+                    file.write("<h4>Indels summary</h4>")
+                    indel_table = self._cleanIndels(indel_table)
+                    file.write(indel_table.to_html(index=False, escape=False))
 
-    			# reporting details for processed variants
-    			self.df_processed = self._cleanHtmlDf(df_processed, mode="processed")
-    			#print(self.df_processed.columns)
-    			file.write("<h4>Processed variants summary</h4>")
+                # reporting details for processed variants
+                self.df_processed = self._cleanHtmlDf(df_processed, mode="processed")
+                self.df_processed.sort_values(by=["Residue position"],  inplace=True)
+                #print(self.df_processed.columns)
+                file.write("<h4>Processed variants summary</h4>")
 
-    			html_processed = self.df_processed.to_html(index=False, escape=False)
-    			file.write(html_processed)
-    			file.write("<hr>")
+                html_processed = self.df_processed.to_html(index=False, escape=False)
+                file.write(html_processed)
+                file.write("<hr>")
 
-    			# integrate interactive plot (needs bokeh library)
-    			try: 
-    				interactive_plot = Plot(self.df_processed)
-    				file.write(interactive_plot.div)
-    				file.write(interactive_plot.script)
-    			except: 
-    				print("Install Bokeh to explore the result interactively")
+                # integrate interactive plot (needs bokeh library)
+                try: 
+                    if bokeh :
+                        file.write("Hover to explore")
+                    interactive_plot = Plot(self.df_processed)
+                    file.write(interactive_plot.div)
+                    file.write(interactive_plot.script)
+                except: 
+                    print("Install Bokeh to explore the result interactively")
 
 
 
+parser = argparse.ArgumentParser(description=" This script formats the output of SWAAT to interactive html")
 
-
-"""  		
+        
 if __name__ == "__main__":
-	instance = cleanData("/home/houcemeddine/BILIM/SWAAT/main/work/04/93cf5b6641292cd32524f6b9430e80/predicted_outcomes.csv",
-	"/home/houcemeddine/BILIM/SWAAT/main/work/43/c400dbbdfacbf72a4873f5e6fb2bd1/allVariantsInOneFile.csv" )
+    #instance = cleanData("/home/houcemeddine/BILIM/SWAAT/main/work/f6/dc7d37010ef1cd778088353e8fd993//predicted_outcomes.csv",
+    #"/home/houcemeddine/BILIM/SWAAT/main/work/06/5ea0bd667b002ae218083b19714295/allVariantsInOneFile.csv" )
 
-	instance.readFiles()
-	instance.cleanDf()
-	#instance.addAnnotation()
-	#html = formatHtML( instance.merged_data)
-	#html.list_of_genes()
-	#html.outputHtml()
-"""
+    # add long and short argument
+    parser.add_argument("--prediction", help="A file containing the calculated features and the prediction by the ML model")
+    parser.add_argument("--variants", help="A list of variants")
+    args = parser.parse_args()
+    instance = cleanData(args.prediction, args.variants )
+    """ exapmle 
+    python formatOutput --prediction predicted_outcomes.csv --variants allVariantsInOneFile.csv
+    """
+    instance.readFiles()
+    instance.cleanDf()
+    instance.addAnnotation()
+    html = formatHtML( instance.merged_data)
+    html.list_of_genes()
+    html.outputHtml()
