@@ -23,21 +23,29 @@ import argparse
 
 def process_PDBs(PDBspath, sequence, output="which_pdb.tsv"):
 	seq=ParseFASTA(sequence)
+
 	seq.readFASTA()
 	seqinFASTA=seq.my_seqs[0]["sequence"]
+	print(seqinFASTA)
 	if len(seq.my_seqs) >1: 
 		raise ValueError("More than one seq in fasta file"  )
 	isProt1 = re.match('^[AERTYIPQSDFGHKLMWCVNaertyipqsdfghklmwcvn]+$', seqinFASTA)
 	for pdbfile in glob.glob(PDBspath + "*/*.pdb") : 
+		print(glob.glob(PDBspath + "*/*.pdb"))
 		mypdb=ParsePDB(pdbfile)
 		chains = []
 		for chain in mypdb.properties: 
 			isProt2=re.match('^[AERTYIPQSDFGHKLMWCVNaertyipqsdfghklmwcvn]+$', chain["seq"] ) 
 			if bool(isProt1) and bool(isProt2):
 				is_sub_string = seqinFASTA.find(chain["seq"])
+				print(chain["seq"])
+				print(is_sub_string)
 				if is_sub_string != -1:
 					if chain['chain'] != " ":
 						chains.append(chain['chain'])
+				else:
+					print("Sequence from PDB doesn't match the sequence from FASTA")
+
 		#output to file block
 		if chains != []:
 			with open(output, "a") as outputfile: 
