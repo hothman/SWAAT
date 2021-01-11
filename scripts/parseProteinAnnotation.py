@@ -120,12 +120,15 @@ class ParseUniprotAnnotation(object):
 			if is_feature :
 				feature_splitted = re.split( "\s\s+" ,line) 
 				for feature in KEYS : 
-					if feature in line: 
+					feature_in_line = bool( re.match(r'^FT[ \t]+%s[ \t]+' % feature, line)  )   
+					#print("sdfdfd", feature_in_line)
+					if feature_in_line : 
 						if "note="  in raw_data[counter+1]:
 							specific_annotation = raw_data[counter+1].split("note=")[-1].replace('"', '')
 						else: 
 							specific_annotation=""
 						anotation_line = re.split( "\s\s+" ,line) 
+						print(anotation_line)
 						annotation_type = anotation_line[1]
 						res_range = anotation_line[-1].split("..")
 						start_residue = int( res_range[0])
