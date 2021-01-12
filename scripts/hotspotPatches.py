@@ -139,7 +139,7 @@ class alaSCanAnalysis():
 		"""
 		close_residues = self._proximalResidues(residue, distance_cutoff=dist_cutoff)    # what are the residues
 		is_close_residue_a_hotspot_table = []
-		for close_residue in close_residues : 
+		for close_residue in close_residues :
 			is_close_residue_a_hotspot = self._evaluateEnergy(close_residue, energy_cutoff=energy_cutoff) 
 			if not is_close_residue_a_hotspot == None :
 				is_close_residue_a_hotspot_table.append(is_close_residue_a_hotspot)
@@ -161,22 +161,22 @@ class alaSCanAnalysis():
 
 	def _evaluateEnergy(self, atom, energy_cutoff=3): 
 		""" Check if an atom corresponds to a residue with
-		high energy or Alanine. return Boolean value.
+		high energy or Alanine. returns Boolean value.
 		"""
 		atom_res_id = str( atom.get_full_id()[3][1] )
-		
 		try: 
 			isInTable = self.dic[int(atom_res_id)]
 		except: 
 			pass 
-		
-		if isInTable :
+		#breakpoint()
+		try:
 			close_residue_name = isInTable[0]
 			close_residue_energy = isInTable[1]
 			if  close_residue_energy >= energy_cutoff:
 				return  atom_res_id, isInTable
-		else: 
+		except: 
 			return False
+
 
 	def formatClusters(self):
 		"""
@@ -185,21 +185,27 @@ class alaSCanAnalysis():
 		keys and a tuple as a value contaning the cluster size, 
 		volume, and energy density.
 		"""
+
 		for chain_cluster in self.clusters_pre_list: 
 			cluster_dic = {}
 			residue_in_cluster_dic = {}
 			residues_to_cluster = {}
 			myClusterList = [elem for elem in self.clusters_pre_list  if len(elem) > 3.0   ] 
+
 			all_rsidue_identifiers = [key for key in self.dic.keys()  ]
+
 			# print( all_rsidue_identifiers )
 			tags = list( range(1, len(myClusterList)+1 ) )   # ID number of the cluster in the chain
 			for tag, cluster in zip(tags, myClusterList ):
 				cluster_volume = 0.0
 				cumulated_energy = 0.0
-				for residue in cluster: 
-					cluster_volume += volume[residue[1][0]]
-					cumulated_energy += residue[1][1]
-					residue_in_cluster_dic[str( residue[0] ) ] = 'c'+str(tag)+residue[1][2]
+				for residue in cluster:
+					try:
+						cluster_volume += volume[residue[1][0]]
+						cumulated_energy += residue[1][1]
+						residue_in_cluster_dic[str( residue[0] ) ] = 'c'+str(tag)+residue[1][2]
+					except: 
+						pass
 				per_volume_energy = round( cumulated_energy/cluster_volume, 6 )
 				cluster_name =  'c'+str(tag)+cluster[0][1][2]
 				cluster_size =  len(cluster) 
