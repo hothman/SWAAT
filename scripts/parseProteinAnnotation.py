@@ -78,11 +78,15 @@ class ParseUniprotAnnotation(object):
 
 		self.lines_to_output = []
 		sequence = []
+		transcripts_list = []
 		for counter,line  in enumerate(raw_data) : 
 			is_feature = bool( re.match(r'^FT', line)  ) 
 			is_gene_name = bool( re.match(r'^GN\s+Name=', line)  ) 
 			is_uniprot_accession = bool( re.match(r'^AC', line)  ) 
 			is_refseq_accession = bool( re.match(r'^DR.+RefSeq;', line)  )
+			if is_refseq_accession == True: 
+				transcripts_list.append(line)
+
 			is_ensembl_accession = bool( re.match(r'^DR\s+Ensembl;', line)  )
 			is_sequence = bool( re.match(r'^\s+', line)  )
 
@@ -91,7 +95,9 @@ class ParseUniprotAnnotation(object):
 				sequence.append(re.sub(r"[\s]", '', line))
 
 			# get transcript ID
-			try: self.transcript
+			try: 
+				self.transcript
+
 			except: 	
 				if is_refseq_accession:
 					for element in line.split(): 
@@ -117,6 +123,7 @@ class ParseUniprotAnnotation(object):
 					match = re.search(r'Name=\w+', line) 
 					self.gene_name = match.group().replace('Name=', '') 
 
+
 			if is_feature :
 				feature_splitted = re.split( "\s\s+" ,line) 
 				for feature in KEYS : 
@@ -128,7 +135,7 @@ class ParseUniprotAnnotation(object):
 						else: 
 							specific_annotation=""
 						anotation_line = re.split( "\s\s+" ,line) 
-						print(anotation_line)
+						#print(anotation_line)
 						annotation_type = anotation_line[1]
 						res_range = anotation_line[-1].split("..")
 						start_residue = int( res_range[0])
@@ -139,6 +146,19 @@ class ParseUniprotAnnotation(object):
 						residue_list_with_common_annotation =   list(range(start_residue,end_residue+1) ) 
 						for res in residue_list_with_common_annotation: 
 						 	self.lines_to_output.append( [str(res), self.gene_name, self.uniprot_accession , features[feature][1], specific_annotation] )
+
+		# The following block will search for the canonical transcript based on the brackets notation: example [Q16348-1]
+		# if not it will keep the first transcript exracted in lines 103-107
+		if counter == len(raw_data)-1:     # check if we reached the last line in the file
+			if len(transcripts_list ) >0 :  # check if the transcripts_list is not empty
+				for transcript in transcripts_list:
+					if "["+self.uniprot_accession+"-1]" in transcript:
+						splitted = transcript.split(';') 
+						for split in splitted : 
+							if "["+self.uniprot_accession+"-1]" in split:
+								self.transcript = re.match(r'.+NM_[0123456789]+', split).group().replace(" ","") 
+			else: 
+				warnings.warn( "The parsed file doesn't include a refseq record" )
 
 		# join the sequence together 
 		self.sequence = ''.join(sequence) 
