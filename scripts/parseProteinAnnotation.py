@@ -151,8 +151,9 @@ class ParseUniprotAnnotation(object):
 		# if not it will keep the first transcript exracted in lines 103-107
 		if counter == len(raw_data)-1:     # check if we reached the last line in the file
 			if len(transcripts_list ) >0 :  # check if the transcripts_list is not empty
+				print(transcripts_list)
 				for transcript in transcripts_list:
-					if "["+self.uniprot_accession+"-1]" in transcript:
+					if "["+self.uniprot_accession+"-1]" in transcript and "NM_" in transcript and "NM_" in transcript :
 						splitted = transcript.split(';') 
 						for split in splitted : 
 							if "["+self.uniprot_accession+"-1]" in split:
