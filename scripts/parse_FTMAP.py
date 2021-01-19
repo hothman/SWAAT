@@ -27,27 +27,34 @@ class parseFTMAP():
 		"""
 		Wrapper method
 		"""
-		zscore_nb = self._percentileCalculation( self.nonbonded )
-		zscore_hb = self._percentileCalculation( self.hbond )
+		non_bonded = self._percentileZscoresCalculation( self.nonbonded )
+		zscore_nb = non_bonded[0]
+		percentiles_nb = non_bonded[1]
+		h_bonded = self._percentileZscoresCalculation( self.hbond )
+		zscore_hb = h_bonded[0]
+		percentiles_hb = h_bonded[1]
 		filename_nb = path+suffix+"_nb.csv"
 		filename_hb = path+suffix+"_hb.csv"
 
 		with open(filename_nb, "w") as nbfile:
-			nbfile.writelines( "resID,chain,probe_contacts,zscore\n" ) 			
-			for residue, zscore in zip(self.nonbonded, zscore_nb): 
-				line = ','.join( [str(residue[0]), residue[1], str(residue[2]), str(round(zscore,2)) ] )
+			nbfile.writelines( "resID,chain,probe_contacts,zscore,percentile_score\n" ) 			
+			for residue, zscore, percentile in zip(self.nonbonded, zscore_nb, percentiles_nb ): 
+				line = ','.join( [str(residue[0]), residue[1], str(residue[2]), str(round(zscore,2)), str(percentile)  ] )
 				nbfile.writelines( line+"\n"  )
 
 		with open(filename_hb, "w") as hbfile:
-			hbfile.writelines( "resID,chain,probe_hbonds,zscore\n" ) 			
-			for residue, zscore in zip(self.hbond, zscore_hb): 
-				line = ','.join( [str(residue[0]), residue[1], str(residue[2]), str(round(zscore,2)) ] )
+			hbfile.writelines( "resID,chain,probe_hbonds,zscore,percentile_score\n" ) 			
+			for residue, zscore, percentile in zip(self.hbond, zscore_hb, percentiles_hb): 
+				line = ','.join( [str(residue[0]), residue[1], str(residue[2]), str(round(zscore,2)), str(percentile) ] )
 				hbfile.writelines( line+"\n"  )
 
-	def _percentileCalculation(self, contact_table):
+	def _percentileZscoresCalculation(self, contact_table):
+		percentiles = []
 		contact_list = [x[2] for x in  contact_table ]
 		zscores = stats.zscore(contact_list) 
-		return zscores
+		for nb_contacts in contact_list:
+			percentiles.append(round(stats.percentileofscore(contact_list,nb_contacts  )))
+		return zscores, percentiles
 
 	def _parseLine(self, contact_table):
 		clean_contacts = []
