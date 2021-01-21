@@ -50,6 +50,7 @@ HOTSPOTSPATCHES="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/hotspots"
 UNIPROT2PDBHOME="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/uniprot2PDBmap"
 DATAHOME="/home/houcemeddine/BILIM/SWAAT/data/dGdS.csv"  # change this to relative path 
 FASTAHOME="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/sequences"
+FTMAPHOME="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/ftmap"
 
 template_header= """
   
@@ -117,6 +118,7 @@ class cleanData:
         self.merged_data["Covered by the structure"] = coverage
         myannotation=transformAnnotation(self.merged_data)
         self.merged_data["red flags"] = myannotation
+        #self.merged_data["putative_drug_binder"] = 
 
 def _getUNIPROT(genename):
     """
@@ -134,15 +136,22 @@ def _getAnnotation(genename, res_position):
     in the annotated list
     """
     uniprot = _getUNIPROT(genename)
+    
     annotation_data = pd.read_csv(ANNOTATIONHOME+"/"+uniprot+"_annotation.csv")
+    
     annot_list=[]
     if (annotation_data["residue_id"]== res_position ).any() : 
         subdf = annotation_data[annotation_data["residue_id"]== res_position]
+
         for i in range(0, len(subdf)):
             Annot_id = int(subdf.iloc[i].annotation_tag)
-            all_annotation= str(features[Annot_id])+": "+subdf.iloc[i].note
+            try : # this will insure to add only the tag if the content of the note column in the annotation file is empty
+                all_annotation= str(features[Annot_id])+": "+subdf.iloc[i].note
+            except: 
+                all_annotation= str(features[Annot_id])
             annot_list.append(all_annotation)    
     return '\n'.join(annot_list)
+
 
 def isCovered(combineddataframe):
     inrange_list=[]
@@ -159,7 +168,22 @@ def isCovered(combineddataframe):
             inrange_list.append(False)
     offset = map_data.IDref[0]- map_data.ID[0]
     return inrange_list, offset
-        
+
+def _getFtmap(genename, res_position): 
+    """
+    This function parses the outputs of ftmap 
+    """
+    uniprot = _getUNIPROT(genename)
+    annotation_data = pd.read_csv(FTMAPHOME+"/"+genename+"_nb.csv")
+    annot_list=[]
+    if (annotation_data["resID"] == res_position ).any() :
+        subdf = annotation_data[annotation_data["resID"]== res_position]
+        probe_contacts = int(subdf["probe_contacts"])
+        zscore = float(subdf["zscore"])
+        percentile = float(subdf["percentile_score"])
+        annot_list.append("Number of probe molecules = {0}, Zscore = {1}, Percentile Score = {2}%".format(probe_contacts, zscore, percentile ))
+    return '\n'.join(annot_list)
+   
 def getAnnotationList(combineddataframe):
     """
     walks through the variants in the list 
@@ -171,6 +195,8 @@ def getAnnotationList(combineddataframe):
         gene = combineddataframe.iloc[i]['gene_name_x'] 
         aa_position = combineddataframe.iloc[i]['AA_position']
         annotation_list.append(_getAnnotation(gene, aa_position) )
+        print(_getFtmap(gene, aa_position))
+
     return annotation_list
 
 def getHotSpotPatch(combineddataframe, offset=0): 
