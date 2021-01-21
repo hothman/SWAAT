@@ -123,17 +123,30 @@ class ParseUniprotAnnotation(object):
 					match = re.search(r'Name=\w+', line) 
 					self.gene_name = match.group().replace('Name=', '') 
 
-
 			if is_feature :
 				feature_splitted = re.split( "\s\s+" ,line) 
 				for feature in KEYS : 
 					feature_in_line = bool( re.match(r'^FT[ \t]+%s[ \t]+' % feature, line)  )   
-					#print("sdfdfd", feature_in_line)
 					if feature_in_line : 
 						if "note="  in raw_data[counter+1]:
-							specific_annotation = raw_data[counter+1].split("note=")[-1].replace('"', '')
+							#The below block is necessary to parse annotation spanning many lines
+							specific_annotation = raw_data[counter+1].split("note=")[-1]
+							if specific_annotation[-2] != "\"":
+								full_annotation = raw_data[counter+1].replace('\n', '').split("note=")[-1]+" "
+								line_index = 1
+								end_of_annotation = False
+								while end_of_annotation == False: 
+									if "\"" in raw_data[counter+1+line_index]:
+										end_of_annotation = True
+										specific_annotation = full_annotation+re.sub('^FT\s+', '', raw_data[counter+1+line_index]).replace('\n','') 
+
+									else:
+										line_index += 1
+										full_annotation = full_annotation+re.sub('^FT\s+', '', raw_data[counter+1+line_index]).replace('\n','') 
+
 						else: 
 							specific_annotation=""
+
 						anotation_line = re.split( "\s\s+" ,line) 
 						#print(anotation_line)
 						annotation_type = anotation_line[1]
@@ -145,13 +158,18 @@ class ParseUniprotAnnotation(object):
 							end_residue = int( res_range[0])
 						residue_list_with_common_annotation =   list(range(start_residue,end_residue+1) ) 
 						for res in residue_list_with_common_annotation: 
-						 	self.lines_to_output.append( [str(res), self.gene_name, self.uniprot_accession , features[feature][1], specific_annotation] )
+						 	specific_annotation = specific_annotation.replace("\n", '').replace("\"", '')
+						 	try:  # only if you parse a downloaded file
+						 		specific_annotation= re.split( '/.+=', specific_annotation)[0] 
+						 	except:
+						 		pass
 
+						 	self.lines_to_output.append( [str(res), self.gene_name, self.uniprot_accession , features[feature][1], "\""+specific_annotation+"\""])
+						 	
 		# The following block will search for the canonical transcript based on the brackets notation: example [Q16348-1]
 		# if not it will keep the first transcript exracted in lines 103-107
 		if counter == len(raw_data)-1:     # check if we reached the last line in the file
 			if len(transcripts_list ) >0 :  # check if the transcripts_list is not empty
-				print(transcripts_list)
 				for transcript in transcripts_list:
 					if "["+self.uniprot_accession+"-1]" in transcript and "NM_" in transcript and "NM_" in transcript :
 						splitted = transcript.split(';') 
