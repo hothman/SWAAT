@@ -63,9 +63,9 @@ table, td, th {{
     border-collapse: collapse;
     border: 1px solid silver;
     box-shadow: inset 0 1px 0 #fff;
-    font-size: 10px;
+    font-size: 12px;
     line-height: 24px;
-    margin: 40px auto;
+    margin: 50px auto;
     text-align: left;
     width: 800px;
 
@@ -110,13 +110,14 @@ class cleanData:
         return self.merged_data
 
     def addAnnotation(self):
-        annotation = getAnnotationList(self.merged_data)
+        annotation, ftmap_annotation = getAnnotationList(self.merged_data)
         coverage, offset = isCovered(self.merged_data)
         hotspotpatch = getHotSpotPatch(self.merged_data, offset = offset)
         self.merged_data["annotation"] = annotation
         self.merged_data["hotspotpatch"] = hotspotpatch
         self.merged_data["Covered by the structure"] = coverage
         myannotation=transformAnnotation(self.merged_data)
+        self.merged_data["Putative drug interaction"] = ftmap_annotation
         self.merged_data["red flags"] = myannotation
         #self.merged_data["putative_drug_binder"] = 
 
@@ -191,13 +192,14 @@ def getAnnotationList(combineddataframe):
     returns a list of strs 
     """
     annotation_list=[]
+    ftmap_annotation = []
     for i in range(0,len(combineddataframe)) : 
         gene = combineddataframe.iloc[i]['gene_name_x'] 
         aa_position = combineddataframe.iloc[i]['AA_position']
         annotation_list.append(_getAnnotation(gene, aa_position) )
-        print(_getFtmap(gene, aa_position))
+        ftmap_annotation.append(_getFtmap(gene, aa_position) )
 
-    return annotation_list
+    return annotation_list, ftmap_annotation
 
 def getHotSpotPatch(combineddataframe, offset=0): 
     hs_list = []
@@ -352,6 +354,7 @@ class formatHtML:
         return total_number_of_coding_variants, number_of_indels, len(non_processed_aa), len(processed_aa), non_processed_aa, processed_aa
 
     def _cleanHtmlDf(self, dataframe, mode):
+        print(dataframe)
         to_format_columns = ["gene_name_x", "gene_name_y", "wt_res","var_id", "mut_res", "position_y", 
         "subScore", "grantham", "sneath", "classWT",  "classMut", "sasa_mut", "sasa_wt", "hyrophob_WT",
          "hyrophob_Mut",  "volume_WT", "volume_Mut", "pssm_mut", "pssm_wt", "Covered by the structure", 
@@ -366,16 +369,21 @@ class formatHtML:
             clean_dataframe.columns =["Chromosome", "position", "Reference Allele", "Aternative allele", "Reference residue", 
             "Residue position", "Residue variant",  "Chain", "dG (kcal/mol)", "Secondary structure", "dS (kcal/mol)", 
             "#hydrogen bonds ref", "#hydrogen bonds var", "#salt bridges var", "#salt bridges ref", "SASA ratio", "ML prediction", 
-            "Annotation", "Red Flags"]
+            "Annotation", "Putative drug binder", "Red Flags"  ]
             return clean_dataframe
 
         elif mode == "non-covered": 
             to_format_columns = to_format_columns+["chain", "dG","SecStruc","dS","hb_mut","hb_wt","sb_mut","sb_wt","sasa_ratio","swaat_prediction", "red flags"]
-            col_names = ["Chromosome", "Position", "Reference Allele", "Aternative allele", "Reference residue", "Residue position", "Residue variant" , "Annotation"] 
+            col_names = ["Chromosome", "Position", "Reference Allele", "Aternative allele", "Reference residue", "Residue position", "Residue variant" ,"Putative drug binder", 
+            "Annotation"] 
             is_annotation_empty = list(dataframe["annotation"] == "")  # erturns a list of booleans
             if all(is_annotation_empty) : 
                 to_format_columns=to_format_columns + ["annotation"]
-                col_names = col_names[0:-1]
+                col_names.remove('annotation')
+            is_drug_empty = list(dataframe["Putative drug binder"] == "")
+            if all(is_drug_empty) :
+                to_format_columns=to_format_columns+ ["Putative drug binder"]
+                col_names.remove('Putative drug binder')             
             clean_dataframe = dataframe.drop(columns=to_format_columns)
             clean_dataframe.columns = col_names
             return clean_dataframe
@@ -423,8 +431,7 @@ class formatHtML:
                     html_non_processed = df_non_processed.to_html(index=False, escape=False)
                     file.write(html_non_processed)
 
-                # report indels 
-                
+                # report indels         
                 indel_table = vars_for_gene[vars_for_gene["mutant_AA"] == "_"]
                 if not indel_table.empty:
                     file.write("<h4>Indels summary</h4>")
