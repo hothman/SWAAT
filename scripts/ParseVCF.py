@@ -160,7 +160,7 @@ class MissenseVars(VCF, Prot2GenMap ):
 		cDNA_new_codon = self.getcDNA(new_codon)
 		new_AA = DNA_code[cDNA_new_codon] 
 		return { 'g_codon':g_codon, 
-				 'cDNA_g_codon':cDNA_g_codon ,
+				 'cDNA_g_codon':cDNA_g_codon,
 				 'AA':AA,
 				 'new_codon':new_codon ,
 				 'cDNA_new_codon':cDNA_new_codon,
@@ -179,7 +179,6 @@ class MissenseVars(VCF, Prot2GenMap ):
 			with open( output_file , 'w') as file:
 				file.writelines("gene_name,chromosome,position,ref_allele,alt_allele,ref_AA,AA_position,mutant_AA\n")
 			for retained_variant in self.retained_vars: 
-				#print(self.vars[retained_variant])
 				chromosome = self.vars[retained_variant][0]
 				position = self.vars[retained_variant][1]
 				ref = self.vars[retained_variant][2]
@@ -187,8 +186,18 @@ class MissenseVars(VCF, Prot2GenMap ):
 				for var_map in self.map: 
 					if  int(var_map[4]) <= position <= int(var_map[5]): 
 						position_in_triplet = range( int(var_map[4]) , int(var_map[5])+1 ).index(position)+1
-						gDNA_codon = var_map[6] 
+						gDNA_codon = var_map[6]
+
 						mut_dic = self.mutate(gDNA_codon , alt , position_in_triplet)
+						if var_map[6] == var_map[7]:  # check if the gDNA and the cDNA have the same sequences, if so, use only the information from the tsv file
+							mut_dic["cDNA_new_codon"]=mut_dic["new_codon"]
+							mut_dic["cDNA_g_codon"] = var_map[7]
+							mut_dic["AA"] = DNA_code[mut_dic["cDNA_g_codon"]]
+							mut_dic["new_AA"] = DNA_code[mut_dic["cDNA_new_codon"]]
+
+						if  mut_dic["AA"] != var_map[2] : # quality check of the outputs by matching the translated codon with the amino acid in the map file 
+							raise Exception("""The translated codon and the amino acid from the map file do not match \n chromosome: {0} position: {1} """.format(chromosome, position )) 
+
 						if mut_dic['new_AA'] != var_map[2]: 
 							# in order : gene name, chromosome, position, reference allele, alternative allele, reference AA, AA position, mutant AA
 							# output to a file 
@@ -200,7 +209,7 @@ class MissenseVars(VCF, Prot2GenMap ):
 								self.swaat_vars.append(data_for_swaat)
 
 	def swaatOutput(self, swaat_input="swaat_input.tsv"): 
-		if len(self.swaat_vars ) > 1:
+		if len(self.swaat_vars ) > 0:
 			for variant in self.swaat_vars : 
 				with open(swaat_input, "a") as file:
 					file.writelines( "\t".join([variant[0], variant[1], variant[2],variant[3]+"\n" ] ) )
