@@ -27,6 +27,8 @@ params.PDBFILEFIXED = "/home/houcemeddine/BILIM/testing_SWAAT/PDBs"
 params.MATRICES="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/matrices/"
 // Path to the pickle file for Random forest prediction 
 params.RFMLM="/home/houcemeddine/BILIM/ADME_PGx/SnpsInPdb/MLmodel/swaat_rf.ML"
+// link to the rotabase file (current version of foldx requires that)
+params.ROTABASE ="/home/houcemeddine/modules/foldx/rotabase.txt"
 
 
 
@@ -49,8 +51,8 @@ process generate_swaat_input {
 		gene_output_dir.mkdir()
 
 	"""
-	vcf4gene=\$(ls ${params.VCFHOME}/*$gene*.vcf)
-	map4gene=\$(ls ${params.DATABASE}/maps/*$gene*.tsv)
+	vcf4gene=\$(ls ${params.VCFHOME}/${gene}.vcf)
+	map4gene=\$(ls ${params.DATABASE}/maps/${gene}.tsv)
 	# gnerate missense variants report and swaat input 
 	python ${params.SCRIPTS}/ParseVCF.py --vcf \$vcf4gene \
 										 --map \$map4gene  \
@@ -152,10 +154,13 @@ process generateGuidingFile {
 	"""
 }
 
+
 // tata.flatMap().println()
 
 process foldX {
+	//errorStrategy 'ignore'
 	echo true
+	cpus  2
 	 input:
 	 	val variant from vars4foldx.flatMap()
 	 	file(my_id) from id
@@ -171,11 +176,13 @@ process foldX {
 												 --seq2chain ${params.DATABASE}/Seq2Chain \
 												 --output ${the_id} \
 												 --map  ${params.DATABASE}/uniprot2PDBmap
+
 	mutation_suffix=\$(sed 's/;//' individual_list_${the_id}.txt |sed 's/,//')
 	pdbfile=\$(cat ${the_id}_pdb.txt )
 	Uniprot=\$(basename \$pdbfile .pdb)
 	touch \$Uniprot.pointer 
 	ln -s ${params.PDBFILEFIXED}/\$pdbfile
+	ln -s ${params.ROTABASE} 
 	foldx --command=BuildModel --pdb=\$pdbfile --mutant-file=individual_list_${the_id}.txt >/dev/null
 	mv Dif_*.fxout ${the_id}_\${mutation_suffix}_suffixed.fxout
 	mv  WT_*.pdb  WT_${the_id}_repaired.pdb
@@ -198,6 +205,7 @@ process foldX {
 	ID=\$(basename *.pointer .pointer )
 	eigefile=\$(echo \$ID.eige)
 
+	mapfile=\$(ls ${params.DATABASE}/uniprot2PDBmap/\${gene_names}_*.tsv)
 
 	python  ${params.SCRIPTHOME}/parseOutput.py --diff ${the_id}*.fxout  \
 											    --matrix ${params.MATRICES}/blosum62.txt \
@@ -217,7 +225,7 @@ process foldX {
 											    --pssm ${params.DATABASE}/PSSMs/\$gene_names.pssm \
 											    --genename \$gene_names \
 											    --output ${the_id}_swaat.csv \
-											    --map ${params.DATABASE}/uniprot2PDBmap/\${gene_names}*.tsv
+											    --map \$mapfile
 
 
 	"""
@@ -236,6 +244,7 @@ process predict_var  {
 } 
 
 
+
 process formatReport {
 	input: 
 		file(vars) from var2aa_report.collect()
@@ -243,7 +252,7 @@ process formatReport {
 	output: 
 		file "${outcomes}" 
 		file "*.html"
-	
+
 	publishDir "${params.OUTFOLDER}/", mode:'copy'
 
 	"""
@@ -256,3 +265,4 @@ process formatReport {
 
 	"""
 }
+
