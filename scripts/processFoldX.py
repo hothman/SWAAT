@@ -27,7 +27,7 @@ def _readMap(gene_name, path_to_maps):
 	Required to convert from the seq coordinates to Pdb coordinates
 	"""
 	try:
-		matching_files = glob.glob(path_to_maps+"/"+gene_name+"*.tsv")
+		matching_files = glob.glob(path_to_maps+"/"+gene_name+"_"+"*.tsv")
 		if len(matching_files) > 1: 
 			warnings.warn("Multiple files that matches the gene name {}, will only read the first match".format(gene_name))
 	except IOError : 
@@ -44,8 +44,6 @@ def _readMap(gene_name, path_to_maps):
 		ID_in_uniprot.append(line.split()[2])
 	return gene_from_map_file, ID_in_PDB, ID_in_uniprot
 	
-
-
 def scanFolder(gene_chain_input, vartable, path_to_maps):
 	for data_file in glob.glob(gene_chain_input + "/*2PDBchain.tsv"): 
 		with open(data_file, "r") as file : 
@@ -60,7 +58,7 @@ def scanFolder(gene_chain_input, vartable, path_to_maps):
 					var_id_in_pdb = ids_in_pdb[index_var]
 					indiv_table.append(myvar[1]+chain+var_id_in_pdb+myvar[3])
 				indiv_table[-1] = indiv_table[-1]+";\n"
-				print("{4} mutation {0}/{1} in fasta at position {2} --> {3} in PDB structure".format(myvar[1], myvar[3], myvar[2], var_id_in_pdb,  gene[0]   ))
+				print("{4} mutation {0}/{1} in fasta at position {2} --> {3} in PDB structure {5}".format(myvar[1], myvar[3], myvar[2], var_id_in_pdb,  gene[0], gene[-1]  ))
 				return ','.join(indiv_table), gene[-1].replace("\n",'') 
 
 def outputfile(indiv_expression, outputindiv, outputpdbname):
@@ -80,10 +78,6 @@ if __name__ == "__main__":
 	parser.add_argument("--map", help="Path to mapping file between PDB and sequence")
 	parser.add_argument("--output", help="outputname")
 	args = parser.parse_args()
-
-	#myvar = readVar("../main/work/60/d2fe89b553151c0adf3119d0216217/myvar.txt")
 	myvar = readVar(args.var)
-	# myindiv = scanFolder("/home/houcemeddine/BILIM/testing_SWAAT/myoutput/Seq2Chain/", myvar)
 	myindiv = scanFolder(args.seq2chain, myvar, args.map)
-	#outputfile(myindiv, "output_4swaat.indiv", "pdbfile.txt")
 	outputfile(myindiv, "individual_list_"+args.output+".txt", args.output+"_pdb.txt")
