@@ -20,7 +20,7 @@ if sys.version_info[0] < 3:
 
 
        ###  Check the arguments ###
-args, out=getopt.getopt(sys.argv[1:], 'i:o:' )
+args, out=getopt.getopt(sys.argv[1:], 'i:o:f:' )
 argdic={}
 for elem in args:
     argdic[elem[0]] = elem[1]
@@ -30,14 +30,21 @@ try:
     fastaInput = argdic['-i']
 except:
     sys.exit('No FASTA file is provided. We stop here.\
-    \nUsage:\nprot2genCoor -i<input-fasta> -o <output-file> ')
+    \nUsage:\nprot2genCoor -i<input-fasta> -o <output-file> -f <output_fasta> ')
 
 # Check the output
 try:
     output = argdic['-o']
 except:
     sys.exit('No output is provided. We stop here. \
-    \nUsage:\nprot2genCoor -i<input-fasta> -o <output-file> ')
+    \nUsage:\nprot2genCoor -i<input-fasta> -o <output-file> -f <output_fasta> ')
+
+try:
+    fasta_output = argdic['-f']
+except:
+    sys.exit('No output is provided for the refseq protein file. We stop here. \
+    \nUsage:\nprot2genCoor -i<input-fasta> -o <output-file> -f <output_fasta> ')
+
 
 ## Process FASTA file
 class ParseFASTA:
@@ -70,10 +77,12 @@ class Transvar():
        chromosomeID, HGCN name, amino acid, amino acid number
        starting and ending positions of the codon and 
        both cDNA and gDNA codents"""
-       def __init__(self, header, sequence, outputfile):
+       def __init__(self, header, sequence, outputfile, fasta_output):
            self.header = header 
            self.sequence = sequence
            self.outputfile = outputfile
+           self.fasta_output = fasta_output
+           print(self.header)
        
        def getRegexp(self):
            """ process the attributes and generate the output """
@@ -82,51 +91,63 @@ class Transvar():
            transcript_name = self.header[3]
            print("Running transvar for transcript "+transcript_name+" of "+self.header[1]+" ...")
            geneName= self.header[1]
-           for idx, AA in enumerate(self.sequence):
-                constructed_cmd = "transvar  panno -i '"+str( geneName+":p."+str(idx+1) )+"' --refseq --refversion hg19|grep "+transcript_name
-                # print(constructed_cmd)   for debugging
-                output = str(subprocess.check_output(constructed_cmd, shell=True) )
-                regexp1 = re.compile(r'chr\d+:g.\d+_\d+/c.\d+_\d+/p.\d+\w') 
-                gen_coor = regexp1.findall(output)
-                regexp2 = re.compile(r'gDNA_sequence=\w{3}')
-                gDNA = regexp2.findall(output)
-                regexp3 = re.compile(r'cDNA_sequence=\w{3}')
-                cDNA = regexp3.findall(output)
-                regexp4 = re.compile(r'protein_coding[)]\\t\w+\\t')
-                gene_hgcn = regexp4.findall(output)
-                
-                # extracting chrom ID, start-end nucleotide, check AA
-                if gen_coor[0][-1] != AA :
-                    warning_msg = "Unmatched amino acids "+str(gen_coor[0][-1])+" and " \
-                        +AA+" at positions "+str(idx+1)+" and "+str(gen_coor[0][-2])
-                    warnings.warn( warning_msg )
-                reg1 = re.compile(r'\d+')
-                exp1 = reg1.findall(gen_coor[0]) 
-                start_genomic_position = exp1[1]
-                end_genomic_position = str (int( start_genomic_position ) + 2 )
-                AA_position = exp1[-1]
-                chromosome = exp1[0]
-                AA_ref = gen_coor[0][-1]
-                gene_hgcn = gene_hgcn[0].split('\\t')[1]
 
-                gDNA_codon = gDNA[0].replace("gDNA_sequence=", "")
-                cDNA_codon = cDNA[0].replace("cDNA_sequence=", "")
-                coord_list.append([chromosome, gene_hgcn, AA_ref, AA_position, start_genomic_position, \
+           aa_index = 1
+           output = "initial output"
+
+           ref_seq_aa_sequence = ""
+           while output != "":
+            try:
+              constructed_cmd = "transvar  panno -i '"+str( geneName+":p."+str(aa_index) )+"' --refseq --refversion hg19|grep "+transcript_name
+              output = str(subprocess.check_output(constructed_cmd, shell=True) )
+              regexp1 = re.compile(r'chr\d+:g.\d+_\d+/c.\d+_\d+/p.\d+\w') 
+              gen_coor = regexp1.findall(output)
+              regexp2 = re.compile(r'gDNA_sequence=\w{3}')
+              gDNA = regexp2.findall(output)
+              regexp3 = re.compile(r'cDNA_sequence=\w{3}')
+              cDNA = regexp3.findall(output)
+              regexp4 = re.compile(r'protein_coding[)]\\t\w+\\t')
+              gene_hgcn = regexp4.findall(output)
+              amino_acid = gen_coor[-1][-1] 
+              if amino_acid in "QWERTYIPASDFGHKLXCVNM":
+                ref_seq_aa_sequence = ref_seq_aa_sequence + gen_coor[-1][-1]
+              reg1 = re.compile(r'\d+')
+              exp1 = reg1.findall(gen_coor[0])
+              start_genomic_position = exp1[1]
+              end_genomic_position = str (int( start_genomic_position ) + 2 )
+              AA_position = exp1[-1]
+              chromosome = exp1[0]
+              AA_ref = gen_coor[0][-1]
+              gene_hgcn = gene_hgcn[0].split('\\t')[1]
+              gDNA_codon = gDNA[0].replace("gDNA_sequence=", "")
+              cDNA_codon = cDNA[0].replace("cDNA_sequence=", "")
+              coord_list.append([chromosome, gene_hgcn, AA_ref, AA_position, start_genomic_position, \
                  end_genomic_position, gDNA_codon, cDNA_codon] )
+
+            except: 
+              break
+            aa_index = aa_index +1 
 
            with open( self.outputfile , 'w') as file:
             file.writelines("chr\tgene_hgcn\tAmino_acid\tAA_position\tgen_start\tgen_end\tgDNA_codon\tcDNA_codon\n")
             file.writelines('\t'.join(i) + '\n' for i in coord_list) 
-           print("Finished successfully")         
-  
+
+           with open( self.fasta_output , 'w') as refseq_fasta: # output the refseq protein sequence to a fasta file 
+            refseq_fasta.writelines(">"+self.header[0]+"|"+ self.header[1]+"|"+ self.header[2]+"|"+self.header[3]+"\n")
+            refseq_fasta.writelines(ref_seq_aa_sequence)
+
+           print("Finished successfully")   
+
+class CheckConsitency(object):
+   """This class is used to check the consistencey of the sequence data between the Uniprot and refseq"""
+   def __init__(self):
+     pass
+       
 ####################
 # Run the workflow #
 #################### 
-
-Fastafile= ParseFASTA(fastaInput)           # createarseFASTA() object
-
-header, sequence =Fastafile.readFASTA()     # extract header and sequence
-
-obj = Transvar(header, sequence, output)    # create transvar object
-
-obj.getRegexp()                             # run transvar and generate tsv table
+if __name__ == "__main__":
+     Fastafile= ParseFASTA(fastaInput)                         # createarseFASTA() object
+     header, sequence =Fastafile.readFASTA()                   # extract header and sequence
+     obj = Transvar(header, sequence, output, fasta_output)    # create transvar object
+     obj.getRegexp()                                           # run transvar and generate tsv table
