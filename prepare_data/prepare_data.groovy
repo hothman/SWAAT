@@ -26,23 +26,26 @@ params.calculate_PSSM = true
 // 'false' if you don't want to calculate the hotspot islands
 params.calculate_hotspots = true
 // path to FTMAP files 
-params.FTMAPPATH = 
+params.FTMAPPATH ="/home/houcemeddine/BILIM/SWAAT/ftmap"
+// link to the rotabase file (current version of foldx requires that)
+params.ROTABASE ="/home/houcemeddine/modules/foldx/rotabase.txt"
 // Parameters that have to be set to run the calculation of PSSM (to run PRODRES pipeline) 
 // of each sequence
 params.PRODRESPATH = '/home/houcemeddine/modules/PRODRES/PRODRES'
-params.PRODRESDB = '/home/houcemeddine/modules/PRODRES/db/prodres_db.nr100.sqlite3'
+params.PRODRESDB = '/home/houcemeddine/BILIM/SWAAT/prepare_data/prodres_db.nr100.sqlite3'
 params.PRODRESPFAMSCAN = '/home/houcemeddine/modules/PRODRES/PfamScan/pfam_scan.pl'
 params.UNIREF90 = '/home/houcemeddine/modules/PRODRES/db/uniprot/uniref90.fasta'
 params.PFAM = '/home/houcemeddine/modules/PRODRES/db/pfam'
 
 
+println "Project : $workflow.projectDir"
+
 
 PROTLIST = Channel.fromPath("$params.PROTLIST")
 // output sequences to 'sequences' directory 
-sequence_dir  = file("${params.OUTFOLDER}/sequences")
-sequence_dir.mkdir() 
+sequence_output_directory  = file("${params.OUTFOLDER}/sequences")
+sequence_output_directory.mkdir() 
 
-PROTLIST = Channel.fromPath("$params.PROTLIST")
 
 /* output annotation files to the prot_annotation directory
    extracts the fasta file from Uniprot
@@ -50,15 +53,20 @@ PROTLIST = Channel.fromPath("$params.PROTLIST")
 prot_annotation_dir  = file("${params.OUTFOLDER}/prot_annotation")
 prot_annotation_dir.mkdir() 
 
-process GetProteinAnnotation {
+process GetProteinAnnotationFetchFasta {
+	/* fasta files from this process are extracted from uniprot
+	And they will be saved to a subdirectory "Uniprot" in the directory "${params.OUTFOLDER}/sequences" */
+	sequence_output_uniprot  = file("${params.OUTFOLDER}/sequences/Uniprot")
+	sequence_output_uniprot.mkdir()
+
 	input: 
 		file(list_of_proteins) from PROTLIST
 	output: 
 		file '*_annotation.csv' into prot_annotation_file
-		file '*.fa' into sequences 
+		file '*.fa' into sequences_from_uniprot
 
-	publishDir prot_annotation_dir, mode:'copy'
-	publishDir sequence_dir, mode:'copy'
+	publishDir prot_annotation_dir, mode:'copy', pattern:"*_annotation.csv"
+	publishDir sequence_output_uniprot, mode:'copy', pattern:"*_uniprot.fa"
 
 	"""
 	tail -n +2  $list_of_proteins >list_of_uniprot_ids
@@ -71,27 +79,39 @@ process GetProteinAnnotation {
 	"""
 }
 
-sequences.into {seq_for_mapping ; seq_for_annotation ; seq_for_chains; seq_for_pdb}
 
 
-// output mapping files to the 'maps' directory
-maps_dir  = file("${params.OUTFOLDER}/maps")
-maps_dir.mkdir() 
 
-process GetCoordinates {   
+
+process GetCoordinates {  	
+	// output mapping files to the 'maps' directory
+	maps_dir  = file("${params.OUTFOLDER}/maps")
+	maps_dir.mkdir() 
+
+	/* fasta files from this process are extracted from Refseq
+	And they will be saved to a subdirectory "Refseq" in the directory "${params.OUTFOLDER}/sequences" */
+	sequence_output_refseq  = file("${params.OUTFOLDER}/sequences/Refseq")
+	sequence_output_refseq.mkdir()
+
    input:
-        file fasta from  seq_for_mapping.flatMap()
+        file fasta from  sequences_from_uniprot.flatMap()
    output:
    		file '*.tsv' into data_files	
+   		file '*_refseq.fa' into sequences_from_refseq
 
-   	publishDir maps_dir , mode:'copy'
-      
+	publishDir maps_dir , mode:'copy', pattern:'*.tsv'
+   	publishDir sequence_output_refseq, mode:'copy', pattern:'*_refseq.fa' 
+
    """
-   suffix=\$(basename outfolder/${fasta} .fa)
+   suffix=\$(basename outfolder/${fasta} _uniprot.fa)
    outputname=\$(echo \$suffix'.tsv') 
-   python ${params.SCRIPTHOME}/prot2genCoor.py -i ${fasta} -o \$outputname 
+   output_fasta_refseq=\$(echo \$suffix'_refseq.fa')
+   python ${params.SCRIPTHOME}/prot2genCoor.py -i ${fasta} -o \$outputname -f \$output_fasta_refseq
    """
 } 
+
+sequences_from_refseq.into {seq_for_annotation ; seq_for_chains; seq_for_pdb}
+
 
 
 /* 		which of the chains in the PDB file correspond to 
@@ -107,7 +127,7 @@ process geneToChainMapping {
 	input:
 		file sequence from seq_for_chains.flatMap()
 	output: 
-		file "${name}_2PDBchain.tsv" into gene2PDBchains
+		file "${name}_2PDBchain.tsv" into gene2PDBchains, gene2PDBchains2
 	script: 
 		name = sequence.baseName.replaceFirst(".fa","")
 
@@ -121,6 +141,7 @@ process geneToChainMapping {
   		per amino acid
 */ 
 process uniprot2PDB {
+	echo true
 	uniprot2PDB_dir  = file("${params.OUTFOLDER}/uniprot2PDBmap")
 	uniprot2PDB_dir.mkdir() 
 	publishDir uniprot2PDB_dir , mode:'copy'
@@ -134,6 +155,7 @@ process uniprot2PDB {
 	gene_name=\$(cut -f 1  $gene2PDBchain)
 	pdbfile=\$(cut -f 4  $gene2PDBchain)
 	fasta_file=\$(ls \${gene_name}*.fa)
+	echo \$fasta_file
 	python ${params.SCRIPTHOME}/parsePDB.py --fasta \$fasta_file  --pdb ${params.PDBFILESPATH}/\$pdbfile
 	rm *_2PDBchain.tsv
 	"""
@@ -149,7 +171,10 @@ if ( params.calculate_PSSM == true ) {
 	pssm_dir  = file("${params.OUTFOLDER}/PSSMs")
 	pssm_dir.mkdir() 
 	// You need psiblast, hmmer and setting PRODRES dependencies 
+	
 	process CalculatePSSM {
+		errorStrategy 'ignore'
+		cpus  2
 		input: 
 			file fasta from seq_for_annotation.flatMap()
 		output:
@@ -208,6 +233,7 @@ if ( params.calculate_hotspots == true ) {
 	    publishDir hotspot_dir , mode:'copy'
 	"""
 	ln -s ${params.PDBFILESPATH}/${id}.pdb 
+	ln -s ${params.ROTABASE}
 	# first repair the structure
 	foldx --command=RepairPDB --pdb=${id}.pdb
 	# Generate the Ala scan profile
@@ -239,11 +265,36 @@ process encomWT {
 	script: 
 		name = pdb.baseName.replaceFirst(".pdb","")
 
-
 	"""
+	echo calculating the normal modes for ${name} 
 	build_encom -i $pdb -cov ${name}.cov -o ${name}.eige 
 	"""
 }
+
+
+hotspot_dir  = file("${params.OUTFOLDER}/ftmap")
+hotspot_dir.mkdir() 
+
+process parseFTMAP {
+	errorStrategy 'ignore'   // this is just to tell theworkflow not to stop running if the FTMAP files are missing
+	// input files must be of the form nonbonded[SUFFIX].rawextract and hbonded[SUFFIX].rawextract
+	publishDir "${params.OUTFOLDER}/ftmap/", mode:'copy'
+	input: 
+		file gene_name_data from  gene2PDBchains2
+
+	output: 
+		file "*.csv"
+
+	"""
+	gene_name=\$(cut -f 1  $gene_name_data)
+	echo \$gene_name
+	python ${params.SCRIPTHOME}/parse_FTMAP.py  --nb ${params.FTMAPPATH}/\$gene_name/nonbonded*.rawextract \
+											    --hb ${params.FTMAPPATH}/\$gene_name/hbonded*.rawextract \
+											    --suffix \$gene_name
+
+	"""
+}
+
 
 matrix_dir  = file("${params.OUTFOLDER}/matrices")
 matrix_dir.mkdir()
@@ -327,3 +378,9 @@ H 25 28 31 34 29 36 27 24 30 34 28 31 27 35 27 31 23 18 25 0" >sneath.txt
 	"""
 }
 
+
+workflow.onComplete = {
+    // any workflow property can be used here
+    println "Pipeline complete"
+    println "Command line: $workflow.commandLine"
+}
