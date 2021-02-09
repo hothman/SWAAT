@@ -82,11 +82,11 @@ class Transvar():
            self.sequence = sequence
            self.outputfile = outputfile
            self.fasta_output = fasta_output
-           print(self.header)
        
        def getRegexp(self):
            """ process the attributes and generate the output """
 
+           transcript_table = []
            coord_list = []
            transcript_name = self.header[3]
            print("Running transvar for transcript "+transcript_name+" of "+self.header[1]+" ...")
@@ -96,11 +96,23 @@ class Transvar():
            output = "initial output"
 
            ref_seq_aa_sequence = ""
-           while output != "":
-            try:
+           while "no_valid_transcript_found" not in output:
+            try:  # try to match the transcript from uniprot with the list of hits returned by transvar
               constructed_cmd = "transvar  panno -i '"+str( geneName+":p."+str(aa_index) )+"' --refseq --refversion hg19|grep "+transcript_name
               output = str(subprocess.check_output(constructed_cmd, shell=True) )
-              regexp1 = re.compile(r'chr\d+:g.\d+_\d+/c.\d+_\d+/p.\d+\w') 
+
+            except: 
+              try:  # select the first choice from the table (nested )
+                constructed_cmd = "transvar  panno -i '"+str( geneName+":p."+str(aa_index) )+"' --refseq --refversion hg19 |head -n 2|tail -n 1"
+                output = str(subprocess.check_output(constructed_cmd, shell=True) )
+                
+              except:
+                print("No transcript found for gene {0}".format(geneName))
+                raise  # raise an error if not hit was obtained
+                break
+
+            try: 
+              regexp1 = re.compile(r'chr\d+:g.\d+_\d+/c.\d+_\d+/p.\d+\w')
               gen_coor = regexp1.findall(output)
               regexp2 = re.compile(r'gDNA_sequence=\w{3}')
               gDNA = regexp2.findall(output)
@@ -108,9 +120,9 @@ class Transvar():
               cDNA = regexp3.findall(output)
               regexp4 = re.compile(r'protein_coding[)]\\t\w+\\t')
               gene_hgcn = regexp4.findall(output)
-              amino_acid = gen_coor[-1][-1] 
+              amino_acid = gen_coor[-1][-1]
               if amino_acid in "QWERTYIPASDFGHKLXCVNM":
-                ref_seq_aa_sequence = ref_seq_aa_sequence + gen_coor[-1][-1]
+                  ref_seq_aa_sequence = ref_seq_aa_sequence + gen_coor[-1][-1]
               reg1 = re.compile(r'\d+')
               exp1 = reg1.findall(gen_coor[0])
               start_genomic_position = exp1[1]
@@ -121,31 +133,34 @@ class Transvar():
               gene_hgcn = gene_hgcn[0].split('\\t')[1]
               gDNA_codon = gDNA[0].replace("gDNA_sequence=", "")
               cDNA_codon = cDNA[0].replace("cDNA_sequence=", "")
-              coord_list.append([chromosome, gene_hgcn, AA_ref, AA_position, start_genomic_position, \
-                 end_genomic_position, gDNA_codon, cDNA_codon] )
 
-            except: 
-              break
+              if len(transcript_table ) == 0:  # get the transcript id from transvar 
+                transcript_table.append(output.split("\\t")[1].split()[0])
+                if output.split("\\t")[1].split()[0] != transcript_name: 
+                  print("Transcrpt ID in Uniprot ({0}) cannot be found in Refseq ({1}), will take the first accession ...".format(transcript_name,transcript_table[0] ))       
+              else:
+                pass
+
+              coord_list.append([chromosome, gene_hgcn, AA_ref, AA_position, start_genomic_position, \
+                  end_genomic_position, gDNA_codon, cDNA_codon] )
+            except:
+              pass
+
             aa_index = aa_index +1 
+
 
            with open( self.outputfile , 'w') as file:
             file.writelines("chr\tgene_hgcn\tAmino_acid\tAA_position\tgen_start\tgen_end\tgDNA_codon\tcDNA_codon\n")
             file.writelines('\t'.join(i) + '\n' for i in coord_list) 
 
            with open( self.fasta_output , 'w') as refseq_fasta: # output the refseq protein sequence to a fasta file 
-            refseq_fasta.writelines(">"+self.header[0]+"|"+ self.header[1]+"|"+ self.header[2]+"|"+self.header[3]+"\n")
+            refseq_fasta.writelines(">"+self.header[0]+"|"+ self.header[1]+"|"+ self.header[2]+"|"+transcript_table[0]+"\n")
             refseq_fasta.writelines(ref_seq_aa_sequence)
 
            print("Finished successfully")   
 
-class CheckConsitency(object):
-   """This class is used to check the consistencey of the sequence data between the Uniprot and refseq"""
-   def __init__(self):
-     pass
-       
-####################
-# Run the workflow #
-#################### 
+
+
 if __name__ == "__main__":
      Fastafile= ParseFASTA(fastaInput)                         # createarseFASTA() object
      header, sequence =Fastafile.readFASTA()                   # extract header and sequence
