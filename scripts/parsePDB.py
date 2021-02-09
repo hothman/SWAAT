@@ -152,8 +152,7 @@ class ParsePDB:
 		    	sys.exit("One of the sequences contains non standard amino acids")
 	    for chain in self.properties:
 	    	if chain['posinref'] == []:
-	    		raise MissingDataError( str(chain['chain']), " Does not match any elements in the sequence table.\n \
-	    		Check for mismatches between the reference and the PDB sequences or for missing segments in the PDB file")
+	    		raise MissingDataError( str(chain['chain']), """Does not match any elements in the sequence table. Check for mismatches between the reference and the PDB sequences or for missing segments in the PDB file""")
 	    		sys.exit()
 
 	def getSsHbonds(self, chain):
