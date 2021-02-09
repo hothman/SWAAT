@@ -81,8 +81,6 @@ process GetProteinAnnotationFetchFasta {
 
 
 
-
-
 process GetCoordinates {  	
 	// output mapping files to the 'maps' directory
 	maps_dir  = file("${params.OUTFOLDER}/maps")
@@ -113,16 +111,14 @@ process GetCoordinates {
 sequences_from_refseq.into {seq_for_annotation ; seq_for_chains; seq_for_pdb}
 
 
-
 /* 		which of the chains in the PDB file correspond to 
 		The sequence of the protein.
 */ 
-
-// output mapping files to the 'maps' directory
-seq2chain_dir  = file("${params.OUTFOLDER}/Seq2Chain")
-seq2chain_dir.mkdir() 
-
 process geneToChainMapping {
+	// output mapping files to the 'maps' directory
+	seq2chain_dir  = file("${params.OUTFOLDER}/Seq2Chain")
+	seq2chain_dir.mkdir() 
+
 	publishDir seq2chain_dir , mode:'copy'
 	input:
 		file sequence from seq_for_chains.flatMap()
@@ -132,9 +128,14 @@ process geneToChainMapping {
 		name = sequence.baseName.replaceFirst(".fa","")
 
 	"""
-	python  ${params.SCRIPTHOME}/whichPdb.py --pdbpath ${params.PDBFILESPATH}  --fasta ${sequence} --output ${name}_2PDBchain.tsv
+	python  ${params.SCRIPTHOME}/whichPdb.py --pdbpath ${params.PDBFILESPATH} \
+											 --fasta ${sequence} \
+											 --output ${name}_2PDBchain.tsv
 	"""
 }
+
+
+
 
 /* 		This process generates the mapping between the Uniprot
   		sequence to PDB and calculates sasa, sasa ratio, SS element and H_bonds number
@@ -154,12 +155,13 @@ process uniprot2PDB {
 	"""
 	gene_name=\$(cut -f 1  $gene2PDBchain)
 	pdbfile=\$(cut -f 4  $gene2PDBchain)
-	fasta_file=\$(ls \${gene_name}*.fa)
+	fasta_file=\$(ls \${gene_name}_refseq.fa)
 	echo \$fasta_file
 	python ${params.SCRIPTHOME}/parsePDB.py --fasta \$fasta_file  --pdb ${params.PDBFILESPATH}/\$pdbfile
 	rm *_2PDBchain.tsv
 	"""
 }
+
 
 // 		Will  calculate the PSSM for each protein, requires PRODRES
 // 		If you use our precalculated PSSM matrices then turn this parameters to False 
@@ -212,17 +214,16 @@ if ( params.calculate_PSSM == true ) {
 		 Are processed by the workflow
 */
 
+uniprot_list = file("${params.PROTLIST}")
+uniprot_id  = uniprot_list.readLines()
+uniprot_id.remove(0)   // remove the header
+
 
 if ( params.calculate_hotspots == true ) {
 	// creating output directory 
 	// output mapping files to the 'maps' directory
 	hotspot_dir  = file("${params.OUTFOLDER}/hotspots")
 	hotspot_dir.mkdir() 
-
-	uniprot_list = file("${params.PROTLIST}")
-	uniprot_id  = uniprot_list.readLines()
-	uniprot_id.remove(0)   // remove the header
-
 
 	process Hospotislands {
 		input:
@@ -232,6 +233,7 @@ if ( params.calculate_hotspots == true ) {
 
 	    publishDir hotspot_dir , mode:'copy'
 	"""
+	echo $id
 	ln -s ${params.PDBFILESPATH}/${id}.pdb 
 	ln -s ${params.ROTABASE}
 	# first repair the structure
@@ -243,6 +245,7 @@ if ( params.calculate_hotspots == true ) {
 	}
 
 }
+
 
 
 /*
@@ -259,17 +262,17 @@ process encomWT {
 	publishDir "${params.OUTFOLDER}/ENCoM/", mode:'copy'
 	input:
 		file pdb from PDBLIST
+		val id from uniprot_id
 	output: 
-		file "${name}.eige"
-		file "${name}.cov"
-	script: 
-		name = pdb.baseName.replaceFirst(".pdb","")
+		file "${id}.eige"
+		file "${id}.cov"
 
 	"""
-	echo calculating the normal modes for ${name} 
-	build_encom -i $pdb -cov ${name}.cov -o ${name}.eige 
+	echo calculating the normal modes for ${id} 
+	build_encom -i $pdb -cov ${id}.cov -o ${id}.eige 
 	"""
 }
+
 
 
 hotspot_dir  = file("${params.OUTFOLDER}/ftmap")
@@ -294,7 +297,6 @@ process parseFTMAP {
 
 	"""
 }
-
 
 matrix_dir  = file("${params.OUTFOLDER}/matrices")
 matrix_dir.mkdir()
