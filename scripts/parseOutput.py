@@ -421,7 +421,7 @@ def getEntropy(wt_subspace, mut_subspace):
 		eigen1 = wt_subspace.eigenvalues
 		mut_subspace.parse_eigen()
 		eigen2 = mut_subspace.eigenvalues
-		assert: len(eigen2) == len(eigen1), "Dimensions of the eigenvalues for the mutant and the WT are not the same. They came prbably from different proteins !"
+		assert len(eigen2) == len(eigen1), "Dimensions of the eigenvalues for the mutant and the WT are not the same. They came prbably from different proteins !"
 		fraction_eigenvalues = np.array(eigen2[6:])/np.array(eigen1[6:])     # do this or an overflow error will pop-up
 		# deltaS_vib 
 		return np.log(np.prod(fraction_eigenvalues)) 
