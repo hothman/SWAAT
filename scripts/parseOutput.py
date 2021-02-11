@@ -414,13 +414,14 @@ def calRMSIP(subspace1, subspace2, n = 50):
 		raise TypeError ('Arguments must be instances of class Encom')
 
 def getEntropy(wt_subspace, mut_subspace):
-	""" Calculates entropy changing between two 
+	""" Calculates entropy changing between  
 	mutant and wild type"""
 	if (isinstance(wt_subspace, Encom) and isinstance(mut_subspace, Encom)):
 		wt_subspace.parse_eigen()
 		eigen1 = wt_subspace.eigenvalues
 		mut_subspace.parse_eigen()
 		eigen2 = mut_subspace.eigenvalues
+		assert: len(eigen2) == len(eigen1), "Dimensions of the eigenvalues for the mutant and the WT are not the same. They came prbably from different proteins !"
 		fraction_eigenvalues = np.array(eigen2[6:])/np.array(eigen1[6:])     # do this or an overflow error will pop-up
 		# deltaS_vib 
 		return np.log(np.prod(fraction_eigenvalues)) 
@@ -668,14 +669,14 @@ if __name__ == "__main__":
 	position = whatMutation(args.indiv)[2]
 	wt_res =  whatMutation(args.indiv)[0]
 	mut_res =  whatMutation(args.indiv)[1]
-	muatation = wt_res+chain+str(position)+mut_res
+	mutation = wt_res+chain+str(position)+mut_res
 
 	if args.mode == "single": 
 		real_position = position
 	else: 
 		real_position = mapPosition( wt_res ,position, args.map)
 
-	red_flags = missense3D(args.pdbWT, args.pdbMut,  muatation, aa_sasa_wt = args.aasasa, aa_sasa_mut=args.aasasamut, stride_wt=args.strideWT, stride_mut=args.strideMut ) 
+	red_flags = missense3D(args.pdbWT, args.pdbMut,  mutation, aa_sasa_wt = args.aasasa, aa_sasa_mut=args.aasasamut, stride_wt=args.strideWT, stride_mut=args.strideMut ) 
 	keys = red_flags.output.keys()
 	values = red_flags.output.values()
 	try : 
