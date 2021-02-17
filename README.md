@@ -1,6 +1,6 @@
 # SWAAT
 
-
+![Drag Racing](logo_SWAAT.png)
 
 ## Preparing dependencies for the auxiliary workflow 
 
