@@ -71,8 +71,10 @@ ENV PATH /foldx:/ENCoM/bin:$PATH
 RUN git clone https://github.com/hothman/SWAAT.git
 
 # clean the container
-RUN apt-get -qq -y remove wget git build-essential autoconf \
+RUN apt-get -qq -y remove wget git build-essential \
 	&& apt-get -qq -y autoremove \
 	&& apt-get autoclean \ 
 	&& rm -rf /var/lib/apt/lists/* /var/log/dpkg.log \ 
+	&& rm /foldx/foldxLinux64.tar.gz \
+	&& rm /Miniconda3-latest-Linux-x86_64.sh \
 	&& conda clean --all --yes
