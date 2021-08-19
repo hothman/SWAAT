@@ -45,12 +45,12 @@ features = { 1:'signal peptide',
 19: 'residue involved with a crosslink bonding with another amino acid',
 20: 'external annotation'}
 
-ANNOTATIONHOME="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/prot_annotation"
-HOTSPOTSPATCHES="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/hotspots"
-UNIPROT2PDBHOME="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/uniprot2PDBmap"
-DATAHOME="/home/houcemeddine/BILIM/SWAAT/data/dGdS.csv"  # change this to relative path 
-FASTAHOME="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/sequences/Refseq"
-FTMAPHOME="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/ftmap"
+ANNOTATIONHOME="/home/houcem/tmp_science/SWAAT/database/prot_annotation"
+HOTSPOTSPATCHES="/home/houcem/tmp_science/SWAAT/database/hotspots"
+UNIPROT2PDBHOME="/home/houcem/tmp_science/SWAAT/database/uniprot2PDBmap"
+DATAHOME="/home/houcem/tmp_science/SWAAT/database/data/dGdS.csv"  # change this to relative path 
+FASTAHOME="/home/houcem/tmp_science/SWAAT/database/sequences/Refseq"
+FTMAPHOME="/home/houcem/tmp_science/SWAAT/database/ftmap"
 
 template_header= """
   

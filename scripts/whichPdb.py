@@ -26,7 +26,7 @@ def process_PDBs(PDBspath, sequence, output="which_pdb.tsv"):
 
 	seq.readFASTA()
 	seqinFASTA=seq.my_seqs[0]["sequence"]
-	print(seqinFASTA)
+	
 	if len(seq.my_seqs) >1: 
 		raise ValueError("More than one seq in fasta file"  )
 	isProt1 = re.match('^[AERTYIPQSDFGHKLMWCVNaertyipqsdfghklmwcvn]+$', seqinFASTA)
@@ -50,6 +50,7 @@ def process_PDBs(PDBspath, sequence, output="which_pdb.tsv"):
 		if chains != []:
 			with open(output, "a") as outputfile: 
 				uniprot_code = seq.my_seqs[0]["header"][0]
+				print(uniprot_code)
 				geneID = seq.my_seqs[0]["header"][1]
 				basename = path.basename(pdbfile)
 				outputfile.writelines("\t".join([geneID, uniprot_code, ",".join(chains), basename+'\n'] )  )

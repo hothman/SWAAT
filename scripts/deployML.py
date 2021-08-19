@@ -24,8 +24,7 @@ def cleanData(swaat_data_csv):
 	    sasa_r.append( float(sasa) )
 	data['sasa_r'] = sasa_r
 
-	dataset=data[["dG", "RMSIP", "dS", "subScore", "grantham", "sneath", "sb_mut",
-	 "sb_wt", "volume_WT", "volume_Mut", "pssm_mut", "pssm_wt",  "dSASA",	
+	dataset=data[["dG", "dS", "subScore", "grantham", "sneath", "volume_WT", "volume_Mut", "pssm_mut", "pssm_wt",  "dSASA",	
 	 "sasa_r", "hydrophobicity"]]
 	return dataset, datacopy
 
@@ -52,9 +51,6 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 	MODELHOME=args.modelpickle
 
-
-	#MODELHOME="/home/houcemeddine/BILIM/ADME_PGx/SnpsInPdb/MLmodel/swaat_rf.ML"
-	#file="/home/houcemeddine/BILIM/SWAAT/main/swaatall"
 	cleandf, rawdf = cleanData(args.inputdata)
 	predictions=predictVariant(cleandf)
 

@@ -7,28 +7,27 @@ INPUTS: OUTFOLDER Path to output folder
 					  FoldX 
 */ 
 
+params.SWAATHOME="/home/houcem/tmp_science/SWAAT/"
 // home for vcf files 
-params.VCFHOME="/home/houcemeddine/BILIM/SWAAT/exampleInputs/vcf/" 
-// Home of the inhouse scripts
-params.SCRIPTS="/home/houcemeddine/BILIM/SWAAT/scripts"
+params.VCFHOME="$params.SWAATHOME/inputexample/" 
 // Directory for all outputs 
-params.OUTFOLDER = "../swaat_output"
+params.OUTFOLDER = "$params.SWAATHOME/swaat_output"
 // Path to database HOME
-params.DATABASE="/home/houcemeddine/BILIM/testing_SWAAT/myoutput"
+params.DATABASE="$params.SWAATHOME/database"
 // list of gene name to process (one gene name per line)
-params.GENELIST="../exampleInputs/gene_list.txt"
+params.GENELIST="$params.SWAATHOME/inputexample/gene_list.txt"
 // home to script file 
-params.SCRIPTHOME = "/home/houcemeddine/BILIM/SWAAT/scripts/"
+params.SCRIPTHOME = "$params.SWAATHOME/scripts/"
 // home to PDBs 
-params.PDBFILESPATH = "/home/houcemeddine/BILIM/testing_SWAAT/PDBs" 
+params.PDBFILESPATH = "$params.SWAATHOME/PDBs/" 
 // home to PDBs 
-params.PDBFILEFIXED = "/home/houcemeddine/BILIM/testing_SWAAT/PDBs" 
+params.PDBFILEFIXED = "$params.SWAATHOME/PDBs/" 
 // Home to folder containing Blosum62, Grantham and Sneath matrices
-params.MATRICES="/home/houcemeddine/BILIM/testing_SWAAT/myoutput/matrices/"
+params.MATRICES="$params.SWAATHOME/matrices/"
 // Path to the pickle file for Random forest prediction 
-params.RFMLM="/home/houcemeddine/BILIM/ADME_PGx/SnpsInPdb/MLmodel/swaat_rf.ML"
+params.RFMLM="/media/houcem/theDrum/BILIM/ADME_PGx/SnpsInPdb/MLmodel/swaat_rf.ML"
 // link to the rotabase file (current version of foldx requires that)
-params.ROTABASE ="/home/houcemeddine/modules/foldx/rotabase.txt"
+params.ROTABASE ="/home/houcem/env_module/modules/software/foldx/rotabase.txt"
 
 
 
@@ -54,7 +53,7 @@ process generate_swaat_input {
 	vcf4gene=\$(ls ${params.VCFHOME}/${gene}.vcf)
 	map4gene=\$(ls ${params.DATABASE}/maps/${gene}.tsv)
 	# gnerate missense variants report and swaat input 
-	python ${params.SCRIPTS}/ParseVCF.py --vcf \$vcf4gene \
+	python ${params.SCRIPTHOME}/ParseVCF.py --vcf \$vcf4gene \
 										 --map \$map4gene  \
 										 --output ${gene}_var2prot.csv \
 										 --swaat ${gene}.swaat
@@ -141,7 +140,7 @@ process generateGuidingFile {
 	output: 
 		file "*.id" into id
 		file "*_whichPDB.tsv" into guidingFile
-	publishDir "/home/houcemeddine/BILIM/SWAAT/main/out" , mode:'copy'
+	publishDir "${params.OUTFOLDER}" , mode:'copy'
 	"""
 	id=\$(echo $variant |sed 's/ /-/g')
 	echo $variant > \$id.id
@@ -149,7 +148,7 @@ process generateGuidingFile {
 	filename=\$(echo \$gene.fa )
 	echo \$filename >mygene
 	python ${params.SCRIPTHOME}/whichPdb.py --fasta     ${params.DATABASE}/sequences/\$filename \
-											--pdbpath   ${params.PDBFILESPATH} --output \${id}_whichPDB.tsv
+					 --pdbpath   ${params.PDBFILESPATH} --output \${id}_whichPDB.tsv
 
 	"""
 }
@@ -158,7 +157,7 @@ process generateGuidingFile {
 // tata.flatMap().println()
 
 process foldX {
-	//errorStrategy 'ignore'
+	errorStrategy 'ignore'
 	echo true
 	cpus  2
 	 input:
