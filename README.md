@@ -79,5 +79,16 @@ A structuer is a chain
 A structure must contain a chain identifier
 Heteroatoms are not taken into account
 
+### Installing ENCoM
+
+ENCoM can be obtained from its [git repository](https://github.com/NRGlab/ENCoM). The `build_encom` code systematically returns an exit status of 1 which creates an issue when running within  a Nextflow process. To overcome the problem, you need to modify line 370 from `return(1);` to `return(0);` in `src/build_encom.c`. Thereafter you can compile the set of codes as following: 
+
+```shell
+cd ENCoM/build/ \
+	&& make -f Makefile.Unix
+```
+
+ 
+
 
 
