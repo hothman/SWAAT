@@ -45,12 +45,15 @@ features = { 1:'signal peptide',
 19: 'residue involved with a crosslink bonding with another amino acid',
 20: 'external annotation'}
 
+<<<<<<< HEAD
+=======
 ANNOTATIONHOME="/home/houcem/tmp_science/SWAAT/database/prot_annotation"
 HOTSPOTSPATCHES="/home/houcem/tmp_science/SWAAT/database/hotspots"
 UNIPROT2PDBHOME="/home/houcem/tmp_science/SWAAT/database/uniprot2PDBmap"
 DATAHOME="/home/houcem/tmp_science/SWAAT/database/data/dGdS.csv"  # change this to relative path 
 FASTAHOME="/home/houcem/tmp_science/SWAAT/database/sequences/Refseq"
 FTMAPHOME="/home/houcem/tmp_science/SWAAT/database/ftmap"
+>>>>>>> bbbec36f06012a7d57153eebc0877a5d48aa9eff
 
 template_header= """
   
@@ -460,21 +463,22 @@ class formatHtML:
 
 
 
-parser = argparse.ArgumentParser(description=" This script formats the output of SWAAT to interactive html")
-
         
 if __name__ == "__main__":
-    #instance = cleanData("/home/houcemeddine/BILIM/SWAAT/main/work/f6/dc7d37010ef1cd778088353e8fd993//predicted_outcomes.csv",
-    #"/home/houcemeddine/BILIM/SWAAT/main/work/06/5ea0bd667b002ae218083b19714295/allVariantsInOneFile.csv" )
-
+    parser = argparse.ArgumentParser(description=" This script formats the output of SWAAT to interactive html")
     # add long and short argument
     parser.add_argument("--prediction", help="A file containing the calculated features and the prediction by the ML model")
     parser.add_argument("--variants", help="A list of variants")
+    parser.add_argument("--dataHome", help="The Path to the database. It must nest all the dependencies")
     args = parser.parse_args()
+    ANNOTATIONHOME=args.dataHome+"/prot_annotation"
+    HOTSPOTSPATCHES=args.dataHome+"/hotspots"
+    UNIPROT2PDBHOME=args.dataHome+"/uniprot2PDBmap"
+    DATAHOME=args.dataHome+"/data/dGdS.csv"  # change this to relative path 
+    FASTAHOME=args.dataHome+"/sequences/Refseq"
+    FTMAPHOME=args.dataHome+"/ftmap"
     instance = cleanData(args.prediction, args.variants )
-    """ exapmle 
-    python formatOutput --prediction predicted_outcomes.csv --variants allVariantsInOneFile.csv
-    """
+    # running the formatting 
     instance.readFiles()
     instance.cleanDf()
     instance.addAnnotation()
