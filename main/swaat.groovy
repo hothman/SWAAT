@@ -7,6 +7,57 @@ INPUTS: OUTFOLDER Path to output folder
 					  FoldX 
 */ 
 
+<<<<<<< HEAD
+
+def helpMessage() {
+    log.info"""
+    Usage:
+
+    The typical command for running SWAAT: 
+    	nextflow run swaat.groovy --dbhome /home/to/database --VCFHOME /path/to/vcf/dir --OUTFOLDER output_folder --GENELIST ADME_genes_to_annotate.txt
+
+    Arguments:
+      --dbhome [folder]               Path to database containing the dependency files for annotating the variants (Default False)
+      --VCFHOME [folder]              Path to folder containing VCF files split by annotated gene (e.g. CYP2D6.vcf) (Default False)
+      --OUTFOLDER [str]               Where to output the plain text and the HTML report (Default: false)
+      --GENELIST-profile [file]       User can limit the annotation to the list of genes contained in a this text file (one line per gene) (Default False)
+
+    Other
+      --single_end [bool]             Specifies that the input is single-end reads (Default: false)
+      --seq_center [str]              Sequencing center information to be added to read group of BAM files (Default: false)
+
+
+    """.stripIndent()
+}
+
+
+// Show help message
+if (params.help) {
+    helpMessage()
+    exit 0
+}
+
+params.dbhome="/home/houcem/tmp_science/SWAAT"
+// home for vcf files 
+//params.vcfhome="$params.dbhome/inputexample/" 
+// Directory for all outputs 
+params.OUTFOLDER = "$params.dbhome/swaat_output"
+// Path to database HOME
+params.DATABASE="$params.dbhome/database"
+// list of gene name to process (one gene name per line)
+params.GENELIST="$params.dbhome/inputexample/gene_list.txt"
+// home to script file 
+params.SCRIPTHOME = launchDir+"/../scripts"
+// home to PDBs 
+params.PDBFILESPATH = "$params.dbhome/PDBs/" 
+// Home to folder containing Blosum62, Grantham and Sneath matrices
+params.MATRICES="$params.dbhome/database/matrices/"
+// Path to the pickle file for Random forest prediction 
+params.RFMLM=launchDir+"/../ML4swaat/swaat_rf.ML"
+// link to the rotabase file (current version of foldx requires that)
+params.ROTABASE ="/home/houcem/env_module/modules/software/foldx/rotabase.txt"
+
+=======
 params.SWAATHOME="/home/houcem/tmp_science/SWAAT/"
 // home for vcf files 
 params.VCFHOME="$params.SWAATHOME/inputexample/" 
@@ -28,7 +79,21 @@ params.MATRICES="$params.SWAATHOME/matrices/"
 params.RFMLM="/media/houcem/theDrum/BILIM/ADME_PGx/SnpsInPdb/MLmodel/swaat_rf.ML"
 // link to the rotabase file (current version of foldx requires that)
 params.ROTABASE ="/home/houcem/env_module/modules/software/foldx/rotabase.txt"
+>>>>>>> bbbec36f06012a7d57153eebc0877a5d48aa9eff
 
+log.info """
+
+         S W A A T - N F   P I P E L I N E    
+         ===================================
+         Path to VCFs      : ${params.vcfhome}
+         Path to gene_list : ${params.GENELIST}
+         Path to database  : ${params.dbhome}
+         	  PDBs     : ${params.PDBFILESPATH}
+         	  Matrices : ${params.MATRICES}
+         Predictive ML     : ${params.RFMLM}
+         FoldX Rotabase    : ${params.ROTABASE}
+         """
+         
 
 
 // generate a channel from the gene list and replace "\n"  
@@ -50,7 +115,7 @@ process generate_swaat_input {
 		gene_output_dir.mkdir()
 
 	"""
-	vcf4gene=\$(ls ${params.VCFHOME}/${gene}.vcf)
+	vcf4gene=\$(ls ${params.vcfhome}/${gene}.vcf)
 	map4gene=\$(ls ${params.DATABASE}/maps/${gene}.tsv)
 	# gnerate missense variants report and swaat input 
 	python ${params.SCRIPTHOME}/ParseVCF.py --vcf \$vcf4gene \
@@ -180,7 +245,7 @@ process foldX {
 	pdbfile=\$(cat ${the_id}_pdb.txt )
 	Uniprot=\$(basename \$pdbfile .pdb)
 	touch \$Uniprot.pointer 
-	ln -s ${params.PDBFILEFIXED}/\$pdbfile
+	ln -s ${params.PDBFILESPATH}/\$pdbfile
 	ln -s ${params.ROTABASE} 
 	foldx --command=BuildModel --pdb=\$pdbfile --mutant-file=individual_list_${the_id}.txt >/dev/null
 	mv Dif_*.fxout ${the_id}_\${mutation_suffix}_suffixed.fxout
@@ -260,8 +325,14 @@ process formatReport {
 		tail -n +2 \$treeFile >>allVariantsInOneFile.csv
 	done
 
-	python ${params.SCRIPTHOME}/formatOutput.py --prediction ${outcomes} --variants allVariantsInOneFile.csv
-
+	python ${params.SCRIPTHOME}/formatOutput.py --prediction ${outcomes} \
+						    --variants allVariantsInOneFile.csv \
+						    --dataHome ${params.DATABASE} 
 	"""
 }
 
+
+
+workflow.onComplete { 
+	println ( workflow.success ? "\nDone! Open the following report in your browser --> " : "Oops .. something went wrong" )
+}
