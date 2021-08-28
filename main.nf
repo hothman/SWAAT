@@ -12,13 +12,13 @@ def helpMessage() {
       --dbhome [folder]               Path to database containing the dependency files for annotating the variants (Default False)
       --VCFHOME [folder]              Path to folder containing VCF files split by annotated gene (e.g. CYP2D6.vcf) (Default False)
       --outfolder [str]               Where to output the plain text and the HTML report (Default: false)
-      --genelist [file]       User can limit the annotation to the list of genes contained in a this text file (one line per gene) (Default False)
+      --genelist [file]               User can limit the annotation to the list of genes contained in a this text file (one line per gene) (Default False)
 
     Other
-      --single_end [bool]             Specifies that the input is single-end reads (Default: false)
-      --seq_center [str]              Sequencing center information to be added to read group of BAM files (Default: false)
-
-
+      --foldxexe [str]                Specifies the name of the executable of FoldX software (Default foldx)
+      --encomexe [str]                Specifies the name of the executable of build_encom (Default build_encom)
+      --freesasaexe [str]             Specifies the name of the executable of freesasa software (Default freesasa)
+      --strideexe [str]             Specifies the name of the executable of stride software (Default freesasa)
     """.stripIndent()
 }
 
@@ -38,9 +38,22 @@ params.PDBFILESPATH = "$params.dbhome/PDBs/"
 params.MATRICES="$params.dbhome/matrices/"
 // Path to the pickle file for Random forest prediction 
 params.RFMLM=launchDir+"/ML4swaat/swaat_rf.ML"
+
 // link to the rotabase file (current version of foldx requires that)
 params.ROTABASE ="/home/houcem/env_module/modules/software/foldx/rotabase.txt"
 
+/*
+     The following bloc assigns default executable names to 
+     FoldX, build_encom, freesasa and stride. 
+     If ijnstalled under other names, they need to be changed from the CLI or by modifying 
+     the default values in main.nf
+
+*/
+
+params.foldxexe = "foldx"
+params.encomexe = "build_encom"
+params.freesasaexe = "freesasa"
+params.strideexe = "stride"
 
 
 log.info """
@@ -209,21 +222,21 @@ process foldX {
 	touch \$Uniprot.pointer 
 	ln -s ${params.PDBFILESPATH}/\$pdbfile
 	ln -s ${params.ROTABASE} 
-	foldx --command=BuildModel --pdb=\$pdbfile --mutant-file=individual_list_${the_id}.txt >/dev/null
+	${params.foldxexe} --command=BuildModel --pdb=\$pdbfile --mutant-file=individual_list_${the_id}.txt >/dev/null
 	mv Dif_*.fxout ${the_id}_\${mutation_suffix}_suffixed.fxout
 	mv  WT_*.pdb  WT_${the_id}_repaired.pdb
 	mv *_1.pdb ${the_id}_mutant.pdb
 
 
-	build_encom -i ${the_id}_mutant.pdb -cov ${the_id}.cov -o ${the_id}.eigen >/dev/null
+	${params.encomexe} -i ${the_id}_mutant.pdb -cov ${the_id}.cov -o ${the_id}.eigen >/dev/null
 	
-	freesasa -n 200 ${the_id}_mutant.pdb >${the_id}_mut.sasa
-	freesasa -n 200 WT_${the_id}_repaired.pdb >${the_id}_wt.sasa
-	freesasa --format seq -n 200 WT_${the_id}_repaired.pdb >${the_id}_perAA.sasa 
-	freesasa --format seq -n 200 ${the_id}_mutant.pdb >${the_id}_perAA_mut.sasa
+	${params.freesasaexe} -n 200 ${the_id}_mutant.pdb >${the_id}_mut.sasa
+	${params.freesasaexe} -n 200 WT_${the_id}_repaired.pdb >${the_id}_wt.sasa
+	${params.freesasaexe} --format seq -n 200 WT_${the_id}_repaired.pdb >${the_id}_perAA.sasa 
+	${params.freesasaexe} --format seq -n 200 ${the_id}_mutant.pdb >${the_id}_perAA_mut.sasa
 
-	stride -f ${the_id}_mutant.pdb -h >Hbond_${the_id}_mut.dat
-	stride -f WT_${the_id}_repaired.pdb -h >Hbond_${the_id}_wt.dat
+	${params.strideexe} -f ${the_id}_mutant.pdb -h >Hbond_${the_id}_mut.dat
+	${params.strideexe} -f WT_${the_id}_repaired.pdb -h >Hbond_${the_id}_wt.dat
 
 	gene_names=\$(awk {'print \$1'} $my_id)
 	coor_in_ref=\$(awk {'print \$1'} seq_coord_${the_id}.txt) 
