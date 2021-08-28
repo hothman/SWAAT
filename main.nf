@@ -1,13 +1,5 @@
 #!/usr/bin/env nextflow
-/*
-INPUTS: OUTFOLDER Path to output folder
-        listmut Path to variants table (could contain multiple lines per gene)  
 
-		Dependencies: Python 3 (scipy, Biopython)
-					  FoldX 
-*/ 
-
-<<<<<<< HEAD
 
 def helpMessage() {
     log.info"""
@@ -19,8 +11,8 @@ def helpMessage() {
     Arguments:
       --dbhome [folder]               Path to database containing the dependency files for annotating the variants (Default False)
       --VCFHOME [folder]              Path to folder containing VCF files split by annotated gene (e.g. CYP2D6.vcf) (Default False)
-      --OUTFOLDER [str]               Where to output the plain text and the HTML report (Default: false)
-      --GENELIST-profile [file]       User can limit the annotation to the list of genes contained in a this text file (one line per gene) (Default False)
+      --outfolder [str]               Where to output the plain text and the HTML report (Default: false)
+      --genelist [file]       User can limit the annotation to the list of genes contained in a this text file (one line per gene) (Default False)
 
     Other
       --single_end [bool]             Specifies that the input is single-end reads (Default: false)
@@ -37,56 +29,26 @@ if (params.help) {
     exit 0
 }
 
-params.dbhome="/home/houcem/tmp_science/SWAAT"
-// home for vcf files 
-//params.vcfhome="$params.dbhome/inputexample/" 
-// Directory for all outputs 
-params.OUTFOLDER = "$params.dbhome/swaat_output"
-// Path to database HOME
-params.DATABASE="$params.dbhome/database"
-// list of gene name to process (one gene name per line)
-params.GENELIST="$params.dbhome/inputexample/gene_list.txt"
+
 // home to script file 
-params.SCRIPTHOME = launchDir+"/../scripts"
+params.SCRIPTHOME = launchDir+"/scripts"
 // home to PDBs 
 params.PDBFILESPATH = "$params.dbhome/PDBs/" 
 // Home to folder containing Blosum62, Grantham and Sneath matrices
-params.MATRICES="$params.dbhome/database/matrices/"
+params.MATRICES="$params.dbhome/matrices/"
 // Path to the pickle file for Random forest prediction 
-params.RFMLM=launchDir+"/../ML4swaat/swaat_rf.ML"
+params.RFMLM=launchDir+"/ML4swaat/swaat_rf.ML"
 // link to the rotabase file (current version of foldx requires that)
 params.ROTABASE ="/home/houcem/env_module/modules/software/foldx/rotabase.txt"
 
-=======
-params.SWAATHOME="/home/houcem/tmp_science/SWAAT/"
-// home for vcf files 
-params.VCFHOME="$params.SWAATHOME/inputexample/" 
-// Directory for all outputs 
-params.OUTFOLDER = "$params.SWAATHOME/swaat_output"
-// Path to database HOME
-params.DATABASE="$params.SWAATHOME/database"
-// list of gene name to process (one gene name per line)
-params.GENELIST="$params.SWAATHOME/inputexample/gene_list.txt"
-// home to script file 
-params.SCRIPTHOME = "$params.SWAATHOME/scripts/"
-// home to PDBs 
-params.PDBFILESPATH = "$params.SWAATHOME/PDBs/" 
-// home to PDBs 
-params.PDBFILEFIXED = "$params.SWAATHOME/PDBs/" 
-// Home to folder containing Blosum62, Grantham and Sneath matrices
-params.MATRICES="$params.SWAATHOME/matrices/"
-// Path to the pickle file for Random forest prediction 
-params.RFMLM="/media/houcem/theDrum/BILIM/ADME_PGx/SnpsInPdb/MLmodel/swaat_rf.ML"
-// link to the rotabase file (current version of foldx requires that)
-params.ROTABASE ="/home/houcem/env_module/modules/software/foldx/rotabase.txt"
->>>>>>> bbbec36f06012a7d57153eebc0877a5d48aa9eff
+
 
 log.info """
 
-         S W A A T - N F   P I P E L I N E    
+					S W A A T - N F   P I P E L I N E    
          ===================================
          Path to VCFs      : ${params.vcfhome}
-         Path to gene_list : ${params.GENELIST}
+         Path to gene_list : ${params.genelist}
          Path to database  : ${params.dbhome}
          	  PDBs     : ${params.PDBFILESPATH}
          	  Matrices : ${params.MATRICES}
@@ -97,26 +59,26 @@ log.info """
 
 
 // generate a channel from the gene list and replace "\n"  
-genes = Channel.fromPath("$params.GENELIST").splitText()  { it.replaceAll("\n", "") }
+genes = Channel.fromPath("$params.genelist").splitText()  { it.replaceAll("\n", "") }
 		.ifEmpty { error "Cannot find genes in gene list" }
 
 
 //genes.subscribe { println "File: ${it} => ${it}" }
 // generate the list of missens variants from VCF and Map files
 process generate_swaat_input {
-	publishDir "${params.OUTFOLDER}/$gene", mode:'copy'
+	publishDir "${params.outfolder}/$gene", mode:'copy'
 	input:
 		val(gene) from genes.flatMap()
 	output: 
 		file "${gene}_var2prot.csv" into var2aa_report
 		file "${gene}.swaat" into swaat_input
 	script: 
-		gene_output_dir = file("${params.OUTFOLDER}/$gene")   // create subdirectories (gene names) in the output directory
+		gene_output_dir = file("${params.outfolder}/$gene")   // create subdirectories (gene names) in the output directory
 		gene_output_dir.mkdir()
 
 	"""
 	vcf4gene=\$(ls ${params.vcfhome}/${gene}.vcf)
-	map4gene=\$(ls ${params.DATABASE}/maps/${gene}.tsv)
+	map4gene=\$(ls ${params.dbhome}/maps/${gene}.tsv)
 	# gnerate missense variants report and swaat input 
 	python ${params.SCRIPTHOME}/ParseVCF.py --vcf \$vcf4gene \
 										 --map \$map4gene  \
@@ -141,7 +103,7 @@ process filterVars {
 		//file("${name}_pointer.tsv") optional true into pointerfile
   		val name into bigreceiver
 
-	publishDir "${params.OUTFOLDER}/$name", mode:'copy'
+	publishDir "${params.outfolder}/$name", mode:'copy'
 
 	script:
 		name = variants.baseName.replaceFirst(".swaat","")
@@ -151,7 +113,7 @@ process filterVars {
 	print("$name")
 	with open("$variants", "r") as input: 
 		lines=input.readlines() 
-	for datafile in glob.glob("${params.DATABASE}/uniprot2PDBmap" + "/*.tsv"):
+	for datafile in glob.glob("${params.dbhome}/uniprot2PDBmap" + "/*.tsv"):
 		# supposes that the variant file contains only one gene 
 		gene_name_in_vars = lines[0].split()[0]
 		with open(datafile, "r") as mydatafile: 
@@ -205,14 +167,14 @@ process generateGuidingFile {
 	output: 
 		file "*.id" into id
 		file "*_whichPDB.tsv" into guidingFile
-	publishDir "${params.OUTFOLDER}" , mode:'copy'
+	publishDir "${params.outfolder}" , mode:'copy'
 	"""
 	id=\$(echo $variant |sed 's/ /-/g')
 	echo $variant > \$id.id
 	gene=\$(echo $variant| awk {'print \$1'}  )
 	filename=\$(echo \$gene.fa )
 	echo \$filename >mygene
-	python ${params.SCRIPTHOME}/whichPdb.py --fasta     ${params.DATABASE}/sequences/\$filename \
+	python ${params.SCRIPTHOME}/whichPdb.py --fasta     ${params.dbhome}/sequences/\$filename \
 					 --pdbpath   ${params.PDBFILESPATH} --output \${id}_whichPDB.tsv
 
 	"""
@@ -237,9 +199,9 @@ process foldX {
 	"""
 	echo $variant >seq_coord_${the_id}.txt
 	python  ${params.SCRIPTHOME}/processFoldX.py --var $my_id \
-												 --seq2chain ${params.DATABASE}/Seq2Chain \
+												 --seq2chain ${params.dbhome}/Seq2Chain \
 												 --output ${the_id} \
-												 --map  ${params.DATABASE}/uniprot2PDBmap
+												 --map  ${params.dbhome}/uniprot2PDBmap
 
 	mutation_suffix=\$(sed 's/;//' individual_list_${the_id}.txt |sed 's/,//')
 	pdbfile=\$(cat ${the_id}_pdb.txt )
@@ -269,7 +231,7 @@ process foldX {
 	ID=\$(basename *.pointer .pointer )
 	eigefile=\$(echo \$ID.eige)
 
-	mapfile=\$(ls ${params.DATABASE}/uniprot2PDBmap/\${gene_names}_*.tsv)
+	mapfile=\$(ls ${params.dbhome}/uniprot2PDBmap/\${gene_names}_*.tsv)
 
 	python  ${params.SCRIPTHOME}/parseOutput.py --diff ${the_id}*.fxout  \
 											    --matrix ${params.MATRICES}/blosum62.txt \
@@ -285,8 +247,8 @@ process foldX {
 											    --pdbMut ${the_id}_mutant.pdb \
 											    --pdbWT WT_${the_id}_repaired.pdb \
 											    --modesMut ${the_id}.eigen \
-											    --modesWT ${params.DATABASE}/ENCoM/\$eigefile \
-											    --pssm ${params.DATABASE}/PSSMs/\$gene_names.pssm \
+											    --modesWT ${params.dbhome}/ENCoM/\$eigefile \
+											    --pssm ${params.dbhome}/PSSMs/\$gene_names.pssm \
 											    --genename \$gene_names \
 											    --output ${the_id}_swaat.csv \
 											    --map \$mapfile
@@ -317,7 +279,7 @@ process formatReport {
 		file "${outcomes}" 
 		file "*.html"
 
-	publishDir "${params.OUTFOLDER}/", mode:'copy'
+	publishDir "${params.outfolder}/", mode:'copy'
 
 	"""
 	for treeFile in ${vars}
@@ -327,7 +289,7 @@ process formatReport {
 
 	python ${params.SCRIPTHOME}/formatOutput.py --prediction ${outcomes} \
 						    --variants allVariantsInOneFile.csv \
-						    --dataHome ${params.DATABASE} 
+						    --dataHome ${params.dbhome} 
 	"""
 }
 
