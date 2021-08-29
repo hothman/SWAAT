@@ -1,5 +1,22 @@
 #!/usr/bin/env nextflow
 
+log.info """
+
+@@@###############################################################################################@@
+                                                     *                                             
+        (########   .###        #        ###        */  ,**               (     ################   
+      ####(   ####   ###.     ,##      (###     / #(*.#  ,              ###     ################   
+     ###.            ####    #####    ####      (     **               #####         .###          
+    .######          ####  /##,###   ###    .  ( .   *  ..,          ###.###         ###(          
+      (#########      ### ###   ###/###      (   ,     . .*        /###  ####       *###           
+            /####     #####,    ######                  ,**,      ###########       ###,           
+    ,       ,###      ####      .###   ( ,*  ,  /(#, *  ,, *    ##############     /###            
+  #############       ##*        ##    .(            *  .*     ###         ###     ###.            
+     ######                      #   ,                 *  *  ####          (###   (###             
+    
+                    STRUCTURAL  WORKFLOW   FOR  ANALYZING  ADME   TARGETS
+         """
+
 
 def helpMessage() {
     log.info"""
@@ -42,13 +59,14 @@ params.RFMLM=launchDir+"/ML4swaat/swaat_rf.ML"
 // link to the rotabase file (current version of foldx requires that)
 params.ROTABASE ="/home/houcem/env_module/modules/software/foldx/rotabase.txt"
 
-/*
+/*------------------------------------------------------------------------------------------
+
      The following bloc assigns default executable names to 
      FoldX, build_encom, freesasa and stride. 
      If ijnstalled under other names, they need to be changed from the CLI or by modifying 
      the default values in main.nf
 
-*/
+-------------------------------------------------------------------------------------------*/
 
 params.foldxexe = "foldx"
 params.encomexe = "build_encom"
@@ -56,28 +74,85 @@ params.freesasaexe = "freesasa"
 params.strideexe = "stride"
 
 
-log.info """
 
-					S W A A T - N F   P I P E L I N E    
-         ===================================
-         Path to VCFs      : ${params.vcfhome}
-         Path to gene_list : ${params.genelist}
-         Path to database  : ${params.dbhome}
-         	  PDBs     : ${params.PDBFILESPATH}
-         	  Matrices : ${params.MATRICES}
-         Predictive ML     : ${params.RFMLM}
-         FoldX Rotabase    : ${params.ROTABASE}
-         """
-         
+/*--------------------------------------------------------------------------------------------
 
+			The following bloc check if essential paramters specified in options 
+			are valid
+/*------------------------------------------------------------------------------------------*/
 
-// generate a channel from the gene list and replace "\n"  
+// test if the gene file list exists
+def testFile = new File(params.genelist)
+if (!testFile.exists()) {
+			log.info "file ${params.genelist} does not exist "		
+			exit 1	}
+  else { 
+  			log.info "~~~~~Gene list file exists"
+  				}
+
+// test if the dbhome exist
+def testFolderDb = new File(params.dbhome)
+if (!testFolderDb.exists()) {
+			log.info "file ${params.dbhome} does not exist "		
+			exit 1	}
+  else { 
+  			log.info "~~~~~Path to database exists"
+  				}
+
+ // generate a channel from the gene list and replace "\n"  
 genes = Channel.fromPath("$params.genelist").splitText()  { it.replaceAll("\n", "") }
 		.ifEmpty { error "Cannot find genes in gene list" }
 
+// check if VCF files exist 
+Channel.fromPath("${params.vcfhome}"+"/*.vcf")
+		.ifEmpty { error "Cannot find files with extension .vcf in ${params.vcfhome}" }
 
-//genes.subscribe { println "File: ${it} => ${it}" }
-// generate the list of missens variants from VCF and Map files
+
+/*--------------------------------------------------------------------------------------------
+
+			The following bloc will assess if freesasa, build_sncom, stide and foldx are in the PATH  
+			are valid
+/*------------------------------------------------------------------------------------------*/
+
+def checkToolInPath(tool)
+{
+           Runtime myrt = Runtime.getRuntime();
+           Process myproc = myrt.exec("which "+tool)
+           int exitVal = myproc.waitFor()
+           if (exitVal != 0) {
+							log.info tool+" not in PATH"
+							exit 1
+								} 
+}
+
+checkToolInPath(params.freesasaexe)
+checkToolInPath(params.encomexe)
+checkToolInPath(params.foldxexe)
+checkToolInPath(params.strideexe)
+
+
+/*--------------------------------------------------------------------------------------------
+
+			SWAAT starts to run here
+			
+/*------------------------------------------------------------------------------------------*/
+
+
+log.info """
+
+ =========================================
+
+ Path to VCFs      : ${params.vcfhome}
+ Path to gene_list : ${params.genelist}
+ Path to database  : ${params.dbhome}
+     	  PDBs     : ${params.PDBFILESPATH}
+     	  Matrices : ${params.MATRICES}
+ Predictive ML     : ${params.RFMLM}
+ FoldX Rotabase    : ${params.ROTABASE}
+
+ ========================================
+ """
+         
 process generate_swaat_input {
 	publishDir "${params.outfolder}/$gene", mode:'copy'
 	input:
