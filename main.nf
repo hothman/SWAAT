@@ -35,7 +35,9 @@ def helpMessage() {
       --foldxexe [str]                Specifies the name of the executable of FoldX software (Default foldx)
       --encomexe [str]                Specifies the name of the executable of build_encom (Default build_encom)
       --freesasaexe [str]             Specifies the name of the executable of freesasa software (Default freesasa)
-      --strideexe [str]             Specifies the name of the executable of stride software (Default freesasa)
+      --strideexe [str]               Specifies the name of the executable of stride software (Default freesasa)
+      --rotabase [abs path]           Path to rotabase.txt (Default PATH to foldx)
+      
     """.stripIndent()
 }
 
@@ -57,7 +59,7 @@ params.MATRICES="$params.dbhome/matrices/"
 params.RFMLM=launchDir+"/ML4swaat/swaat_rf.ML"
 
 // link to the rotabase file (current version of foldx requires that)
-params.ROTABASE ="/home/houcem/env_module/modules/software/foldx/rotabase.txt"
+//params.rotabase ="/home/houcem/env_module/modules/software/foldx/rotabase.txt"
 
 /*------------------------------------------------------------------------------------------
 
@@ -72,7 +74,6 @@ params.foldxexe = "foldx"
 params.encomexe = "build_encom"
 params.freesasaexe = "freesasa"
 params.strideexe = "stride"
-
 
 
 /*--------------------------------------------------------------------------------------------
@@ -133,8 +134,23 @@ checkToolInPath(params.strideexe)
 
 /*--------------------------------------------------------------------------------------------
 
+			The following bloc will set params.rotabase to the same path as foldx if it is not 
+			specified in CLI
+
+/*------------------------------------------------------------------------------------------*/
+
+if (!params.rotabase) {
+	log.info "~~~~~Setting the path to rotabase.txt from foldx location"
+	foldx_full_path = "which ${params.foldxexe}".execute().text
+  params.rotabase = "dirname ${foldx_full_path}".execute().text.replaceAll("\n", "")+"/rotabase.txt"
+}
+
+
+
+/*--------------------------------------------------------------------------------------------
+
 			SWAAT starts to run here
-			
+
 /*------------------------------------------------------------------------------------------*/
 
 
@@ -148,7 +164,7 @@ log.info """
      	  PDBs     : ${params.PDBFILESPATH}
      	  Matrices : ${params.MATRICES}
  Predictive ML     : ${params.RFMLM}
- FoldX Rotabase    : ${params.ROTABASE}
+ FoldX Rotabase    : ${params.rotabase}
 
  ========================================
  """
@@ -296,7 +312,7 @@ process foldX {
 	Uniprot=\$(basename \$pdbfile .pdb)
 	touch \$Uniprot.pointer 
 	ln -s ${params.PDBFILESPATH}/\$pdbfile
-	ln -s ${params.ROTABASE} 
+	ln -s ${params.rotabase} 
 	${params.foldxexe} --command=BuildModel --pdb=\$pdbfile --mutant-file=individual_list_${the_id}.txt >/dev/null
 	mv Dif_*.fxout ${the_id}_\${mutation_suffix}_suffixed.fxout
 	mv  WT_*.pdb  WT_${the_id}_repaired.pdb
