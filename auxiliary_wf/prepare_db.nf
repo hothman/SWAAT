@@ -14,21 +14,21 @@
 
 
 // Where the running scripts are located 
-params.SCRIPTHOME = "/home/houcemeddine/BILIM/SWAAT/scripts/"
+params.SCRIPTHOME = "/home/houcem/Desktop/SWAAT/scripts/"
 // List of uniprot codes (one column with a header)
-params.PROTLIST = "/home/houcemeddine/BILIM/SWAT/list.csv"
+params.PROTLIST = "/home/houcem/Desktop/SWAAT/list.csv"
 // PDB files 
-params.PDBFILESPATH="/home/houcemeddine/BILIM/testing_SWAAT/PDBs"
+params.PDBFILESPATH="/home/houcem/tmp_science/SWAAT/database/PDBs/Tmp_container"
 // name and path of the output directory
-params.OUTFOLDER="/home/houcemeddine/BILIM/testing_SWAAT/myoutput"
+params.OUTFOLDER="/home/houcem/Desktop/SWAAT/mytestdb"
 // 'false' if you don't want to calculate PSSMs for each protein
-params.calculate_PSSM = true
+params.calculate_PSSM = false
 // 'false' if you don't want to calculate the hotspot islands
 params.calculate_hotspots = true
 // path to FTMAP files 
-params.FTMAPPATH ="/home/houcemeddine/BILIM/SWAAT/ftmap"
+params.FTMAPPATH ="/home/houcem/tmp_science/SWAAT/database/ftmap"
 // link to the rotabase file (current version of foldx requires that)
-params.ROTABASE ="/home/houcemeddine/modules/foldx/rotabase.txt"
+params.ROTABASE ="/home/houcem/env_module/modules/software/foldx/rotabase.txt"
 // Parameters that have to be set to run the calculation of PSSM (to run PRODRES pipeline) 
 // of each sequence
 params.PRODRESPATH = '/home/houcemeddine/modules/PRODRES/PRODRES'
@@ -80,7 +80,6 @@ process GetProteinAnnotationFetchFasta {
 }
 
 
-
 process GetCoordinates {  	
 	// output mapping files to the 'maps' directory
 	maps_dir  = file("${params.OUTFOLDER}/maps")
@@ -101,12 +100,14 @@ process GetCoordinates {
    	publishDir sequence_output_refseq, mode:'copy', pattern:'*_refseq.fa' 
 
    """
-   suffix=\$(basename outfolder/${fasta} _uniprot.fa)
+   suffix=\$(basename ${fasta} .fa)
+   echo \$suffix
    outputname=\$(echo \$suffix'.tsv') 
    output_fasta_refseq=\$(echo \$suffix'_refseq.fa')
    python ${params.SCRIPTHOME}/prot2genCoor.py -i ${fasta} -o \$outputname -f \$output_fasta_refseq
    """
 } 
+
 
 sequences_from_refseq.into {seq_for_annotation ; seq_for_chains; seq_for_pdb}
 
@@ -135,14 +136,11 @@ process geneToChainMapping {
 }
 
 
-
-
 /* 		This process generates the mapping between the Uniprot
   		sequence to PDB and calculates sasa, sasa ratio, SS element and H_bonds number
   		per amino acid
 */ 
 process uniprot2PDB {
-	echo true
 	uniprot2PDB_dir  = file("${params.OUTFOLDER}/uniprot2PDBmap")
 	uniprot2PDB_dir.mkdir() 
 	publishDir uniprot2PDB_dir , mode:'copy'
@@ -273,8 +271,6 @@ process encomWT {
 	"""
 }
 
-
-
 hotspot_dir  = file("${params.OUTFOLDER}/ftmap")
 hotspot_dir.mkdir() 
 
@@ -297,6 +293,8 @@ process parseFTMAP {
 
 	"""
 }
+
+
 
 matrix_dir  = file("${params.OUTFOLDER}/matrices")
 matrix_dir.mkdir()
