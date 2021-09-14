@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 
 	/*
-	This workflow scans a list of Uniprot IDs in a csv file (params.PROTLIST)
+	This workflow scans a list of Uniprot IDs in a csv file (params.protlist)
 	Download the sequences from ensembl (grch37), the mapping between genomic 
 	coordinates and protein coordinates, generate annotation tables, and (optionally)
 	calculates PSSMs.
@@ -13,22 +13,24 @@
 	*/
 
 
-// Where the running scripts are located 
-params.SCRIPTHOME = "/home/houcem/Desktop/SWAAT/scripts/"
 // List of uniprot codes (one column with a header)
-params.PROTLIST = "/home/houcem/Desktop/SWAAT/list.csv"
+params.protlist = "/home/houcem/Desktop/SWAAT/list.csv"
 // PDB files 
-params.PDBFILESPATH="/home/houcem/tmp_science/SWAAT/database/PDBs/Tmp_container"
+params.pdbs="/home/houcem/tmp_science/SWAAT/database/PDBs/Tmp_container"
 // name and path of the output directory
-params.OUTFOLDER="/home/houcem/Desktop/SWAAT/mytestdb"
+params.outfolder="/home/houcem/Desktop/SWAAT/mytestdb"
 // 'false' if you don't want to calculate PSSMs for each protein
 params.calculate_PSSM = false
 // 'false' if you don't want to calculate the hotspot islands
 params.calculate_hotspots = true
 // path to FTMAP files 
-params.FTMAPPATH ="/home/houcem/tmp_science/SWAAT/database/ftmap"
+params.ftmap ="/home/houcem/tmp_science/SWAAT/database/ftmap"
 // link to the rotabase file (current version of foldx requires that)
-params.ROTABASE ="/home/houcem/env_module/modules/software/foldx/rotabase.txt"
+params.rotabase ="/home/houcem/env_module/modules/software/foldx/rotabase.txt"
+
+// home to script file 
+params.SCRIPTHOME = launchDir+"/../scripts"
+
 // Parameters that have to be set to run the calculation of PSSM (to run PRODRES pipeline) 
 // of each sequence
 params.PRODRESPATH = '/home/houcemeddine/modules/PRODRES/PRODRES'
@@ -38,25 +40,101 @@ params.UNIREF90 = '/home/houcemeddine/modules/PRODRES/db/uniprot/uniref90.fasta'
 params.PFAM = '/home/houcemeddine/modules/PRODRES/db/pfam'
 
 
-println "Project : $workflow.projectDir"
+/* ///////////////////////////////////////////////////////////////
+ 
+      Check and extract info from input protein list
+
+*/////////////////////////////////////////////////////////////////
 
 
-PROTLIST = Channel.fromPath("$params.PROTLIST")
+def uniprot_list = new File(params.protlist).collect {it}
+number_of_genes_to_process  = uniprot_list.size() 
+joined_accessions =uniprot_list.join(' ') 
+
+
+
+/*------------------------------------------------------------------------------------------
+     The following bloc assigns default executable names to 
+     FoldX, build_encom, freesasa and stride. 
+     If ijnstalled under other names, they need to be changed from the CLI or by modifying 
+     the default values in main.nf
+-------------------------------------------------------------------------------------------*/
+
+params.foldxexe = "foldx"
+params.encomexe = "build_encom"
+
+
+/* ///////////////////////////////////////////////////////////////
+ 
+      Here starts the workflow
+
+*/////////////////////////////////////////////////////////////////
+
+if (params.help) {
+    helpMessage()
+    exit 0
+}
+
+log.info """\
+         S W A A T  A U X I L I A R Y  W O R K F L O W  
+              SBIMB -- Wits University -- 2021  
+
+
+         ==============================================
+         Number of genes    : ${number_of_genes_to_process}
+         Path to PDB files  : ${params.pdbs}
+         Outputdir          : ${params.outfolder}
+         List of accessions : ${joined_accessions}
+         """
+         .stripIndent()
+
+
+def helpMessage() {
+    log.info"""
+    Usage:
+
+    The typical command for running SWAAT: 
+    	nextflow run prepare_db.nf --protlist /path/to/Uniprot_list.csv 
+
+    Arguments:
+      --protlist [file]               Path to file comtaining the list of uniprot referece acccessions (one accession per line) (Default False)
+      --pdbs [folder]                 Path to directory containing the PDB files. Basename is the uniprot accession (e.g P05177.pdb) (Default False)
+      --outfolder [str]               Where to output the annotation files (Default: false)
+      --genelist [file]               User can limit the annotation to the list of genes contained in a this text file (one line per gene) (Default False)
+
+    Other
+      --foldxexe [str]                Specifies the name of the executable of FoldX software (Default foldx)
+      --encomexe [str]                Specifies the name of the executable of build_encom (Default build_encom)
+      --rotabase [abs path]           Path to rotabase.txt (Default PATH to foldx)
+
+    """.stripIndent()
+}
+
+
+// Show help message
+if (params.help) {
+    helpMessage()
+    exit 0
+}
+
+
+
+PROTLIST = Channel.fromPath("$params.protlist")
 // output sequences to 'sequences' directory 
-sequence_output_directory  = file("${params.OUTFOLDER}/sequences")
+sequence_output_directory  = file("${params.outfolder}/sequences")
 sequence_output_directory.mkdir() 
 
 
 /* output annotation files to the prot_annotation directory
    extracts the fasta file from Uniprot
 */
-prot_annotation_dir  = file("${params.OUTFOLDER}/prot_annotation")
+prot_annotation_dir  = file("${params.outfolder}/prot_annotation")
 prot_annotation_dir.mkdir() 
 
 process GetProteinAnnotationFetchFasta {
 	/* fasta files from this process are extracted from uniprot
-	And they will be saved to a subdirectory "Uniprot" in the directory "${params.OUTFOLDER}/sequences" */
-	sequence_output_uniprot  = file("${params.OUTFOLDER}/sequences/Uniprot")
+	And they will be saved to a subdirectory "Uniprot" in the directory "${params.outfolder}/sequences" */
+	sequence_output_uniprot  = file("${params.outfolder}/sequences/Uniprot")
 	sequence_output_uniprot.mkdir()
 
 	input: 
@@ -82,12 +160,12 @@ process GetProteinAnnotationFetchFasta {
 
 process GetCoordinates {  	
 	// output mapping files to the 'maps' directory
-	maps_dir  = file("${params.OUTFOLDER}/maps")
+	maps_dir  = file("${params.outfolder}/maps")
 	maps_dir.mkdir() 
 
 	/* fasta files from this process are extracted from Refseq
-	And they will be saved to a subdirectory "Refseq" in the directory "${params.OUTFOLDER}/sequences" */
-	sequence_output_refseq  = file("${params.OUTFOLDER}/sequences/Refseq")
+	And they will be saved to a subdirectory "Refseq" in the directory "${params.outfolder}/sequences" */
+	sequence_output_refseq  = file("${params.outfolder}/sequences/Refseq")
 	sequence_output_refseq.mkdir()
 
    input:
@@ -112,12 +190,13 @@ process GetCoordinates {
 sequences_from_refseq.into {seq_for_annotation ; seq_for_chains; seq_for_pdb}
 
 
-/* 		which of the chains in the PDB file correspond to 
+/* ----------------------------------------------------	
+	which of the chains in the PDB file correspond to 
 		The sequence of the protein.
-*/ 
+------------------------------------------------------*/
 process geneToChainMapping {
 	// output mapping files to the 'maps' directory
-	seq2chain_dir  = file("${params.OUTFOLDER}/Seq2Chain")
+	seq2chain_dir  = file("${params.outfolder}/Seq2Chain")
 	seq2chain_dir.mkdir() 
 
 	publishDir seq2chain_dir , mode:'copy'
@@ -129,19 +208,20 @@ process geneToChainMapping {
 		name = sequence.baseName.replaceFirst(".fa","")
 
 	"""
-	python  ${params.SCRIPTHOME}/whichPdb.py --pdbpath ${params.PDBFILESPATH} \
+	python  ${params.SCRIPTHOME}/whichPdb.py --pdbpath ${params.pdbs} \
 											 --fasta ${sequence} \
 											 --output ${name}_2PDBchain.tsv
 	"""
 }
 
 
-/* 		This process generates the mapping between the Uniprot
+/*------------------------------------------------------------------------------------------
+ 		This process generates the mapping between the Uniprot
   		sequence to PDB and calculates sasa, sasa ratio, SS element and H_bonds number
   		per amino acid
-*/ 
+------------------------------------------------------------------------------------------*/ 
 process uniprot2PDB {
-	uniprot2PDB_dir  = file("${params.OUTFOLDER}/uniprot2PDBmap")
+	uniprot2PDB_dir  = file("${params.outfolder}/uniprot2PDBmap")
 	uniprot2PDB_dir.mkdir() 
 	publishDir uniprot2PDB_dir , mode:'copy'
 	input: 
@@ -155,20 +235,20 @@ process uniprot2PDB {
 	pdbfile=\$(cut -f 4  $gene2PDBchain)
 	fasta_file=\$(ls \${gene_name}_refseq.fa)
 	echo \$fasta_file
-	python ${params.SCRIPTHOME}/parsePDB.py --fasta \$fasta_file  --pdb ${params.PDBFILESPATH}/\$pdbfile
+	python ${params.SCRIPTHOME}/parsePDB.py --fasta \$fasta_file  --pdb ${params.pdbs}/\$pdbfile
 	rm *_2PDBchain.tsv
 	"""
 }
 
-
+/*----------------------------------------------------------------------------------------
 // 		Will  calculate the PSSM for each protein, requires PRODRES
 // 		If you use our precalculated PSSM matrices then turn this parameters to False 
 // 		In the configuration file (calculate_PSSM = false ) 
-
+------------------------------------------------------------------------------------------*/
 if ( params.calculate_PSSM == true ) {
     println 'calculate_PSSM'
     // output mapping files to the 'PSSMs' directory
-	pssm_dir  = file("${params.OUTFOLDER}/PSSMs")
+	pssm_dir  = file("${params.outfolder}/PSSMs")
 	pssm_dir.mkdir() 
 	// You need psiblast, hmmer and setting PRODRES dependencies 
 	
@@ -202,17 +282,18 @@ if ( params.calculate_PSSM == true ) {
 	}
 }
 
-/*		 Alanine scanning  to generate hotspot patch map 
+/*---------------------------------------------------------------
+	 Alanine scanning  to generate hotspot patch map 
 		 Will run the alanine scanning prorocol of FoldX over the
 		 PDB structures than will apply an algorithm to locate and 
 		 index the hotspot islands withing the structure 
 		 The PDB file must have the Uniprot ID as basename 
 		 example P04798.pdb
-		 Only proteins defined in the list file 'params.PROTLIST'
+		 Only proteins defined in the list file 'params.protlist'
 		 Are processed by the workflow
-*/
+------------------------------------------------------------------*/
 
-uniprot_list = file("${params.PROTLIST}")
+uniprot_list = file("${params.protlist}")
 uniprot_id  = uniprot_list.readLines()
 uniprot_id.remove(0)   // remove the header
 
@@ -220,7 +301,7 @@ uniprot_id.remove(0)   // remove the header
 if ( params.calculate_hotspots == true ) {
 	// creating output directory 
 	// output mapping files to the 'maps' directory
-	hotspot_dir  = file("${params.OUTFOLDER}/hotspots")
+	hotspot_dir  = file("${params.outfolder}/hotspots")
 	hotspot_dir.mkdir() 
 
 	process Hospotislands {
@@ -232,32 +313,30 @@ if ( params.calculate_hotspots == true ) {
 	    publishDir hotspot_dir , mode:'copy'
 	"""
 	echo $id
-	ln -s ${params.PDBFILESPATH}/${id}.pdb 
-	ln -s ${params.ROTABASE}
+	ln -s ${params.pdbs}/${id}.pdb 
+	ln -s ${params.rotabase}
 	# first repair the structure
-	foldx --command=RepairPDB --pdb=${id}.pdb
+	${params.foldxexe} --command=RepairPDB --pdb=${id}.pdb
 	# Generate the Ala scan profile
-	foldx --command=AlaScan --pdb=${id}_Repair.pdb
+	${params.foldxexe} --command=AlaScan --pdb=${id}_Repair.pdb
 	python ${params.SCRIPTHOME}/hotspotPatches.py --pdb ${id}_Repair.pdb --ALAscan *_AS.fxout --suffix ${id}
 	"""
 	}
 
 }
 
-
-
-/*
-		Calculating the covariance matrix and the eigenvectors fors 
+/*----------------------------------------------------------------------------------------------------
+		Calculating the covariance matrix and the eigenvectors for
 		the reference structure using EnCom. 
 		The current version of EncoM has an issue with nextflow caused by an exit status
 		of 1. To make it work with SWAAT, modify line 370 in src/build_encom.c from "return(1)" with 
 		"return(0)" then compile again
-*/
+------------------------------------------------------------------------------------------------------*/
 
-PDBLIST = Channel.fromPath("${params.PDBFILESPATH}/*.pdb")
+PDBLIST = Channel.fromPath("${params.pdbs}/*.pdb")
 
 process encomWT {
-	publishDir "${params.OUTFOLDER}/ENCoM/", mode:'copy'
+	publishDir "${params.outfolder}/ENCoM/", mode:'copy'
 	input:
 		file pdb from PDBLIST
 		val id from uniprot_id
@@ -271,13 +350,13 @@ process encomWT {
 	"""
 }
 
-hotspot_dir  = file("${params.OUTFOLDER}/ftmap")
+hotspot_dir  = file("${params.outfolder}/ftmap")
 hotspot_dir.mkdir() 
 
 process parseFTMAP {
 	errorStrategy 'ignore'   // this is just to tell theworkflow not to stop running if the FTMAP files are missing
 	// input files must be of the form nonbonded[SUFFIX].rawextract and hbonded[SUFFIX].rawextract
-	publishDir "${params.OUTFOLDER}/ftmap/", mode:'copy'
+	publishDir "${params.outfolder}/ftmap/", mode:'copy'
 	input: 
 		file gene_name_data from  gene2PDBchains2
 
@@ -287,8 +366,8 @@ process parseFTMAP {
 	"""
 	gene_name=\$(cut -f 1  $gene_name_data)
 	echo \$gene_name
-	python ${params.SCRIPTHOME}/parse_FTMAP.py  --nb ${params.FTMAPPATH}/\$gene_name/nonbonded*.rawextract \
-											    --hb ${params.FTMAPPATH}/\$gene_name/hbonded*.rawextract \
+	python ${params.SCRIPTHOME}/parse_FTMAP.py  --nb ${params.ftmap}/\$gene_name/nonbonded*.rawextract \
+											    --hb ${params.ftmap}/\$gene_name/hbonded*.rawextract \
 											    --suffix \$gene_name
 
 	"""
@@ -296,7 +375,7 @@ process parseFTMAP {
 
 
 
-matrix_dir  = file("${params.OUTFOLDER}/matrices")
+matrix_dir  = file("${params.outfolder}/matrices")
 matrix_dir.mkdir()
 
 process generate_matrixes {
