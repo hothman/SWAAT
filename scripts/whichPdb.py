@@ -30,30 +30,33 @@ def process_PDBs(PDBspath, sequence, output="which_pdb.tsv"):
 	if len(seq.my_seqs) >1: 
 		raise ValueError("More than one seq in fasta file"  )
 	isProt1 = re.match('^[AERTYIPQSDFGHKLMWCVNaertyipqsdfghklmwcvn]+$', seqinFASTA)
+	matching_seqs = False
 	for pdbfile in glob.glob(PDBspath + "*/*.pdb") : 
-		print(glob.glob(PDBspath + "*/*.pdb"))
+		#print(glob.glob(PDBspath + "*/*.pdb"))
 		mypdb=ParsePDB(pdbfile)
 		chains = []
 		for chain in mypdb.properties: 
 			isProt2=re.match('^[AERTYIPQSDFGHKLMWCVNaertyipqsdfghklmwcvn]+$', chain["seq"] ) 
 			if bool(isProt1) and bool(isProt2):
 				is_sub_string = seqinFASTA.find(chain["seq"])
-				print(chain["seq"])
-				print(is_sub_string)
+				#print(chain["seq"])
+				#print(is_sub_string)
 				if is_sub_string != -1:
-					if chain['chain'] != " ":
+					if chain['chain'] != " ":						
 						chains.append(chain['chain'])
-				else:
-					print("Sequence from PDB doesn't match the sequence from FASTA")
-
+						print("Find a match between {0} and {1}".format(path.basename(sequence), path.basename(pdbfile) ) )
 		#output to file block
 		if chains != []:
 			with open(output, "a") as outputfile: 
 				uniprot_code = seq.my_seqs[0]["header"][0]
-				print(uniprot_code)
 				geneID = seq.my_seqs[0]["header"][1]
 				basename = path.basename(pdbfile)
 				outputfile.writelines("\t".join([geneID, uniprot_code, ",".join(chains), basename+'\n'] )  )
+				matching_seqs = True
+				break  # this will matchg only a single PDB file
+	if matching_seqs == False:
+		print("None of the PDB extracted sequences match the reference sequence "+path.basename(sequence))
+
 
 
 if __name__ == "__main__":
