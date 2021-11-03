@@ -133,6 +133,7 @@ def _getAnnotation(genename, res_position):
     uniprot = _getUNIPROT(genename)
     
     annotation_data = pd.read_csv(ANNOTATIONHOME+"/"+uniprot+"_annotation.csv")
+    print(annotation_data)
     
     annot_list=[]
     if (annotation_data["residue_id"]== res_position ).any() : 
@@ -172,7 +173,7 @@ def _getFtmap(genename, res_position):
     annotation_data = pd.read_csv(FTMAPHOME+"/"+genename+"_nb.csv")
     annot_list=[]
     if (annotation_data["resID"] == res_position ).any() :
-        subdf = annotation_data[annotation_data["resID"]== res_position]
+        subdf = annotation_data[annotation_data["resID"] == res_position]
         probe_contacts = int(subdf["probe_contacts"])
         zscore = float(subdf["zscore"])
         percentile = float(subdf["percentile_score"])
@@ -269,8 +270,8 @@ class Plot:
         y_coors_dg = np.array( len( self.processsed_dataframe )*[self.y_coor_dg])-0.2
         y_coors_ds = np.array( len( self.processsed_dataframe )*[self.y_coor_ds])-0.7
         aa_variants = self.processsed_dataframe["Reference residue"] + self.processsed_dataframe["Residue position"].astype(str)+ self.processsed_dataframe["Residue variant"] 
-        self.source = ColumnDataSource(data = {"dG": self.processsed_dataframe["dG (kcal/mol)"],
-                                "dS": self.processsed_dataframe["dS (kcal/mol)"],
+        self.source = ColumnDataSource(data = {"dG": self.processsed_dataframe["ddG (kcal/mol)"],
+                                "dS": self.processsed_dataframe["ddS (kcal/mol)"],
                                 "Chromosome": self.processsed_dataframe.Chromosome, 
                                 "Genome_position": self.processsed_dataframe.position, 
                                 "y_coors_dg":y_coors_dg ,
@@ -348,7 +349,6 @@ class formatHtML:
         return total_number_of_coding_variants, number_of_indels, len(non_processed_aa), len(processed_aa), non_processed_aa, processed_aa
 
     def _cleanHtmlDf(self, dataframe, mode):
-        print(dataframe)
         to_format_columns = ["gene_name_x", "gene_name_y", "wt_res","var_id", "mut_res", "position_y", 
         "subScore", "grantham", "sneath", "classWT",  "classMut", "sasa_mut", "sasa_wt", "hyrophob_WT",
          "hyrophob_Mut",  "volume_WT", "volume_Mut", "pssm_mut", "pssm_wt", "Covered by the structure", 
@@ -368,16 +368,13 @@ class formatHtML:
 
         elif mode == "non-covered": 
             to_format_columns = to_format_columns+["chain", "dG","SecStruc","dS","hb_mut","hb_wt","sb_mut","sb_wt","sasa_ratio","swaat_prediction", "red flags"]
-            col_names = ["Chromosome", "Position", "Reference Allele", "Aternative allele", "Reference residue", "Residue position", "Residue variant" ,"Putative drug binder", 
-            "Annotation"] 
-            is_annotation_empty = list(dataframe["annotation"] == "")  # erturns a list of booleans
+            col_names = ["Chromosome", "Position", "Reference Allele", "Aternative allele", "Reference residue", "Residue position", "Residue variant"] 
+            is_annotation_empty = list(dataframe["annotation"] == "")  # rerturns a list of booleans
             if all(is_annotation_empty) : 
-                to_format_columns=to_format_columns + ["annotation"]
-                col_names.remove('annotation')
-            is_drug_empty = list(dataframe["Putative drug binder"] == "")
-            if all(is_drug_empty) :
-                to_format_columns=to_format_columns+ ["Putative drug binder"]
-                col_names.remove('Putative drug binder')             
+                to_format_columns=to_format_columns + ["annotation","Putative drug interaction"]
+            else:
+                to_format_columns=to_format_columns + ["Putative drug interaction"]
+                col_names = col_names+["Annotation"]
             clean_dataframe = dataframe.drop(columns=to_format_columns)
             clean_dataframe.columns = col_names
             return clean_dataframe
@@ -416,8 +413,9 @@ class formatHtML:
                 # subset variants only for 'gene'
                 vars_for_gene = self.dataframe[self.dataframe["gene_name_x"] == gene]
 
-                # report non covered 
+                # report non covered variants
                 file.write("<h4>Non processed variants summary</h4>")
+                print(vars_for_gene[vars_for_gene["Covered by the structure"] == False].empty)
                 if vars_for_gene[vars_for_gene["Covered by the structure"] == False].empty : 
                     file.write("<p>All variants are covered by the PDB structure</p>")
                 else: 
@@ -451,7 +449,6 @@ class formatHtML:
                     file.write(interactive_plot.script)
                 except: 
                     print("Install Bokeh to explore the result interactively")
-
 
 
         
