@@ -308,8 +308,8 @@ class Plot:
                           y_axis_label="Probability", x="dS", y='y_coors_ds', 
                           energy_tag="dS", energy_column="@dS")
         self.plot = row(plot1, plot2)
-        #output_file("test.html")
-        #save(self.plot)
+        output_file("interactive_plot.html")
+        save(self.plot)
     
     def embedingCode(self): 
         self.script, self.div = components(self.plot)
