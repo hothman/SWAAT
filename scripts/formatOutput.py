@@ -132,9 +132,7 @@ def _getAnnotation(genename, res_position):
     """
     uniprot = _getUNIPROT(genename)
     
-    annotation_data = pd.read_csv(ANNOTATIONHOME+"/"+uniprot+"_annotation.csv")
-    print(annotation_data)
-    
+    annotation_data = pd.read_csv(ANNOTATIONHOME+"/"+uniprot+"_annotation.csv")    
     annot_list=[]
     if (annotation_data["residue_id"]== res_position ).any() : 
         subdf = annotation_data[annotation_data["residue_id"]== res_position]
@@ -270,8 +268,8 @@ class Plot:
         y_coors_dg = np.array( len( self.processsed_dataframe )*[self.y_coor_dg])-0.2
         y_coors_ds = np.array( len( self.processsed_dataframe )*[self.y_coor_ds])-0.7
         aa_variants = self.processsed_dataframe["Reference residue"] + self.processsed_dataframe["Residue position"].astype(str)+ self.processsed_dataframe["Residue variant"] 
-        self.source = ColumnDataSource(data = {"dG": self.processsed_dataframe["ddG (kcal/mol)"],
-                                "dS": self.processsed_dataframe["ddS (kcal/mol)"],
+        self.source = ColumnDataSource(data = {"dG": self.processsed_dataframe["dG (kcal/mol)"],
+                                "dS": self.processsed_dataframe["dS (kcal/mol)"],
                                 "Chromosome": self.processsed_dataframe.Chromosome, 
                                 "Genome_position": self.processsed_dataframe.position, 
                                 "y_coors_dg":y_coors_dg ,
@@ -415,7 +413,6 @@ class formatHtML:
 
                 # report non covered variants
                 file.write("<h4>Non processed variants summary</h4>")
-                print(vars_for_gene[vars_for_gene["Covered by the structure"] == False].empty)
                 if vars_for_gene[vars_for_gene["Covered by the structure"] == False].empty : 
                     file.write("<p>All variants are covered by the PDB structure</p>")
                 else: 
@@ -444,9 +441,9 @@ class formatHtML:
                 try: 
                     if bokeh :
                         file.write("Hover to explore")
-                    interactive_plot = Plot(self.df_processed)
-                    file.write(interactive_plot.div)
-                    file.write(interactive_plot.script)
+                        interactive_plot = Plot(self.df_processed)
+                        file.write(interactive_plot.div)
+                        file.write(interactive_plot.script)
                 except: 
                     print("Install Bokeh to explore the result interactively")
 
