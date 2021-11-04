@@ -1,0 +1,6 @@
+residue_id,gene_symbol,uniprot_accession,annotation_tag,note
+435,CYP2C8,P10632,12,"Iron (heme axial ligand) "
+100,CYP2C8,P10632,13,"Substrate "
+204,CYP2C8,P10632,13,"Substrate "
+241,CYP2C8,P10632,13,"Substrate "
+100,CYP2C8,P10632,15,"Phosphoserine "

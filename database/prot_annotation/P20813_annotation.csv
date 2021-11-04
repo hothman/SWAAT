@@ -1,0 +1,3 @@
+residue_id,gene_symbol,uniprot_accession,annotation_tag,note
+436,CYP2B6,P20813,12,"Iron (heme axial ligand) "
+128,CYP2B6,P20813,15,"Phosphoserine; by PKA "

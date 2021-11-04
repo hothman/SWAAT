@@ -1,0 +1,11 @@
+residue_id,gene_symbol,uniprot_accession,annotation_tag,note
+106,NAT2,P11245,8,"Substrate binding "
+107,NAT2,P11245,8,"Substrate binding "
+68,NAT2,P11245,11,"Acyl-thioester intermediate ACT_SITE        122BINDING         103"
+107,NAT2,P11245,11,""
+122,NAT2,P11245,11,""
+103,NAT2,P11245,13,"Coenzyme A "
+104,NAT2,P11245,13,"Coenzyme A; via amide nitrogen "
+208,NAT2,P11245,13,"Coenzyme A "
+214,NAT2,P11245,13,"Coenzyme A "
+287,NAT2,P11245,13,"Coenzyme A "

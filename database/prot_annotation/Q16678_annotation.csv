@@ -1,0 +1,3 @@
+residue_id,gene_symbol,uniprot_accession,annotation_tag,note
+470,CYP1B1,Q16678,12,"Iron (heme axial ligand) "
+395,CYP1B1,Q16678,14,"Major determinant of CYP1B1 17beta-estradiol hydroxylation regiospecificity"
