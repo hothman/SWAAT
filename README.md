@@ -1,5 +1,9 @@
 ![Drag Racing](logo_SWAAT.png)
 
+
+
+SWAAT allows for the prediction of the variant effect based on structural properties. SWAAT annotates a panel of 36 ADME genes including 22 out of the 23 clinically important members identified by the PharmVar consortium. The workflow consists of a set of python codes of which the execution is managed within Nextflow to annotate coding variants based on 37 criteria. SWAAT also includes an auxiliary workflow allowing a versatile use for genes other than the ADME members.
+
 # Running SWAAT
 
 First, you need to clone the SWAAT repository from GitHub: 
@@ -40,13 +44,11 @@ nextflow run main.nf --dbhome /home/hothman/SWAAT/database/ \
 
 A maintained database can be downloaded with the repository in `./database` folder. The argument `--dbhome` allows to specify the path to the database.
 
-
-
-## Preparing dependencies for the auxiliary workflow 
+# Installing the dependencies 
 
 SWAAT is composed of the main workflow that annotates a list of 36 ADME genes and an auxiliary workflow that could be used to prepare the database for any gene other than from the list of 36 ADME members.  
 
-### Dependencies for the main workflow
+## Dependencies for the main workflow
 
 * Python 3.7.4
 * [Nextflow](https://www.nextflow.io/) 20.10.0
@@ -61,7 +63,7 @@ SWAAT is composed of the main workflow that annotates a list of 36 ADME genes an
 * [Stride](http://webclu.bio.wzw.tum.de/stride/) 
 * [DSSP ](https://github.com/cmbi/dssp)  >= 2.2.6
 
-### Dependencies for the auxiliary workflow
+## Dependencies for the auxiliary workflow
 
 * Python 3.7.4
 * [Nextflow](https://www.nextflow.io/) 20.10.0
@@ -72,7 +74,7 @@ SWAAT is composed of the main workflow that annotates a list of 36 ADME genes an
 * [ENCoM](https://github.com/NRGlab/ENCoM)
 * [freesasa](https://freesasa.github.io/) 2.0.3
 
-### Instruction for installing the dependencies
+## Instruction for installing the dependencies
 
 All the dependencies are open source. The user needs only to obtain a free licence for [FoldX](http://foldxsuite.crg.eu/). We recommend installing the dependencies for SWAAT using conda virtual environment.  First let's create a virtual environment called `SWAAT` and install all the python dependencies including biopython, numpy, pandas, scikit-learn and scipy. We provided a `yaml` file in the root directory to automate the process. We also recommend using the [Mamba](https://github.com/mamba-org/mamba) package manager which will speed up the building process. 
 
@@ -90,6 +92,19 @@ Once the environment is built you can activate it using the following command:
 conda activate SWAAT
 ```
 
+
+
+## Installing ENCoM
+
+ENCoM can be obtained from its [git repository](https://github.com/NRGlab/ENCoM). The `build_encom` code systematically returns an exit status of 1 which creates an issue when running within  a Nextflow process. To overcome the problem, you need to modify line 370 from `return(1);` to `return(0);` in `src/build_encom.c`. Thereafter you can compile the set of codes as following: 
+
+```shell
+cd ENCoM/build/ \
+	&& make -f Makefile.Unix
+```
+
+## Installing Transvar
+
  [Transvar](https://transvar.readthedocs.io/en/latest/index.html) is not required to annotate the list of the default ADME genes. However you will need the tool if you want to run the auxiliary workflow. 
 
 ```sh
@@ -104,7 +119,7 @@ transvar panno -i 'PIK3CA:p.E545K' --ucsc --ccds
 You can also configure transvar to use the hg38 build of the reference genome.
 
 
-### Installing dssp
+## Installing dssp
 
 ```
 git clone https://github.com/cmbi/dssp.git
@@ -114,21 +129,8 @@ cd dssp
 make
 ```
 
-### Preparation of the PDB structures
+## Preparation of the PDB structures
 A structuer is a chain
 A structure must contain a chain identifier
 Heteroatoms are not taken into account
-
-### Installing ENCoM
-
-ENCoM can be obtained from its [git repository](https://github.com/NRGlab/ENCoM). The `build_encom` code systematically returns an exit status of 1 which creates an issue when running within  a Nextflow process. To overcome the problem, you need to modify line 370 from `return(1);` to `return(0);` in `src/build_encom.c`. Thereafter you can compile the set of codes as following: 
-
-```shell
-cd ENCoM/build/ \
-	&& make -f Makefile.Unix
-```
-
- 
-
-
 
