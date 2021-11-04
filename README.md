@@ -1,10 +1,50 @@
-# SWAAT
-
 ![Drag Racing](logo_SWAAT.png)
+
+# Running SWAAT
+
+First, you need to clone the SWAAT repository from GitHub: 
+
+```sh
+git clone https://github.com/hothman/SWAAT.git
+```
+
+You need than to change your path to the repository where you can run the workflow from. The main workflow, that runs the annotation process is implemented in `main.nf` file. To list the options and the arguments type the follwowing command in the source directory after  :
+
+```
+nextflow main.nf --help
+
+Arguments:
+  --dbhome [folder]               Path to database containing the dependency files for annotating the variants (Default False)
+  --vcfhome [folder]              Path to folder containing VCF files split by annotated gene (e.g. CYP2D6.vcf) (Default False)
+  --outfolder [str]               Where to output the plain text and the HTML report (Default: false)
+  --genelist [file]               User can limit the annotation to the list of genes contained in a this text file (one line per gene) (Default False)
+
+Other
+  --foldxexe [str]                Specifies the name of the executable of FoldX software (Default foldx)
+  --encomexe [str]                Specifies the name of the executable of build_encom (Default build_encom)
+  --freesasaexe [str]             Specifies the name of the executable of freesasa software (Default freesasa)
+  --strideexe [str]               Specifies the name of the executable of stride software (Default freesasa)
+  --rotabase [abs path]           Path to rotabase.txt (Default PATH to foldx)
+```
+
+The VCF files to annotate should be specific for each ADME gene in an uncompressed format. The file name for the VCF file must contain the gene symbol in upper case letters (e.g CYP1A2.vcf and TPMT.vcf). A full list of the annotated ADME genes is contained in `./database/gene_list/all_adme_genes.txt`. The path to folder that contains the VCF files is specified in the `--vcfhome` argument. 
+
+A typical run of the workflow could be the following: 
+
+```sh
+nextflow run main.nf --dbhome /home/hothman/SWAAT/database/ \
+		--vcfhome /home/hothman/SWAAT/vcfs \
+		--outfolder ./swaat_out \
+		--genelist ./inputexample/gene_list.txt
+```
+
+A maintained database can be downloaded with the repository in `./database` folder. The argument `--dbhome` allows to specify the path to the database.
+
+
 
 ## Preparing dependencies for the auxiliary workflow 
 
-SWAAT is composed of the main workflow that annotates a list of 36 ADME genes and an auxilliary workflow that could be used to prepare the database for any gene other than from the list of 36 ADME members.  
+SWAAT is composed of the main workflow that annotates a list of 36 ADME genes and an auxiliary workflow that could be used to prepare the database for any gene other than from the list of 36 ADME members.  
 
 ### Dependencies for the main workflow
 
