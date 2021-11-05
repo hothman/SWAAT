@@ -26,16 +26,17 @@ def process_PDBs(PDBspath, sequence, output="which_pdb.tsv"):
 
 	seq.readFASTA()
 	seqinFASTA=seq.my_seqs[0]["sequence"]
-	
+
 	if len(seq.my_seqs) >1: 
 		raise ValueError("More than one seq in fasta file"  )
 	isProt1 = re.match('^[AERTYIPQSDFGHKLMWCVNaertyipqsdfghklmwcvn]+$', seqinFASTA)
 	matching_seqs = False
-	for pdbfile in glob.glob(PDBspath + "*/*.pdb") : 
+	for pdbfile in glob.glob(PDBspath + "/*.pdb"): 
 		#print(glob.glob(PDBspath + "*/*.pdb"))
 		mypdb=ParsePDB(pdbfile)
 		chains = []
 		for chain in mypdb.properties: 
+
 			isProt2=re.match('^[AERTYIPQSDFGHKLMWCVNaertyipqsdfghklmwcvn]+$', chain["seq"] ) 
 			if bool(isProt1) and bool(isProt2):
 				is_sub_string = seqinFASTA.find(chain["seq"])
@@ -61,7 +62,7 @@ def process_PDBs(PDBspath, sequence, output="which_pdb.tsv"):
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description=" Scans a directory of PDB files and return which of the chains in the PDBs \
-		match the input FASTA sequence \n usage: 		whichPdb.py  --pdbpath path_to_pdbs  --fatsa  sequence.fa --output myoutput.tsv")
+		match the input FASTA sequence \n usage: whichPdb.py  --pdbpath path_to_pdbs  --fatsa  sequence.fa --output myoutput.tsv")
 	parser.add_argument("--pdbpath", help="Path to directory containing PDB files")
 	parser.add_argument("--fasta", help="Path sequence file")
 	parser.add_argument("--output", help="Output file")
