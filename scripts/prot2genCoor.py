@@ -100,6 +100,7 @@ class Transvar():
             try:  # try to match the transcript from uniprot with the list of hits returned by transvar
               constructed_cmd = "transvar  panno -i '"+str( geneName+":p."+str(aa_index) )+"' --refseq --refversion hg19|grep "+transcript_name
               output = str(subprocess.check_output(constructed_cmd, shell=True) )
+              #print(output)
 
             except: 
               try:  # select the first choice from the table (nested )
@@ -112,8 +113,10 @@ class Transvar():
                 break
 
             try: 
-              regexp1 = re.compile(r'chr\d+:g.\d+_\d+/c.\d+_\d+/p.\d+\w')
+              regexp1 = re.compile(r'chr[XY\d]+:g.\d+_\d+/c.\d+_\d+/p.\d+\w')
               gen_coor = regexp1.findall(output)
+              print(output)
+              print(gen_coor)
               regexp2 = re.compile(r'gDNA_sequence=\w{3}')
               gDNA = regexp2.findall(output)
               regexp3 = re.compile(r'cDNA_sequence=\w{3}')
@@ -121,6 +124,7 @@ class Transvar():
               regexp4 = re.compile(r'protein_coding[)]\\t\w+\\t')
               gene_hgcn = regexp4.findall(output)
               amino_acid = gen_coor[-1][-1]
+              print(gen_coor)
               if amino_acid in "QWERTYIPASDFGHKLXCVNM":
                   ref_seq_aa_sequence = ref_seq_aa_sequence + gen_coor[-1][-1]
               reg1 = re.compile(r'\d+')
@@ -164,5 +168,6 @@ class Transvar():
 if __name__ == "__main__":
      Fastafile= ParseFASTA(fastaInput)                         # createarseFASTA() object
      header, sequence =Fastafile.readFASTA()                   # extract header and sequence
+     print(header)
      obj = Transvar(header, sequence, output, fasta_output)    # create transvar object
      obj.getRegexp()                                           # run transvar and generate tsv table
