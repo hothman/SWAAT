@@ -303,7 +303,9 @@ if ( params.calculate_hotspots == true ) {
 		input:
 			val id from uniprot_id
 		output: 
-			file  '*.csv' 
+			file  '*.csv'
+			file '*_Repair.pdb' into repairedPdb 
+
 
 	    publishDir hotspot_dir , mode:'copy'
 	"""
@@ -451,6 +453,25 @@ H 25 28 31 34 29 36 27 24 30 34 28 31 27 35 27 31 23 18 25 0" >sneath.txt
 	"""
 }
 
+
+
+/*---------------------------------------------------------
+Output PDB files  
+-----------------------------------------------------------*/
+process outputPDB {
+	publishDir "${params.outfolder}/PDBs" , mode:'copy'
+	input:
+		file pdb from repairedPdb
+
+	output:
+		file('*.pdb')
+
+	"""
+	name=\$(basename $pdb _Repair.pdb  ) 
+	cp $pdb \${name}.pdb 
+	"""
+
+}
 
 workflow.onComplete = {
     // any workflow property can be used here
