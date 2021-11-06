@@ -33,10 +33,9 @@ The user is required to provide:
 
 ### Providing the list of genes
 
-The Uniprot list must be arranged in a text file **containing a one line header** as one accession per line. No header or hanging empty lines should be provided in the file. A typical layout is the following. 
+The Uniprot list must be arranged in a text file **containing no header** as one accession per line. No header or hanging empty lines should be provided in the file. A typical layout is the following. 
 
 ```
-Uniprot_id
 O75795
 P20813
 P33261
