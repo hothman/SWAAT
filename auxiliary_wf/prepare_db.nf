@@ -1,43 +1,68 @@
 #!/usr/bin/env nextflow
 
-	/*
-	This workflow scans a list of Uniprot IDs in a csv file (params.protlist)
-	Download the sequences from ensembl (grch37), the mapping between genomic 
-	coordinates and protein coordinates, generate annotation tables, and (optionally)
-	calculates PSSMs.
+/* -----------------------------------------------
 
-	dependencies :  	fetch_seq.R 		(needs biomaRt and tidyverse)
-						prot2genCoor.py 	(needs python3 and transvar installed and configured to use grch37)
-						parseProteinAnnotation.py (needs python3)
-						You must be connected to www 
-	*/
+Auxilliary workflow to prepare database files used by SWAAT.
+	Author:     "Houcemeddine Othman"
+    Credits:    "Wits University H3Africa/GSK ADME collaboration"
+	Maintainer: "Houcemeddine Othman"
+    Email:      "houcemoo@gmail.com"
+
+-------------------------------------------------*/
+
+if (params.help) {
+    helpMessage()
+    exit 0
+}
 
 
-// List of uniprot codes (one column with a header)
-params.protlist = "/home/houcem/Desktop/SWAAT/list.csv"
-// PDB files 
-params.pdbs="/home/houcem/tmp_science/SWAAT/database/PDBs/Tmp_container"
-// name and path of the output directory
-params.outfolder="/home/houcem/Desktop/SWAAT/mytestdb"
+
+def helpMessage() {
+    log.info"""
+    Usage:
+
+    The typical command for running SWAAT: 
+    	nextflow run prepare_db.nf --protlist /path/to/Uniprot_list.csv 
+
+    Arguments:
+      --protlist [file]               Path to file comtaining the list of uniprot referece acccessions (one accession per line) (Default None)
+      --pdbs [folder]                 Path to directory containing the PDB files. Basename is the uniprot accession (e.g P05177.pdb) (Default None)
+      --outfolder [str]               Where to output the annotation files (Default: None)
+
+    Other
+      --pssm [str]                    Allow PSSM calculation (Default false)
+      --hotspot [str]                 Allow the calculation of hotspot patches (Default true)
+      --ftmap [str]                   Path to ftmap raw files (Default launchDir)
+      --foldxexe [str]                Specifies the name of the executable of FoldX software (Default foldx)
+      --encomexe [str]                Specifies the name of the executable of build_encom (Default build_encom)
+      --rotabase [abs path]           Path to rotabase.txt (Default PATH to foldx)
+      --PRODRESPATH [abs path]        Path to PRODRES source directory. Required if pssm=true (Default launchDir)
+      --PRODRESDB [abs path]          Path to 'prodres_db.nr100.sqlite3' file. Required if pssm=true (Default launchDir)
+      --PRODRESPFAMSCAN [abs path]    Path to 'pfam_scan.pl' script. Required if pssm=true (Default launchDir)
+      --UNIREF90 [abs path]           Path to 'uniref90.fasta' script. Required if pssm=true (Default launchDir)
+      --PFAM [abs path]               Path to pfam database folder. Required if pssm=true (Default launchDir)
+
+
+    """.stripIndent()
+}
+
+
+
 // 'false' if you don't want to calculate PSSMs for each protein
-params.calculate_PSSM = false
+params.pssm = false
 // 'false' if you don't want to calculate the hotspot islands
-params.calculate_hotspots = true
+params.hotspot = true
 // path to FTMAP files 
-params.ftmap ="/home/houcem/tmp_science/SWAAT/database/ftmap"
-// link to the rotabase file (current version of foldx requires that)
-params.rotabase ="/home/houcem/env_module/modules/software/foldx/rotabase.txt"
-
+params.ftmap = launchDir
 // home to script file 
 params.SCRIPTHOME = launchDir+"/../scripts"
-
 // Parameters that have to be set to run the calculation of PSSM (to run PRODRES pipeline) 
 // of each sequence
-params.PRODRESPATH = '/path/to/PRODRES/PRODRES'
-params.PRODRESDB = '/path/to/prodres_db.nr100.sqlite3'
-params.PRODRESPFAMSCAN = '/path/to/PfamScan/pfam_scan.pl'
-params.UNIREF90 = '/path/to/uniref90.fasta'
-params.PFAM = '/path/to/PRODRES/db/pfam'
+params.PRODRESPATH = launchDir
+params.PRODRESDB = launchDir
+params.PRODRESPFAMSCAN = launchDir
+params.UNIREF90 = launchDir
+params.PFAM = launchDir
 
 
 /* ///////////////////////////////////////////////////////////////
@@ -52,10 +77,9 @@ number_of_genes_to_process  = uniprot_list.size()
 joined_accessions =uniprot_list.join(' ') 
 
 
-
 /*------------------------------------------------------------------------------------------
      The following bloc assigns default executable names to 
-     FoldX, build_encom, freesasa and stride. 
+     FoldX, build_encom. 
      If ijnstalled under other names, they need to be changed from the CLI or by modifying 
      the default values in main.nf
 -------------------------------------------------------------------------------------------*/
@@ -64,16 +88,72 @@ params.foldxexe = "foldx"
 params.encomexe = "build_encom"
 
 
+/*--------------------------------------------------------------------------------------------
+
+			The following bloc check if essential paramters specified in options 
+			are valid
+/*------------------------------------------------------------------------------------------*/
+
+// test if the Uniprot list exists
+def testFile = new File(params.protlist)
+if (!testFile.exists()) {
+			log.info "file ${params.protlist} does not exist "		
+			exit 1	}
+  else { 
+  			log.info "~~~~~Uniprot list file exists"
+  				}
+
+// test if the path to PDB files exist
+def testFolderDb = new File(params.pdbs)
+if (!testFolderDb.exists()) {
+			log.info "Path ${params.pdbs} does not exist "		
+			exit 1	}
+  else { 
+  			log.info "~~~~~Path to PDB files exists"
+  				}
+
+
+/*--------------------------------------------------------------------------------------------
+
+			The following bloc will assess if build_sncom, stide and foldx are in the PATH  
+			are valid
+/*------------------------------------------------------------------------------------------*/
+
+def checkToolInPath(tool)
+{
+           Runtime myrt = Runtime.getRuntime();
+           Process myproc = myrt.exec("which "+tool)
+           int exitVal = myproc.waitFor()
+           if (exitVal != 0) {
+							log.info tool+" not in PATH"
+							exit 1
+								} 
+}
+
+checkToolInPath(params.encomexe)
+checkToolInPath(params.foldxexe)
+
+
+/*--------------------------------------------------------------------------------------------
+
+			The following bloc will set params.rotabase to the same path as foldx if it is not 
+			specified in CLI
+
+/*------------------------------------------------------------------------------------------*/
+
+if (!params.rotabase) {
+	log.info "~~~~~Setting the path to rotabase.txt from foldx location"
+	foldx_full_path = "which ${params.foldxexe}".execute().text
+  params.rotabase = "dirname ${foldx_full_path}".execute().text.replaceAll("\n", "")+"/rotabase.txt"
+}
+
+
 /* ///////////////////////////////////////////////////////////////
  
-      Here starts the workflow
+      START THE WORKFLOW
 
 */////////////////////////////////////////////////////////////////
 
-if (params.help) {
-    helpMessage()
-    exit 0
-}
 
 log.info """\
          S W A A T  A U X I L I A R Y  W O R K F L O W  
@@ -87,34 +167,6 @@ log.info """\
          List of accessions : ${joined_accessions}
          """
          .stripIndent()
-
-
-def helpMessage() {
-    log.info"""
-    Usage:
-
-    The typical command for running SWAAT: 
-    	nextflow run prepare_db.nf --protlist /path/to/Uniprot_list.csv 
-
-    Arguments:
-      --protlist [file]               Path to file comtaining the list of uniprot referece acccessions (one accession per line) (Default False)
-      --pdbs [folder]                 Path to directory containing the PDB files. Basename is the uniprot accession (e.g P05177.pdb) (Default False)
-      --outfolder [str]               Where to output the annotation files (Default: false)
-
-    Other
-      --foldxexe [str]                Specifies the name of the executable of FoldX software (Default foldx)
-      --encomexe [str]                Specifies the name of the executable of build_encom (Default build_encom)
-      --rotabase [abs path]           Path to rotabase.txt (Default PATH to foldx)
-
-    """.stripIndent()
-}
-
-
-// Show help message
-if (params.help) {
-    helpMessage()
-    exit 0
-}
 
 
 PROTLIST = Channel.fromPath("$params.protlist")
@@ -242,8 +294,7 @@ process uniprot2PDB {
 // 		If you use our precalculated PSSM matrices then turn this parameters to False 
 // 		In the configuration file (calculate_PSSM = false ) 
 ------------------------------------------------------------------------------------------*/
-if ( params.calculate_PSSM == true ) {
-    println 'calculate_PSSM'
+if ( params.pssm == true ) {
     // output mapping files to the 'PSSMs' directory
 	pssm_dir  = file("${params.outfolder}/PSSMs")
 	pssm_dir.mkdir() 
@@ -293,7 +344,7 @@ if ( params.calculate_PSSM == true ) {
 uniprot_list = file("${params.protlist}")
 uniprot_id  = uniprot_list.readLines()
 
-if ( params.calculate_hotspots == true ) {
+if ( params.hotspot == true ) {
 	// creating output directory 
 	// output mapping files to the 'maps' directory
 	hotspot_dir  = file("${params.outfolder}/hotspots")
@@ -351,7 +402,7 @@ process encomWT {
 
 process parseFTMAP {
 	errorStrategy 'ignore'   // Tell theworkflow not to stop running if the FTMAP files are missing
-	// input files must be of the form nonbonded[SUFFIX].rawextract and hbonded[SUFFIX].rawextract
+	// input files must be tagged with "nonbonded" and "hbonded"
 	publishDir "${params.outfolder}/ftmap/", mode:'copy'
 	input: 
 		file gene_name_data from  gene2PDBchains2
@@ -362,8 +413,8 @@ process parseFTMAP {
 	"""
 	gene_name=\$(cut -f 1  $gene_name_data)
 	echo \$gene_name
-	python ${params.SCRIPTHOME}/parse_FTMAP.py  --nb ${params.ftmap}/\$gene_name/nonbonded*.rawextract \
-											    --hb ${params.ftmap}/\$gene_name/hbonded*.rawextract \
+	python ${params.SCRIPTHOME}/parse_FTMAP.py  --nb ${params.ftmap}/\$gene_name/*nonbonded*.rawextract \
+											    --hb ${params.ftmap}/\$gene_name/*hbonded*.rawextract \
 											    --suffix \$gene_name
 
 	"""
