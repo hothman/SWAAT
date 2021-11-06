@@ -33,11 +33,11 @@ params.SCRIPTHOME = launchDir+"/../scripts"
 
 // Parameters that have to be set to run the calculation of PSSM (to run PRODRES pipeline) 
 // of each sequence
-params.PRODRESPATH = '/home/houcemeddine/modules/PRODRES/PRODRES'
-params.PRODRESDB = '/home/houcemeddine/BILIM/SWAAT/prepare_data/prodres_db.nr100.sqlite3'
-params.PRODRESPFAMSCAN = '/home/houcemeddine/modules/PRODRES/PfamScan/pfam_scan.pl'
-params.UNIREF90 = '/home/houcemeddine/modules/PRODRES/db/uniprot/uniref90.fasta'
-params.PFAM = '/home/houcemeddine/modules/PRODRES/db/pfam'
+params.PRODRESPATH = '/path/to/PRODRES/PRODRES'
+params.PRODRESDB = '/path/to/prodres_db.nr100.sqlite3'
+params.PRODRESPFAMSCAN = '/path/to/PfamScan/pfam_scan.pl'
+params.UNIREF90 = '/path/to/uniref90.fasta'
+params.PFAM = '/path/to/PRODRES/db/pfam'
 
 
 /* ///////////////////////////////////////////////////////////////
@@ -100,7 +100,6 @@ def helpMessage() {
       --protlist [file]               Path to file comtaining the list of uniprot referece acccessions (one accession per line) (Default False)
       --pdbs [folder]                 Path to directory containing the PDB files. Basename is the uniprot accession (e.g P05177.pdb) (Default False)
       --outfolder [str]               Where to output the annotation files (Default: false)
-      --genelist [file]               User can limit the annotation to the list of genes contained in a this text file (one line per gene) (Default False)
 
     Other
       --foldxexe [str]                Specifies the name of the executable of FoldX software (Default foldx)
@@ -116,7 +115,6 @@ if (params.help) {
     helpMessage()
     exit 0
 }
-
 
 
 PROTLIST = Channel.fromPath("$params.protlist")
@@ -147,13 +145,12 @@ process GetProteinAnnotationFetchFasta {
 	publishDir sequence_output_uniprot, mode:'copy', pattern:"*_uniprot.fa"
 
 	"""
-	tail -n +2  $list_of_proteins >list_of_uniprot_ids
 	while read protein_id
 	do
 		echo \$protein_id
 		python ${params.SCRIPTHOME}/parseProteinAnnotation.py --accession \$protein_id
 
-	done < list_of_uniprot_ids
+	done < $list_of_proteins
 	"""
 }
 
@@ -295,8 +292,6 @@ if ( params.calculate_PSSM == true ) {
 
 uniprot_list = file("${params.protlist}")
 uniprot_id  = uniprot_list.readLines()
-uniprot_id.remove(0)   // remove the header
-
 
 if ( params.calculate_hotspots == true ) {
 	// creating output directory 
@@ -334,9 +329,7 @@ if ( params.calculate_hotspots == true ) {
 ------------------------------------------------------------------------------------------------------*/
 
 PDBLIST = Channel.fromPath("${params.pdbs}/*.pdb")
-
 process encomWT {
-	publishDir "${params.outfolder}/ENCoM/", mode:'copy'
 	input:
 		file pdb from PDBLIST
 		val id from uniprot_id
@@ -344,24 +337,25 @@ process encomWT {
 		file "${id}.eige"
 		file "${id}.cov"
 
+	publishDir "${params.outfolder}/ENCoM/", mode:'copy'
+
 	"""
 	echo calculating the normal modes for ${id} 
 	build_encom -i $pdb -cov ${id}.cov -o ${id}.eige 
 	"""
 }
 
-hotspot_dir  = file("${params.outfolder}/ftmap")
-hotspot_dir.mkdir() 
+
 
 process parseFTMAP {
-	errorStrategy 'ignore'   // this is just to tell theworkflow not to stop running if the FTMAP files are missing
+	errorStrategy 'ignore'   // Tell theworkflow not to stop running if the FTMAP files are missing
 	// input files must be of the form nonbonded[SUFFIX].rawextract and hbonded[SUFFIX].rawextract
 	publishDir "${params.outfolder}/ftmap/", mode:'copy'
 	input: 
 		file gene_name_data from  gene2PDBchains2
 
 	output: 
-		file "*.csv"
+		file "*.csv" optional true
 
 	"""
 	gene_name=\$(cut -f 1  $gene_name_data)
