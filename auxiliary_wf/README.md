@@ -63,7 +63,7 @@ However, the user can download the FASTA Refseq sequences of the proteins, modif
 
 ### FTMap input data 
 
-FTMap is a lool ([doi.org/10.1038/nprot.2015.043](doi.org/10.1038/nprot.2015.043) ) used in the Identification of binding hot spots. This is the only step that will require a manual processing by the user. However, if the gene is not known to bind drugs or small ligands, it won't be necessary to go through this step. The user needs to submit the structure to the  [STMap server](http://ftmap.bu.edu/login.php) and then download the ....... output files to a clean location, where you can specify it later with the `ftmap` option.
+FTMap is a lool ([doi.org/10.1038/nprot.2015.043](doi.org/10.1038/nprot.2015.043) ) used in the Identification of binding hot spots. This is the only step that will require a manual processing by the user. However, if the gene is not known to bind drugs or small ligands, it won't be necessary to go through this step. The user needs to submit the structure to the  [STMap server](http://ftmap.bu.edu/login.php) and then download the 'hbonded' and the 'nonbonded' raw output output files to a clean location with the **gene symbol as the name for the directory**, The files should be tagged "nonbonded" and "hbonded" strings (e.g. `mage6_hbonded.rawextract` and `mage6_nonbonded.rawextract`) The location of the parent directory, i.e. containing the gene symbol named folders, can then be specified in the `ftmap` option.
 
 ## Running the workflow 
 
@@ -76,7 +76,9 @@ nextflow run prepare_db.nf --help
 A typical running of the workflow is as follows: 
 
 ```
-nextflow run prepare_db.nf --protlist /path/to/Uniprot_list.txt --pdbs /path/to/pdb/files
+nextflow run prepare_db.nf --protlist /path/to/Uniprot_list.txt \
+	--pdbs /path/to/pdb/files
+	--outfolder /path/to/the/outputfolder
 ```
 
 ## Output
@@ -98,14 +100,15 @@ The auxiliary workflows generates a series of directories, each containing data 
 
 The Uniprot accession for MAGE-6 is [P43360](https://www.uniprot.org/uniprot/P43360). The structure of this protein contains one chain. The structure were generated using homology modeling and provided in the directory `input_example/PDB` as `P43360.pdb`. 
 
-Next you need a text file containing a one line header in the following format
+Next you need a text file containing no header in the following format
 
 ```
-Unipro_id
 P43360
 ```
 
 The file can also be found in the `input_example` directory (`example.csv`) . 
+
+The FTMap files were calculated by submitting the PDB structure to the servers which results in two output files. They were renamed to contain the tags "hbonded" and "nonbonded". The raw files were put into a directory `MAGEA6` named after the gene symbol (this is a requirement). The `MAGEA6` directory is a child directory of `input_example/ftmap`. We can then use the option `--ftmap` to point to the location of the ftmap raw files.  
 
 One you have prepared the inputs you can call the auxiliary workflow as follows: 
 
@@ -113,39 +116,33 @@ One you have prepared the inputs you can call the auxiliary workflow as follows:
 nextflow run prepare_db.nf --protlist /home/hothman/SWAAT/auxiliary_wf/input_example/example.csv \
 	--pdbs /home/hothman/SWAAT/auxiliary_wf/input_example/PDB \
 	--outfolder /home/hothman/new_genes_database
+	--ftmap /home/houcem/SWAAT/auxiliary_wf/input_example/ftmap
 ```
 
 A successful run will create a new folder containing the database directory (`new_genes_database`) that are necessary to annotate the MAGE-6 gene using structural data. The output of the command should give something similar to the following:
 
 ```
-S W A A T  A U X I L I A R Y  W O R K F L O W  
-     SBIMB -- Wits University -- 2021  
-
-
-==============================================
 Number of genes    : 1
-Path to PDB files  : /home/hothman/SWAAT/auxiliary_wf/input_example/PDB
-Outputdir          : /home/hothman/new_genes_database
+Path to PDB files  : /home/houcem/SWAAT/auxiliary_wf/input_example/PDB
+Outputdir          : database_new_gene/
 List of accessions : P43360
 executor >  local (8)
-[e9/58a9e2] process > GetProteinAnnotationFetchFasta (1) [100%] 1 of 1 ✔
-[49/8c977c] process > GetCoordinates (1)                 [100%] 1 of 1 ✔
-executor >  local (8)
-[e9/58a9e2] process > GetProteinAnnotationFetchFasta (1) [100%] 1 of 1 ✔
-[49/8c977c] process > GetCoordinates (1)                 [100%] 1 of 1 ✔
-[55/6e1fd9] process > geneToChainMapping (1)             [100%] 1 of 1 ✔
-[f4/f1dc72] process > uniprot2PDB (1)                    [100%] 1 of 1 ✔
-[7d/fd9da0] process > Hospotislands (1)                  [100%] 1 of 1 ✔
-[6c/e18588] process > encomWT (1)                        [100%] 1 of 1 ✔
-[22/911c75] process > parseFTMAP (1)                     [100%] 1 of 1 ✔
-[f7/eb975f] process > generate_matrixes                  [100%] 1 of 1 ✔
-
-Completed at: 05-Nov-2021 16:03:31
-Duration    : 1m 51s
+[d9/9641a8] process > GetProteinAnnotationFetchFasta (1) [100%] 1 of 1 ✔
+[61/310184] process > GetCoordinates (1)                 [100%] 1 of 1 ✔
+executor >  local (9)
+[d9/9641a8] process > GetProteinAnnotationFetchFasta (1) [100%] 1 of 1 ✔
+[61/310184] process > GetCoordinates (1)                 [100%] 1 of 1 ✔
+[42/fb35d6] process > geneToChainMapping (1)             [100%] 1 of 1 ✔
+[58/0178c7] process > uniprot2PDB (1)                    [100%] 1 of 1 ✔
+[ab/c18a85] process > Hospotislands (1)                  [100%] 1 of 1 ✔
+[6a/76b297] process > encomWT (1)                        [100%] 1 of 1 ✔
+[04/7ba5b9] process > parseFTMAP (1)                     [100%] 1 of 1 ✔
+[a3/4dca9d] process > generate_matrixes                  [100%] 1 of 1 ✔
+[d8/c557ae] process > outputPDB (1)                      [100%] 1 of 1 ✔
+Completed at: 06-Nov-2021 14:15:35
+Duration    : 1m 53s
 CPU hours   : (a few seconds)
-Succeeded   : 7
-Ignored     : 1
-Failed      : 0
+Succeeded   : 9
 
 ```
 
