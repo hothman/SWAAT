@@ -261,27 +261,24 @@ process filterVars {
 }
 
 
-//retained.collect().println()
-
-bigreceiver.into {receiver1 ; receiver2; receiver3 }
-
-
 vars = retained_vars.splitText() { it.replaceAll("\n", "") }
-//thepointer = pointerfile.splitText() { it.replaceAll("\n", "") }
-// foldx 
-vars.into { vars4foldx; vars4encom ; vars4suffix ; tata; tata2}
+vars.into { vars4foldx; vars4encom ; vars4suffix }
 
-/*
-This process generates the guiding file (which sequence and which PDB for the mutation)
-*/
+
 process generateGuidingFile {
+/* --------------------------------------------------------------------------------------
+
+This process generates the guiding file (which sequence and which PDB for the mutation)
+
+----------------------------------------------------------------------------------------*/
+
 	//echo true
 	input: 
 		val variant from vars4suffix.flatMap()
 	output: 
 		file "*.id" into id
 		file "*_whichPDB.tsv" into guidingFile
-	publishDir "${params.outfolder}" , mode:'copy'
+
 	"""
 	id=\$(echo $variant |sed 's/ /-/g')
 	echo $variant > \$id.id
@@ -295,9 +292,14 @@ process generateGuidingFile {
 }
 
 
-// tata.flatMap().println()
 
 process calculateStructuralFeatures {
+/*----------------------------------------------------------------------------
+
+    The process calculates structural features using FoldX, ENCoM, stride
+    and assigns annotation from the database using parseOutput.py
+
+-----------------------------------------------------------------------------*/
 	errorStrategy 'ignore'
 	echo true
 	cpus  2
@@ -373,19 +375,35 @@ process calculateStructuralFeatures {
 
 
 data_vars = calculated_parameters.collectFile(name: "./swaatall.csv" ,  newLine: false, skip: 1, keepHeader: true)
-process predict_var  {
+process predictVarEfectMl  {
+
+/*----------------------------------------------------------------------------
+
+    Predicts the effect of amino acid substitution with a random forset model
+    Output: 1 (Has effect), 0 (Neutral)
+-----------------------------------------------------------------------------*/
+
 	input: 
 		file(data4allAavars) from data_vars
 	output: 
 		file "predicted_outcomes.csv" into predicted_outcomes
 	"""
-	python ${params.SCRIPTHOME}/deployML.py --inputdata ${data4allAavars} --modelpickle ${params.RFMLM} --output predicted_outcomes.csv 
+	python ${params.SCRIPTHOME}/deployML.py --inputdata ${data4allAavars} \
+																					--modelpickle ${params.RFMLM} \
+																					--output predicted_outcomes.csv 
 	"""
 } 
 
 
 
 process formatReport {
+
+/*----------------------------------------------------------------------------
+
+    Generates the formatted CSV and HTML reports and output to params.outfolder
+
+-----------------------------------------------------------------------------*/
+
 	input: 
 		file(vars) from var2aa_report.collect()
 		file(outcomes) from predicted_outcomes
