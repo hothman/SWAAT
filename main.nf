@@ -1,5 +1,17 @@
 #!/usr/bin/env nextflow
 
+
+/* -----------------------------------------------
+
+Auxilliary workflow to prepare database files used by SWAAT.
+	  Author:     "Houcemeddine Othman"
+    Credits:    "Wits University H3Africa/GSK ADME collaboration"
+	  Maintainer: "Houcemeddine Othman"
+    Email:      "houcemoo@gmail.com"
+
+-------------------------------------------------*/
+
+
 log.info """
 
 @@@###############################################################################################@@
@@ -14,7 +26,7 @@ log.info """
   #############       ##*        ##    .(            *  .*     ###         ###     ###.            
      ######                      #   ,                 *  *  ####          (###   (###             
     
-                    STRUCTURAL  WORKFLOW   FOR  ANALYZING  ADME   TARGETS
+                    STRUCTURAL WORKFLOW FOR ANALYZING ADME TARGETS
          """
 
 
@@ -23,11 +35,11 @@ def helpMessage() {
     Usage:
 
     The typical command for running SWAAT: 
-    	nextflow run swaat.groovy --dbhome /home/to/database --VCFHOME /path/to/vcf/dir --OUTFOLDER output_folder --GENELIST ADME_genes_to_annotate.txt
+    	nextflow run main.nf --dbhome /home/to/database --vcfhome /path/to/vcf/dir --outfolder output_folder --genelist ADME_genes_to_annotate.txt
 
     Arguments:
       --dbhome [folder]               Path to database containing the dependency files for annotating the variants (Default False)
-      --VCFHOME [folder]              Path to folder containing VCF files split by annotated gene (e.g. CYP2D6.vcf) (Default False)
+      --vcfhome [folder]              Path to folder containing VCF files split by annotated gene (e.g. CYP2D6.vcf) (Default False)
       --outfolder [str]               Where to output the plain text and the HTML report (Default: false)
       --genelist [file]               User can limit the annotation to the list of genes contained in a this text file (one line per gene) (Default False)
 
@@ -58,8 +70,6 @@ params.MATRICES="$params.dbhome/matrices/"
 // Path to the pickle file for Random forest prediction 
 params.RFMLM=launchDir+"/ML4swaat/swaat_rf.ML"
 
-// link to the rotabase file (current version of foldx requires that)
-//params.rotabase ="/home/houcem/env_module/modules/software/foldx/rotabase.txt"
 
 /*------------------------------------------------------------------------------------------
 
@@ -169,7 +179,7 @@ log.info """
  ========================================
  """
          
-process generate_swaat_input {
+process generateSwaatInput {
 	publishDir "${params.outfolder}/$gene", mode:'copy'
 	input:
 		val(gene) from genes.flatMap()
@@ -276,9 +286,9 @@ process generateGuidingFile {
 	id=\$(echo $variant |sed 's/ /-/g')
 	echo $variant > \$id.id
 	gene=\$(echo $variant| awk {'print \$1'}  )
-	filename=\$(echo \$gene.fa )
+	filename=\$(echo \${gene}_refseq.fa )
 	echo \$filename >mygene
-	python ${params.SCRIPTHOME}/whichPdb.py --fasta     ${params.dbhome}/sequences/\$filename \
+	python ${params.SCRIPTHOME}/whichPdb.py --fasta     ${params.dbhome}/sequences//Refseq/\$filename \
 					 --pdbpath   ${params.PDBFILESPATH} --output \${id}_whichPDB.tsv
 
 	"""
@@ -287,7 +297,7 @@ process generateGuidingFile {
 
 // tata.flatMap().println()
 
-process foldX {
+process calculateStructuralFeatures {
 	errorStrategy 'ignore'
 	echo true
 	cpus  2
