@@ -122,5 +122,5 @@ The workflow will process 113 variants in total.
 
 ---
 
-Please contact Oliver Pain ([houcemoo@gmail.com](mailto:houcemoo@gmail.com)/[houcemeddine.othman@wits.ac.za](mailto:houcemeddine.othman@wits.ac.za)) for any questions or comments.
+Please contact Houcemeddine Othman ([houcemoo@gmail.com](mailto:houcemoo@gmail.com)/[houcemeddine.othman@wits.ac.za](mailto:houcemeddine.othman@wits.ac.za)) for any questions or comments.
 
