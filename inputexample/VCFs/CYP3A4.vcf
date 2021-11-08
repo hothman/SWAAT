@@ -1,0 +1,122 @@
+##fileformat=VCFv4.1
+##FILTER=<ID=PASS,Description="All filters passed">
+##fileDate=20210804
+##contig=<ID=1,length=249250621>
+##contig=<ID=2,length=243199373>
+##contig=<ID=3,length=198022430>
+##contig=<ID=4,length=191154276>
+##contig=<ID=5,length=180915260>
+##contig=<ID=6,length=171115067>
+##contig=<ID=7,length=159138663>
+##contig=<ID=8,length=146364022>
+##contig=<ID=9,length=141213431>
+##contig=<ID=10,length=135534747>
+##contig=<ID=11,length=135006516>
+##contig=<ID=12,length=133851895>
+##contig=<ID=13,length=115169878>
+##contig=<ID=14,length=107349540>
+##contig=<ID=15,length=102531392>
+##contig=<ID=16,length=90354753>
+##contig=<ID=17,length=81195210>
+##contig=<ID=18,length=78077248>
+##contig=<ID=19,length=59128983>
+##contig=<ID=20,length=63025520>
+##contig=<ID=21,length=48129895>
+##contig=<ID=22,length=51304566>
+##contig=<ID=X,length=155270560>
+##contig=<ID=Y,length=59373566>
+##contig=<ID=MT,length=16569>
+##contig=<ID=GL000191.1,length=106433>
+##contig=<ID=GL000192.1,length=547496>
+##contig=<ID=GL000193.1,length=189789>
+##contig=<ID=GL000194.1,length=191469>
+##contig=<ID=GL000195.1,length=182896>
+##contig=<ID=GL000196.1,length=38914>
+##contig=<ID=GL000197.1,length=37175>
+##contig=<ID=GL000198.1,length=90085>
+##contig=<ID=GL000199.1,length=169874>
+##contig=<ID=GL000200.1,length=187035>
+##contig=<ID=GL000201.1,length=36148>
+##contig=<ID=GL000202.1,length=40103>
+##contig=<ID=GL000203.1,length=37498>
+##contig=<ID=GL000204.1,length=81310>
+##contig=<ID=GL000205.1,length=174588>
+##contig=<ID=GL000206.1,length=41001>
+##contig=<ID=GL000207.1,length=4262>
+##contig=<ID=GL000208.1,length=92689>
+##contig=<ID=GL000209.1,length=159169>
+##contig=<ID=GL000210.1,length=27682>
+##contig=<ID=GL000211.1,length=166566>
+##contig=<ID=GL000212.1,length=186858>
+##contig=<ID=GL000213.1,length=164239>
+##contig=<ID=GL000214.1,length=137718>
+##contig=<ID=GL000215.1,length=172545>
+##contig=<ID=GL000216.1,length=172294>
+##contig=<ID=GL000217.1,length=172149>
+##contig=<ID=GL000218.1,length=161147>
+##contig=<ID=GL000219.1,length=179198>
+##contig=<ID=GL000220.1,length=161802>
+##contig=<ID=GL000221.1,length=155397>
+##contig=<ID=GL000222.1,length=186861>
+##contig=<ID=GL000223.1,length=180455>
+##contig=<ID=GL000224.1,length=179693>
+##contig=<ID=GL000225.1,length=211173>
+##contig=<ID=GL000226.1,length=15008>
+##contig=<ID=GL000227.1,length=128374>
+##contig=<ID=GL000228.1,length=129120>
+##contig=<ID=GL000229.1,length=19913>
+##contig=<ID=GL000230.1,length=43691>
+##contig=<ID=GL000231.1,length=27386>
+##contig=<ID=GL000232.1,length=40652>
+##contig=<ID=GL000233.1,length=45941>
+##contig=<ID=GL000234.1,length=40531>
+##contig=<ID=GL000235.1,length=34474>
+##contig=<ID=GL000236.1,length=41934>
+##contig=<ID=GL000237.1,length=45867>
+##contig=<ID=GL000238.1,length=39939>
+##contig=<ID=GL000239.1,length=33824>
+##contig=<ID=GL000240.1,length=41933>
+##contig=<ID=GL000241.1,length=42152>
+##contig=<ID=GL000242.1,length=43523>
+##contig=<ID=GL000243.1,length=43341>
+##contig=<ID=GL000244.1,length=39929>
+##contig=<ID=GL000245.1,length=36651>
+##contig=<ID=GL000246.1,length=38154>
+##contig=<ID=GL000247.1,length=36422>
+##contig=<ID=GL000248.1,length=39786>
+##contig=<ID=GL000249.1,length=38502>
+##contig=<ID=NC_007605,length=171823>
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##INFO=<ID=VI,Number=1,Type=String,Description="Variant impact">
+##bcftools_mergeVersion=1.12+htslib-1.12
+##bcftools_mergeCommand=merge -m none CYP3A4_1.002.vcf.gz CYP3A4_1.003.vcf.gz CYP3A4_1.004.vcf.gz CYP3A4_1.005.vcf.gz CYP3A4_1.006.vcf.gz CYP3A4_10.001.vcf.gz CYP3A4_10.vcf.gz CYP3A4_11.001.vcf.gz CYP3A4_11.vcf.gz CYP3A4_12.001.vcf.gz CYP3A4_12.vcf.gz CYP3A4_13.001.vcf.gz CYP3A4_13.vcf.gz CYP3A4_14.001.vcf.gz CYP3A4_14.vcf.gz CYP3A4_15.001.vcf.gz CYP3A4_15.vcf.gz CYP3A4_16.001.vcf.gz CYP3A4_16.vcf.gz CYP3A4_17.001.vcf.gz CYP3A4_17.vcf.gz CYP3A4_18.001.vcf.gz CYP3A4_18.vcf.gz CYP3A4_19.001.vcf.gz CYP3A4_19.vcf.gz CYP3A4_1G.vcf.gz CYP3A4_2.001.vcf.gz CYP3A4_2.vcf.gz CYP3A4_20.001.vcf.gz CYP3A4_20.vcf.gz CYP3A4_21.001.vcf.gz CYP3A4_21.vcf.gz CYP3A4_22.001.vcf.gz CYP3A4_22.vcf.gz CYP3A4_23.001.vcf.gz CYP3A4_23.vcf.gz CYP3A4_24.001.vcf.gz CYP3A4_24.vcf.gz CYP3A4_26.001.vcf.gz CYP3A4_26.vcf.gz CYP3A4_28.001.vcf.gz CYP3A4_28.vcf.gz CYP3A4_29.001.vcf.gz CYP3A4_29.vcf.gz CYP3A4_3.001.vcf.gz CYP3A4_3.vcf.gz CYP3A4_30.001.vcf.gz CYP3A4_30.vcf.gz CYP3A4_31.001.vcf.gz CYP3A4_31.vcf.gz CYP3A4_32.001.vcf.gz CYP3A4_32.vcf.gz CYP3A4_33.001.vcf.gz CYP3A4_33.vcf.gz CYP3A4_34.001.vcf.gz CYP3A4_34.vcf.gz CYP3A4_35.001.vcf.gz CYP3A4_35.vcf.gz CYP3A4_4.001.vcf.gz CYP3A4_4.vcf.gz CYP3A4_5.001.vcf.gz CYP3A4_5.vcf.gz CYP3A4_6.001.vcf.gz CYP3A4_6.vcf.gz CYP3A4_7.001.vcf.gz CYP3A4_7.vcf.gz CYP3A4_8.001.vcf.gz CYP3A4_8.vcf.gz CYP3A4_9.001.vcf.gz CYP3A4_9.vcf.gz; Date=Tue Sep 28 14:09:04 2021
+##VEP="v104" time="2021-09-29 11:29:05" cache="/net/isilonP/public/ro/ensweb-data/latest/tools/grch37/e104/vep/cache/homo_sapiens_refseq/104_GRCh37" db="homo_sapiens_core_104_37@hh-mysql-ens-grch37-web" 1000genomes="phase3" COSMIC="92" ClinVar="202012" HGMD-PUBLIC="20204" assembly="GRCh37.p13" dbSNP="154" gencode="GENCODE 19" genebuild="2011-04" gnomAD="r2.1" polyphen="2.2.2" refseq="2020-10-26 17:03:42 - GCF_000001405.25_GRCh37.p13_genomic.gff" regbuild="1.0" sift="sift5.2.2"
+##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. Format: Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON|HGVSc|HGVSp|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|Existing_variation|DISTANCE|STRAND|FLAGS|SYMBOL_SOURCE|HGNC_ID|MANE_SELECT|MANE_PLUS_CLINICAL|TSL|APPRIS|REFSEQ_MATCH|REFSEQ_OFFSET|GIVEN_REF|USED_REF|BAM_EDIT|SIFT|PolyPhen|AF|CLIN_SIG|SOMATIC|PHENO|PUBMED|MOTIF_NAME|MOTIF_POS|HIGH_INF_POS|MOTIF_SCORE_CHANGE|TRANSCRIPTION_FACTORS">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+7	99358459	.	G	A	.	.	VI=P467S;CSQ=A|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|12/13||||1499|1396|466|P/S|Cct/Tct|rs4986913&CM014350||-1||EntrezGene||||||||G|G||tolerated(0.08)|possibly_damaging(0.47)|0.0004|||0&1|30093869&25266489&26091847&27233804|||||,A|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|12/13||||1502|1399|467|P/S|Cct/Tct|rs4986913&CM014350||-1||EntrezGene||||||||G|G||tolerated(0.08)|benign(0.056)|0.0004|||0&1|30093869&25266489&26091847&27233804|||||
+7	99358524	.	A	G	.	.	VI=M445T;CSQ=G|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|12/13||||1434|1331|444|M/T|aTg/aCg|rs4986910&CM014349&COSV99080073||-1||EntrezGene||||||||A|A||deleterious(0.03)|possibly_damaging(0.768)|0.0026||0&0&1|0&1&1|25881102&30093869&19214745&21921273&21712189&17615053&25955319&19076156&25110414&25266489&26091847&27233804&27164191&21790905&25217544&19463375|||||,G|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|12/13||||1437|1334|445|M/T|aTg/aCg|rs4986910&CM014349&COSV99080073||-1||EntrezGene||||||||A|A||deleterious(0.03)|possibly_damaging(0.87)|0.0026||0&0&1|0&1&1|25881102&30093869&19214745&21921273&21712189&17615053&25955319&19076156&25110414&25266489&26091847&27233804&27164191&21790905&25217544&19463375|||||
+7	99358579	.	T	C	.	.	VI=I427V;CSQ=C|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|12/13||||1379|1276|426|I/V|Ata/Gta|rs774109750||-1||EntrezGene||||||||T|T||tolerated(0.22)|benign(0.011)||||||||||,C|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|12/13||||1382|1279|427|I/V|Ata/Gta|rs774109750||-1||EntrezGene||||||||T|T||tolerated(0.2)|benign(0.017)||||||||||
+7	99359670	.	G	A	.	.	VI=P416L;CSQ=A|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|11/13||||1347|1244|415|P/L|cCt/cTt|rs4986909&CM015324||-1||EntrezGene||||||||G|G||deleterious(0.01)|probably_damaging(1)||||0&1|30093869&21712189&25266489&26091847&27233804|||||,A|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|11/13||||1350|1247|416|P/L|cCt/cTt|rs4986909&CM015324||-1||EntrezGene||||||||G|G||deleterious(0.01)|probably_damaging(1)||||0&1|30093869&21712189&25266489&26091847&27233804|||||
+7	99359800	.	G	A	.	.	VI=L373F;CSQ=A|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|11/13||||1217|1114|372|L/F|Ctt/Ttt|rs12721629&CM015323||-1||EntrezGene||||||||G|G||deleterious(0.03)|probably_damaging(0.933)|0.0012|||0&1|26983698|||||,A|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|11/13||||1220|1117|373|L/F|Ctt/Ttt|rs12721629&CM015323||-1||EntrezGene||||||||G|G||deleterious(0.01)|benign(0.229)|0.0012|||0&1|26983698|||||
+7	99359809	.	C	A	.	.	VI=A370S;CSQ=A|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|11/13||||1208|1105|369|A/S|Gct/Tct|rs756833413||-1||EntrezGene||||||||C|C||tolerated(0.16)|benign(0.038)||||||||||,A|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|11/13||||1211|1108|370|A/S|Gct/Tct|rs756833413||-1||EntrezGene||||||||C|C||tolerated(0.14)|benign(0.123)||||||||||
+7	99359829	.	G	A	.	.	VI=T363M;CSQ=A|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|11/13||||1188|1085|362|T/M|aCg/aTg|rs67784355&CM015322&COSV60504629||-1||EntrezGene||||||||G|G||deleterious(0)|probably_damaging(0.996)|0.0004|likely_benign|0&0&1|1&1&1||||||,A|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|11/13||||1191|1088|363|T/M|aCg/aTg|rs67784355&CM015322&COSV60504629||-1||EntrezGene||||||||G|G||deleterious(0)|probably_damaging(0.996)|0.0004|likely_benign|0&0&1|1&1&1||||||
+7	99361500	.	A	G	.	.	VI=I335T;CSQ=G|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|10/13||||1104|1001|334|I/T|aTt/aCt|rs368296206||-1||EntrezGene||||||||A|A||deleterious(0)|probably_damaging(0.995)||||||||||,G|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|10/13||||1107|1004|335|I/T|aTt/aCt|rs368296206||-1||EntrezGene||||||||A|A||deleterious(0)|probably_damaging(0.958)||||||||||
+7	99361532	.	G	T	.	.	VI=H324Q;CSQ=T|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|10/13||||1072|969|323|H/Q|caC/caA|rs1303250043||-1||EntrezGene||||||||G|G||deleterious(0)|possibly_damaging(0.534)||||||||||,T|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|10/13||||1075|972|324|H/Q|caC/caA|rs1303250043||-1||EntrezGene||||||||G|G||deleterious(0)|possibly_damaging(0.744)||||||||||
+7	99361548	.	T	C	.	.	VI=Y319C;CSQ=C|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|10/13||||1056|953|318|Y/C|tAt/tGt|rs201821708&CM115451&COSV60503453||-1||EntrezGene||||||||T|T||deleterious(0.01)|probably_damaging(0.999)|0.0002||0&0&1|0&1&1||||||,C|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|10/13||||1059|956|319|Y/C|tAt/tGt|rs201821708&CM115451&COSV60503453||-1||EntrezGene||||||||T|T||deleterious(0.01)|probably_damaging(1)|0.0002||0&0&1|0&1&1||||||
+7	99361626	.	A	G	.	.	VI=L293P;CSQ=G|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|10/13||||978|875|292|L/P|cTg/cCg|rs28371759&CM014348||-1||EntrezGene||||||||A|A||tolerated(0.26)|benign(0.127)|0.0022|||0&1|24944790&30093869&21712189&20386561&23922006&24019753&24118098&25110414&27296832&19812066&22875622&28079798&24357089&28640078&22771593&24381495&28261657&25966836|||||,G|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|10/13||||981|878|293|L/P|cTg/cCg|rs28371759&CM014348||-1||EntrezGene||||||||A|A||tolerated(0.26)|benign(0.201)|0.0022|||0&1|24944790&30093869&21712189&20386561&23922006&24019753&24118098&25110414&27296832&19812066&22875622&28079798&24357089&28640078&22771593&24381495&28261657&25966836|||||
+7	99365983	.	A	G	.	.	VI=S222P;CSQ=G|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|7/13||||767|664|222|S/P|Tca/Cca|rs55785340||-1||EntrezGene||||||||A|A||tolerated(0.33)|benign(0.399)|0.0004||||29193749&22702493&25110414&26785747&29681089&29515760|||||,G|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|7/13||||767|664|222|S/P|Tca/Cca|rs55785340||-1||EntrezGene||||||||A|A||tolerated(0.09)|benign(0.007)|0.0004||||29193749&22702493&25110414&26785747&29681089&29515760|||||
+7	99365994	.	G	C	.	.	VI=P218R;CSQ=C|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|7/13||||756|653|218|P/R|cCa/cGa|rs55901263&CM016156&COSV60501165||-1||EntrezGene||||||||G|G||deleterious(0.01)|probably_damaging(0.998)|0.0004||0&0&1|0&1&1||||||,C|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|7/13||||756|653|218|P/R|cCa/cGa|rs55901263&CM016156&COSV60501165||-1||EntrezGene||||||||G|G||deleterious(0)|probably_damaging(0.977)|0.0004||0&0&1|0&1&1||||||
+7	99366047	.	T	A	.	.	VI=Q200H;CSQ=A|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|7/13||||703|600|200|Q/H|caA/caT|rs113667357&COSV60503463||-1||EntrezGene||||||||T|T||tolerated(0.1)|benign(0.005)|||0&1|0&1||||||,A|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|7/13||||703|600|200|Q/H|caA/caT|rs113667357&COSV60503463||-1||EntrezGene||||||||T|T||tolerated(0.11)|benign(0.005)|||0&1|0&1||||||
+7	99366081	.	A	G	.	.	VI=F189S;CSQ=G|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|7/13||||669|566|189|F/S|tTt/tCt|rs4987161&CM014347||-1||EntrezGene||||||||A|A||deleterious(0)|probably_damaging(0.969)||||0&1|24944790&30093869&21712189&20386561&20959500&23130019&25110414&25217544&30306415|||||,G|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|7/13||||669|566|189|F/S|tTt/tCt|rs4987161&CM014347||-1||EntrezGene||||||||A|A||deleterious(0)|probably_damaging(1)||||0&1|24944790&30093869&21712189&20386561&20959500&23130019&25110414&25217544&30306415|||||
+7	99366093	.	G	C	.	.	VI=T185S;CSQ=C|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|7/13||||657|554|185|T/S|aCt/aGt|rs12721627&CM025898||-1||EntrezGene||||||||G|G||deleterious(0)|possibly_damaging(0.677)|0.0008|||0&1|25881102&21708280&21738081&25110414&27296832&23935969&20082485|||||,C|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|7/13||||657|554|185|T/S|aCt/aGt|rs12721627&CM025898||-1||EntrezGene||||||||G|G||deleterious(0)|benign(0.332)|0.0008|||0&1|25881102&21708280&21738081&25110414&27296832&23935969&20082485|||||
+7	99367392	.	C	G	.	.	VI=D174H;CSQ=G|missense_variant&splice_region_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|6/13||||623|520|174|D/H|Gac/Cac|rs4986908&COSV100316085||-1||EntrezGene||||||||C|C||deleterious(0.04)|benign(0.041)|0.0018||0&1|0&1|25110414|||||,G|missense_variant&splice_region_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|6/13||||623|520|174|D/H|Gac/Cac|rs4986908&COSV100316085||-1||EntrezGene||||||||C|C||deleterious(0.04)|benign(0.031)|0.0018||0&1|0&1|25110414|||||
+7	99367404	.	C	T	.	.	VI=V170I;CSQ=T|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|6/13||||611|508|170|V/I|Gtc/Atc|rs72552798||-1||EntrezGene||||||||C|C||tolerated(0.74)|benign(0.025)|0.0002|||||||||,T|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|6/13||||611|508|170|V/I|Gtc/Atc|rs72552798||-1||EntrezGene||||||||C|C||tolerated(0.73)|benign(0.003)|0.0002|||||||||
+7	99367427	.	C	T	.	.	VI=R162Q;CSQ=T|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|6/13||||588|485|162|R/Q|cGg/cAg|rs4986907&CM014346&COSV60503157||-1||EntrezGene||||||||C|C||tolerated(0.22)|benign(0.003)|0.0052||0&0&1|0&1&1|30093869&21712189&17615053&25110414&23423246|||||,T|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|6/13||||588|485|162|R/Q|cGg/cAg|rs4986907&CM014346&COSV60503157||-1||EntrezGene||||||||C|C||tolerated(0.23)|benign(0.003)|0.0052||0&0&1|0&1&1|30093869&21712189&17615053&25110414&23423246|||||
+7	99367428	.	G	A	.	.	VI=R162W;CSQ=A|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|6/13||||587|484|162|R/W|Cgg/Tgg|rs57409622||-1||EntrezGene||||||||G|G||deleterious(0)|benign(0.021)|0.0012|||||||||,A|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|6/13||||587|484|162|R/W|Cgg/Tgg|rs57409622||-1||EntrezGene||||||||G|G||deleterious(0)|possibly_damaging(0.85)|0.0012|||||||||
+7	99367788	.	C	T	.	.	VI=R130Q;CSQ=T|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|5/13||||492|389|130|R/Q|cGa/cAa|rs72552799&CM015321&COSV60500931||-1||EntrezGene||||||||C|C||deleterious(0)|probably_damaging(1)|0.0002||0&0&1|0&1&1||||||,T|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|5/13||||492|389|130|R/Q|cGa/cAa|rs72552799&CM015321&COSV60500931||-1||EntrezGene||||||||C|C||deleterious(0)|probably_damaging(1)|0.0002||0&0&1|0&1&1||||||
+7	99367825	.	T	C	.	.	VI=I118V;CSQ=C|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|5/13||||455|352|118|I/V|Atc/Gtc|rs55951658&CM057668||-1||EntrezGene||||||||T|T||tolerated(0.78)|benign(0.009)|0.0010|||0&1|29170472|||||,C|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|5/13||||455|352|118|I/V|Atc/Gtc|rs55951658&CM057668||-1||EntrezGene||||||||T|T||tolerated(0.78)|benign(0.005)|0.0010|||0&1|29170472|||||
+7	99367840	.	A	T	.	.	VI=F113I;CSQ=T|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|5/13||||440|337|113|F/I|Ttt/Att|rs1449865051||-1||EntrezGene||||||||A|A||tolerated(0.44)|benign(0.007)||||||||||,T|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|5/13||||440|337|113|F/I|Ttt/Att|rs1449865051||-1||EntrezGene||||||||A|A||tolerated(0.42)|benign(0.003)||||||||||
+7	99375702	.	C	T	.	.	VI=G56D;CSQ=T|missense_variant&splice_region_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|3/13||||270|167|56|G/D|gGc/gAc|rs56324128||-1||EntrezGene||||||||C|C||deleterious(0)|probably_damaging(0.999)|0.0004||||25935875&29398917&26173871|||||,T|missense_variant&splice_region_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|3/13||||270|167|56|G/D|gGc/gAc|rs56324128||-1||EntrezGene||||||||C|C||deleterious(0)|probably_damaging(1)|0.0004||||25935875&29398917&26173871|||||
+7	99381641	.	G	C	.	.	VI=L22V;CSQ=C|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|1/13||||167|64|22|L/V|Ctc/Gtc|rs570051168||-1||EntrezGene||||||||G|G||tolerated(0.05)|benign(0.05)|0.0008|||||||||,C|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|1/13||||167|64|22|L/V|Ctc/Gtc|rs570051168||-1||EntrezGene||||||||G|G||tolerated(0.05)|benign(0.033)|0.0008|||||||||
+7	99381661	.	A	G	.	.	VI=L15P;CSQ=G|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|1/13||||147|44|15|L/P|cTg/cCg|rs12721634||-1||EntrezGene||||||||A|A||deleterious(0)|benign(0.315)|||||25266489&26091847&27233804|||||,G|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|1/13||||147|44|15|L/P|cTg/cCg|rs12721634||-1||EntrezGene||||||||A|A||deleterious(0)|probably_damaging(0.986)|||||25266489&26091847&27233804|||||
+7	99381698	.	G	C	.	.	VI=L3V;CSQ=C|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_001202855.3|protein_coding|1/13||||110|7|3|L/V|Ctc/Gtc|rs188389063||-1||EntrezGene||||||||G|G||deleterious(0.04)|benign(0.025)|0.0002|||||||||,C|missense_variant|MODERATE|CYP3A4|1576|Transcript|NM_017460.6|protein_coding|1/13||||110|7|3|L/V|Ctc/Gtc|rs188389063||-1||EntrezGene||||||||G|G||deleterious(0.04)|benign(0.259)|0.0002|||||||||
