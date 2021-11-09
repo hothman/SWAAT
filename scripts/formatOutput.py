@@ -10,6 +10,8 @@ import re as re
 import datetime as dt
 import glob  
 import argparse
+import requests
+import warnings
 
 # Bokeh is optional 
 try: 
@@ -21,8 +23,26 @@ try:
     from bokeh.embed import components
     from bokeh import __version__ as bokeh_version
     bokeh = True
+    
+    # checking the internet connection and output the interactive plot 
+    #to allow HTML output loading even if BokehJS cannot be loaded from the content delivery network
+    url ="http://www.google.com"
+    timeout=10
+    try:
+        request = requests.get(url, timeout=timeout)
+        internet_connection = True
+        bokeh_load = "\"<script src=\"https://cdn.bokeh.org/bokeh/release/bokeh-{0}.min.js\"></script>\"".format(bokeh_version)
+
+    except:
+        internet_connection = False
+        bokeh_load = ""
+
 except: 
     bokeh = False
+    bokeh_load = ""
+
+
+
 
 
 features = { 1:'signal peptide', 
@@ -47,6 +67,7 @@ features = { 1:'signal peptide',
 20: 'external annotation'}
 
 
+
 template_header= """
   
 <!DOCTYPE html>
@@ -63,20 +84,21 @@ table, td, th {{
     margin: 50px auto;
     text-align: left;
     width: 800px;
-
 }}
+
+
 </style>
 
 <html>
 <head>
-    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-{2}.min.js"></script>  
+    {2} 
     <title>{0}</title>
     <h1>{0}</h1> 
     <h2>{1}</h2> 
     <p> Please consider citing the following reference for SWAAT</p>
 </head>
 
-""".format("SWAAT report",  dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), bokeh_version)
+""".format("SWAAT report",  dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), bokeh_load)
 
 
 class cleanData:
@@ -435,17 +457,24 @@ class formatHtML:
 
                 html_processed = self.df_processed.to_html(index=False, escape=False)
                 file.write(html_processed)
-                file.write("<hr>")
+                
 
-                # integrate interactive plot (needs bokeh library)
-                try: 
-                    if bokeh :
-                        file.write("Hover to explore")
-                        interactive_plot = Plot(self.df_processed)
-                        file.write(interactive_plot.div)
-                        file.write(interactive_plot.script)
-                except: 
-                    print("Install Bokeh to explore the result interactively")
+                # integrate interactive plot (needs bokeh library)                
+                if bokeh_load !="" and internet_connection  :
+                    file.write("<h4>Hover to explore interactively</h4>")
+                    interactive_plot = Plot(self.df_processed)
+                    file.write(interactive_plot.div)
+                    file.write(interactive_plot.script)
+                    file.write("<hr>")
+
+                elif internet_connection == False  : 
+                    warnings.warn("No internet connection. BokehJS won't load from CDN")
+                    file.write("<hr>")
+
+                elif bokeh == False:
+                    warnings.warn("Install Bokeh library to explore the result interactively")
+                    file.write("<hr>")
+
 
 
         
