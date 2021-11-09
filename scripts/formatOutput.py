@@ -19,6 +19,7 @@ try:
     from bokeh.models import  ColumnDataSource, HoverTool, Cross
     from bokeh.layouts import row
     from bokeh.embed import components
+    from bokeh import __version__ as bokeh_version
     bokeh = True
 except: 
     bokeh = False
@@ -68,14 +69,14 @@ table, td, th {{
 
 <html>
 <head>
-    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-2.1.1.min.js"></script>  
+    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-{2}.min.js"></script>  
     <title>{0}</title>
     <h1>{0}</h1> 
     <h2>{1}</h2> 
     <p> Please consider citing the following reference for SWAAT</p>
 </head>
 
-""".format("SWAAT report",  dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+""".format("SWAAT report",  dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), bokeh_version)
 
 
 class cleanData:
@@ -234,6 +235,10 @@ def transformAnnotation(combineddataframe):
 #######################
 
 def readData(): 
+    """
+    Read ddG and ddS data calculated for a set of 1680
+    protein single mutation using FoldX and EnCOM.  
+    """
     return pd.read_csv(DATAHOME)
 
 def getPdf(data):
