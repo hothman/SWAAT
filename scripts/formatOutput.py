@@ -306,24 +306,19 @@ class Plot:
         return p
     
     def renderGraph(self): 
-        plot1= self.PlotGraph(title="", x_axis_label='dG(kcal/mol)', 
+        plot1= self.PlotGraph(title="", x_axis_label='ddG(kcal/mol)', 
                           y_axis_label="Probability", x="dG", y='y_coors_dg', 
                           energy_tag="dG", energy_column="@dG")
-        plot2= self.PlotGraph(title="", x_axis_label='dS(kcal/mol)', 
+        plot2= self.PlotGraph(title="", x_axis_label='ddS(kcal/mol)', 
                           y_axis_label="Probability", x="dS", y='y_coors_ds', 
                           energy_tag="dS", energy_column="@dS")
         self.plot = row(plot1, plot2)
-        output_file("interactive_plot.html")
+        #output_file("interactive_plot.html")
         save(self.plot)
     
     def embedingCode(self): 
         self.script, self.div = components(self.plot)
         
-
-    
-##################
-# End of Plot class
-##################
 
 
 class formatHtML: 
