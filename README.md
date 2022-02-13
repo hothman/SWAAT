@@ -1,8 +1,11 @@
 ![Drag Racing](logo_SWAAT.png)
 
 
-
 SWAAT allows for the prediction of the variant effect based on structural properties. SWAAT annotates a panel of 36 ADME genes including 22 out of the 23 clinically important members identified by the PharmVar consortium. The workflow consists of a set of python codes. The execution of these code is managed within Nextflow to annotate coding variants based on 37 criteria. SWAAT also includes an [auxiliary workflow](./auxiliary_wf/README.md) allowing a versatile use for genes other than the ADME members. The auxiliary workflow can be found in the directory `auxiliary_wf` of the repository.
+
+If you use SWAAY, please cite the following article
+
+Othman H, Jemimah S, da Rocha JEB. SWAAT Bioinformatics Workflow for Protein Structure-Based Annotation of ADME Gene Variants. *Journal of Personalized Medicine*. 2022; 12(2):263. [https://doi.org/10.3390/jpm12020263](https://www.mdpi.com/1494522)
 
 # 1. Installing dependencies 
 
