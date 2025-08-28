@@ -14,7 +14,7 @@ import requests
 import warnings
 
 # Bokeh is optional 
-try: 
+try:
     from bokeh.plotting import figure, save,  output_file
     from scipy.stats import norm
     import numpy as np
@@ -28,6 +28,7 @@ try:
     #to allow HTML output loading even if BokehJS cannot be loaded from the content delivery network
     url ="http://www.google.com"
     timeout=10
+    global internet_connection
     try:
         request = requests.get(url, timeout=timeout)
         internet_connection = True
@@ -411,7 +412,8 @@ class formatHtML:
         return newdf
 
 
-    def outputHtml(self): 
+    def outputHtml(self):
+        internet_connection = False
         """
         A arapping mehod to generate HTML report
         """
